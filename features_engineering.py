@@ -27,11 +27,7 @@ df["ma_7"] = (
 
 df["trend"] = df["units sold"] - df["lag_1"]
 
-# -------------------------
-# HOLIDAY (WITHOUT DISCOUNT)
-# -------------------------
-# Priority: use an existing holiday/promotion column if present
-possible_cols = ["holiday/promotion", "holiday", "promotion", "is_holiday"]
+possible_cols = ["holiday/promotion"]
 
 holiday_col = next((c for c in possible_cols if c in df.columns), None)
 
