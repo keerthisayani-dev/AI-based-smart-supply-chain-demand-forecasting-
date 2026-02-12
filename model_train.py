@@ -37,7 +37,7 @@ p = df[df[PRODUCT_COL] == pid].sort_values(DATE_COL).copy()
 
 print("Product:", pid, "| rows:", len(p))
 
-# DAILY DATA (Fix duplicate dates + keep useful predictors)
+#DAILY DATA (Fix duplicate dates + keep useful predictors)
 agg_map = {TARGET: "sum"}
 if "inventory level" in p.columns:
     agg_map["inventory level"] = "sum"
@@ -151,7 +151,7 @@ print("RMSE:", round(lr_rmse, 3))
 print("R2  :", round(lr_r2, 3))
 print("Accuracy (%):", round(lr_r2 * 100, 2))
 
-# GRAPH: ACTUAL vs ARIMA vs LINEAR
+# 6) GRAPH: ACTUAL vs ARIMA vs LINEAR
 plt.figure(figsize=(12,6))
 plt.plot(compare.index, compare["Actual"], label="Actual")
 plt.plot(compare.index, compare["ARIMA_Pred"], label="ARIMA Prediction")
