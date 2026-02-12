@@ -9,9 +9,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from statsmodels.tsa.arima.model import ARIMA
 
-# -----------------------
+
 # SETTINGS
-# -----------------------
 CSV_PATH = "retail_store_inventory.csv"
 DATE_COL = "date"
 PRODUCT_COL = "product id"
@@ -19,9 +18,7 @@ TARGET = "units sold"
 TEST_RATIO = 0.2
 START_DATE = "2022-01-01"
 
-# -----------------------
 # Load data
-# -----------------------
 df = pd.read_csv(CSV_PATH)
 df.columns = df.columns.str.strip().str.lower()
 
@@ -40,9 +37,7 @@ p = df[df[PRODUCT_COL] == pid].sort_values(DATE_COL).copy()
 
 print("Product:", pid, "| rows:", len(p))
 
-# =========================================================
-# 1) DAILY DATA (Fix duplicate dates + keep useful predictors)
-# =========================================================
+# DAILY DATA (Fix duplicate dates + keep useful predictors)
 agg_map = {TARGET: "sum"}
 if "inventory level" in p.columns:
     agg_map["inventory level"] = "sum"
@@ -80,16 +75,12 @@ print("Test range     :", test.index.min().date(), "to", test.index.max().date()
 y_train = train[TARGET].astype(float)
 y_test = test[TARGET].astype(float)
 
-# =========================================================
-# 2) ARIMA MODEL
-# =========================================================
+# ARIMA MODEL
 arima_fit = ARIMA(y_train, order=(1,1,1)).fit()
 arima_pred = arima_fit.forecast(steps=len(y_test))
 arima_pred.index = y_test.index
 
-# =========================================================
-# 3) LINEAR REGRESSION MODEL
-# =========================================================
+# LINEAR REGRESSION MODEL
 feat = daily.copy()
 
 # Lag + time features
@@ -121,14 +112,10 @@ arima_pred = arima_pred.loc[common_dates]
 
 X_test = X_test.loc[common_dates]
 
-# Train LR
 lr = LinearRegression()
 lr.fit(X_train, y_train_lr)
 lr_pred = pd.Series(lr.predict(X_test), index=common_dates)
 
-# =========================================================
-# 4) COMPARISON TABLE
-# =========================================================
 compare = pd.DataFrame({
     "Actual": y_actual,
     "ARIMA_Pred": arima_pred,
@@ -138,11 +125,7 @@ compare = pd.DataFrame({
 print("\n--- Actual vs Predicted ---")
 print(compare.head(10))
 
-# =========================================================
-# 5) MODEL EVALUATION (MAE, MSE, RMSE, R2)
-# =========================================================
 
-# ---- ARIMA Metrics ----
 arima_mae = mean_absolute_error(compare["Actual"], compare["ARIMA_Pred"])
 arima_mse = mean_squared_error(compare["Actual"], compare["ARIMA_Pred"])
 arima_rmse = np.sqrt(arima_mse)
@@ -168,9 +151,7 @@ print("RMSE:", round(lr_rmse, 3))
 print("R2  :", round(lr_r2, 3))
 print("Accuracy (%):", round(lr_r2 * 100, 2))
 
-# =========================================================
-# 6) GRAPH: ACTUAL vs ARIMA vs LINEAR
-# =========================================================
+# GRAPH: ACTUAL vs ARIMA vs LINEAR
 plt.figure(figsize=(12,6))
 plt.plot(compare.index, compare["Actual"], label="Actual")
 plt.plot(compare.index, compare["ARIMA_Pred"], label="ARIMA Prediction")
