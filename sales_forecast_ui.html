@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sales Forecast Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg1: #f7f2e8;
+      --bg2: #e8f4ef;
+      --card: #ffffff;
+      --ink: #102a43;
+      --muted: #4f6378;
+      --accent: #0e7c66;
+      --accent-2: #f67e2b;
+      --line: #d3dde6;
+      --ok: #157f3b;
+      --err: #a11d33;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at 20% 10%, #fff7df, transparent 36%),
+                  radial-gradient(circle at 80% 0%, #d8f4f0, transparent 32%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .panel {
+      width: min(980px, 100%);
+      background: color-mix(in srgb, var(--card) 92%, #f1f7fa);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 18px 30px rgba(16, 42, 67, 0.08);
+      overflow: hidden;
+      animation: fadeIn 420ms ease;
+    }
+
+    .header {
+      padding: 22px 24px 10px;
+      background: linear-gradient(90deg, rgba(14,124,102,0.08), rgba(246,126,43,0.06));
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+      letter-spacing: .2px;
+    }
+
+    .sub {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      padding: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .field { margin-bottom: 10px; }
+    label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
+
+    input {
+      width: 100%;
+      border: 1px solid #b9c8d6;
+      border-radius: 10px;
+      padding: 10px;
+      font: inherit;
+      background: #f9fcff;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 11px;
+      font: 600 0.95rem "Space Grotesk", sans-serif;
+      color: #fff;
+      background: linear-gradient(90deg, var(--accent), #12a385);
+      cursor: pointer;
+      transition: transform .12s ease, filter .2s ease;
+    }
+
+    button:hover { filter: brightness(1.02); }
+    button:active { transform: translateY(1px); }
+
+    .status {
+      min-height: 24px;
+      margin-top: 10px;
+      font-size: .88rem;
+      font-weight: 500;
+    }
+
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--err); }
+
+    .output {
+      height: 100%;
+      display: grid;
+      gap: 10px;
+      grid-template-rows: auto 190px 1fr;
+    }
+
+    .hint {
+      font-size: .85rem;
+      color: var(--muted);
+    }
+
+    .chart-box {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f4f9fc;
+      padding: 8px;
+    }
+
+    #chartCanvas {
+      width: 100%;
+      height: 170px;
+      display: block;
+    }
+
+    .table-wrap {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: auto;
+      max-height: 260px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      font-size: .9rem;
+    }
+
+    th, td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #ebf0f4;
+      text-align: left;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f2f8fb;
+      color: #20435f;
+      font-weight: 600;
+    }
+
+    pre {
+      margin: 0;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #f4f9fc;
+      font: 0.8rem/1.45 "IBM Plex Mono", monospace;
+      overflow: auto;
+      min-height: 150px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 800px) {
+      .content { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <section class="panel">
+    <div class="header">
+      <h1>Supply Chain Forecast Console</h1>
+      <p class="sub">Submit new sales rows and get refreshed demand forecast instantly.</p>
+    </div>
+
+    <div class="content">
+      <form id="salesForm" class="card">
+        <div class="field">
+          <label for="date">Date</label>
+          <input id="date" name="date" type="date" required>
+        </div>
+        <div class="field">
+          <label for="product">Product ID</label>
+          <input id="product" name="product" type="text" value="P0001" required>
+        </div>
+        <div class="field">
+          <label for="units">Units Sold</label>
+          <input id="units" name="units" type="number" min="0" step="1" required>
+        </div>
+        <div class="field">
+          <label for="horizon">Forecast Horizon (days)</label>
+          <input id="horizon" name="horizon" type="number" min="1" value="7" required>
+        </div>
+
+        <button type="submit">Submit + Refresh Forecast</button>
+        <div id="status" class="status"></div>
+      </form>
+
+      <div class="card output">
+        <div class="hint">Updated forecast view</div>
+        <div class="chart-box">
+          <canvas id="chartCanvas" width="560" height="170"></canvas>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Forecast Units Sold</th>
+              </tr>
+            </thead>
+            <tbody id="forecastBody">
+              <tr><td colspan="2">Run a submission to view refreshed forecasts.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <pre id="result">Raw API response will appear here.</pre>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const form = document.getElementById("salesForm");
+    const statusEl = document.getElementById("status");
+    const resultEl = document.getElementById("result");
+    const forecastBody = document.getElementById("forecastBody");
+    const chartCanvas = document.getElementById("chartCanvas");
+    const chartCtx = chartCanvas.getContext("2d");
+
+    function renderTable(rows) {
+      if (!rows.length) {
+        forecastBody.innerHTML = '<tr><td colspan="2">No forecast rows returned.</td></tr>';
+        return;
+      }
+
+      forecastBody.innerHTML = rows
+        .map(r => `<tr><td>${r.date}</td><td>${Number(r.forecast_units_sold).toFixed(2)}</td></tr>`)
+        .join("");
+    }
+
+    function renderChart(rows) {
+      chartCtx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+
+      if (!rows.length) {
+        chartCtx.fillStyle = "#4f6378";
+        chartCtx.font = "14px Space Grotesk";
+        chartCtx.fillText("No data", 12, 24);
+        return;
+      }
+
+      const values = rows.map(r => Number(r.forecast_units_sold));
+      const maxVal = Math.max(...values, 1);
+      const minVal = Math.min(...values, 0);
+      const pad = 24;
+      const w = chartCanvas.width - pad * 2;
+      const h = chartCanvas.height - pad * 2;
+
+      chartCtx.strokeStyle = "#d3dde6";
+      chartCtx.lineWidth = 1;
+      chartCtx.beginPath();
+      chartCtx.moveTo(pad, chartCanvas.height - pad);
+      chartCtx.lineTo(chartCanvas.width - pad, chartCanvas.height - pad);
+      chartCtx.stroke();
+
+      chartCtx.strokeStyle = "#0e7c66";
+      chartCtx.lineWidth = 2;
+      chartCtx.beginPath();
+
+      values.forEach((v, i) => {
+        const x = pad + (i * (w / Math.max(values.length - 1, 1)));
+        const y = pad + (h - ((v - minVal) / Math.max(maxVal - minVal, 1)) * h);
+        if (i === 0) chartCtx.moveTo(x, y);
+        else chartCtx.lineTo(x, y);
+      });
+      chartCtx.stroke();
+
+      chartCtx.fillStyle = "#f67e2b";
+      values.forEach((v, i) => {
+        const x = pad + (i * (w / Math.max(values.length - 1, 1)));
+        const y = pad + (h - ((v - minVal) / Math.max(maxVal - minVal, 1)) * h);
+        chartCtx.beginPath();
+        chartCtx.arc(x, y, 3, 0, Math.PI * 2);
+        chartCtx.fill();
+      });
+    }
+
+    function extractRows(apiData, productId) {
+      const forecasts = apiData.forecasts || {};
+      return forecasts[productId] || [];
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusEl.className = "status";
+      statusEl.textContent = "Submitting sales record...";
+
+      const productId = document.getElementById("product").value.trim();
+      const payload = {
+        horizon: Number(document.getElementById("horizon").value),
+        records: [
+          {
+            date: document.getElementById("date").value,
+            product_id: productId,
+            units_sold: Number(document.getElementById("units").value),
+          }
+        ]
+      };
+
+      try {
+        const res = await fetch("/sales", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        resultEl.textContent = JSON.stringify(data, null, 2);
+
+        if (!res.ok) {
+          statusEl.className = "status err";
+          statusEl.textContent = `Failed (${res.status}): ${data.detail || "Unknown error"}`;
+          renderTable([]);
+          renderChart([]);
+          return;
+        }
+
+        const rows = extractRows(data, productId);
+        renderTable(rows);
+        renderChart(rows);
+
+        statusEl.className = "status ok";
+        statusEl.textContent = "Sales inserted and forecast table/chart updated.";
+      } catch (err) {
+        statusEl.className = "status err";
+        statusEl.textContent = "Request failed. Is the FastAPI server running?";
+        resultEl.textContent = String(err);
+        renderTable([]);
+        renderChart([]);
+      }
+    });
+
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById("date").value = today;
+    renderChart([]);
+  </script>
+</body>
+</html>

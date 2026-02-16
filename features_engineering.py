@@ -29,6 +29,8 @@ df["trend"] = df["units sold"] - df["lag_1"]
 
 possible_cols = ["holiday/promotion"]
 
+
+
 holiday_col = next((c for c in possible_cols if c in df.columns), None)
 
 if holiday_col is not None:
