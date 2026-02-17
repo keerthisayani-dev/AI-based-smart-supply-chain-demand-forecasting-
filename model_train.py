@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from statsmodels.tsa.arima.model import ARIMA
 
 
 # SETTINGS
@@ -72,13 +71,7 @@ print("Data range used:", daily.index.min().date(), "to", daily.index.max().date
 print("Train range    :", train.index.min().date(), "to", train.index.max().date())
 print("Test range     :", test.index.min().date(), "to", test.index.max().date())
 
-y_train = train[TARGET].astype(float)
 y_test = test[TARGET].astype(float)
-
-# ARIMA MODEL
-arima_fit = ARIMA(y_train, order=(1,1,1)).fit()
-arima_pred = arima_fit.forecast(steps=len(y_test))
-arima_pred.index = y_test.index
 
 # LINEAR REGRESSION MODEL
 feat = daily.copy()
@@ -108,7 +101,6 @@ y_test_lr = test_lr[TARGET]
 common_dates = y_test.index.intersection(y_test_lr.index)
 
 y_actual = y_test.loc[common_dates]
-arima_pred = arima_pred.loc[common_dates]
 
 X_test = X_test.loc[common_dates]
 
@@ -118,25 +110,11 @@ lr_pred = pd.Series(lr.predict(X_test), index=common_dates)
 
 compare = pd.DataFrame({
     "Actual": y_actual,
-    "ARIMA_Pred": arima_pred,
     "LR_Pred": lr_pred
 })
 
 print("\n--- Actual vs Predicted ---")
 print(compare.head(10))
-
-
-arima_mae = mean_absolute_error(compare["Actual"], compare["ARIMA_Pred"])
-arima_mse = mean_squared_error(compare["Actual"], compare["ARIMA_Pred"])
-arima_rmse = np.sqrt(arima_mse)
-arima_r2 = r2_score(compare["Actual"], compare["ARIMA_Pred"])
-
-print("\n===== ARIMA Model Evaluation =====")
-print("MAE :", round(arima_mae, 3))
-print("MSE :", round(arima_mse, 3))
-print("RMSE:", round(arima_rmse, 3))
-print("R2  :", round(arima_r2, 3))
-print("Accuracy (%):", round(arima_r2 * 100, 2))
 
 # ---- Linear Regression Metrics ----
 lr_mae = mean_absolute_error(compare["Actual"], compare["LR_Pred"])
@@ -151,10 +129,9 @@ print("RMSE:", round(lr_rmse, 3))
 print("R2  :", round(lr_r2, 3))
 print("Accuracy (%):", round(lr_r2 * 100, 2))
 
-# 6) GRAPH: ACTUAL vs ARIMA vs LINEAR
+# 6) GRAPH: ACTUAL vs LINEAR
 plt.figure(figsize=(12,6))
 plt.plot(compare.index, compare["Actual"], label="Actual")
-plt.plot(compare.index, compare["ARIMA_Pred"], label="ARIMA Prediction")
 plt.plot(compare.index, compare["LR_Pred"], label="Linear Regression Prediction")
 
 plt.title("Actual vs Predicted Demand")

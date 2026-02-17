@@ -90,7 +90,7 @@
       background: #f9fcff;
     }
 
-    button {
+    .submit-btn {
       width: 100%;
       padding: 12px;
       border: none;
@@ -102,8 +102,8 @@
       transition: transform .12s ease, filter .2s ease;
     }
 
-    button:hover { filter: brightness(1.02); }
-    button:active { transform: translateY(1px); }
+    .submit-btn:hover { filter: brightness(1.02); }
+    .submit-btn:active { transform: translateY(1px); }
 
     .status {
       min-height: 24px;
@@ -119,7 +119,7 @@
       height: 100%;
       display: grid;
       gap: 10px;
-      grid-template-rows: auto 190px 1fr;
+      grid-template-rows: auto auto 1fr;
     }
 
     .hint {
@@ -145,6 +145,37 @@
       border-radius: 10px;
       overflow: auto;
       max-height: 260px;
+    }
+
+    .view-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .view-btn {
+      border: 1px solid #b9c8d6;
+      background: #f5fbff;
+      color: #20435f;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: 600 0.9rem "Space Grotesk", sans-serif;
+      cursor: pointer;
+    }
+
+    .view-btn.active {
+      border-color: #0e7c66;
+      background: #e8f7f3;
+      color: #0e7c66;
+    }
+
+    .view-panel {
+      display: none;
+      gap: 10px;
+    }
+
+    .view-panel.active {
+      display: grid;
     }
 
     table {
@@ -193,7 +224,7 @@
   <section class="panel">
     <div class="header">
       <h1>Supply Chain Forecast Console</h1>
-      <p class="sub">Submit new sales rows and get refreshed demand forecast instantly.</p>
+      <p class="sub">Submit new sales rows and get refreshed demand forecast instantly. UI v2026-02-17.2</p>
     </div>
 
     <div class="content">
@@ -215,28 +246,51 @@
           <input id="horizon" name="horizon" type="number" min="1" value="7" required>
         </div>
 
-        <button type="submit">Submit + Refresh Forecast</button>
+        <button type="submit" class="submit-btn">Submit + Refresh Forecast</button>
         <div id="status" class="status"></div>
       </form>
 
       <div class="card output">
-        <div class="hint">Updated forecast view</div>
-        <div class="chart-box">
-          <canvas id="chartCanvas" width="560" height="170"></canvas>
+        <div class="view-switch">
+          <button id="showForecast" type="button" class="view-btn active" data-view="forecastView">Future Forecast</button>
+          <button id="showHistory" type="button" class="view-btn" data-view="historyView">Past Sales</button>
         </div>
 
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Forecast Units Sold</th>
-              </tr>
-            </thead>
-            <tbody id="forecastBody">
-              <tr><td colspan="2">Run a submission to view refreshed forecasts.</td></tr>
-            </tbody>
-          </table>
+        <div id="forecastView" class="view-panel active">
+          <div class="hint">Future prediction view</div>
+          <div class="chart-box">
+            <canvas id="chartCanvas" width="560" height="170"></canvas>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Forecast Units</th>
+                </tr>
+              </thead>
+              <tbody id="forecastBody">
+                <tr><td colspan="2">Run a submission to view refreshed forecasts.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="historyView" class="view-panel">
+          <div class="hint">Past sales history view</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Actual Units Sold</th>
+                </tr>
+              </thead>
+              <tbody id="historyBody">
+                <tr><td colspan="2">Run a submission to view past sales history.</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <pre id="result">Raw API response will appear here.</pre>
@@ -249,17 +303,52 @@
     const statusEl = document.getElementById("status");
     const resultEl = document.getElementById("result");
     const forecastBody = document.getElementById("forecastBody");
+    const historyBody = document.getElementById("historyBody");
     const chartCanvas = document.getElementById("chartCanvas");
     const chartCtx = chartCanvas.getContext("2d");
+    const viewButtons = document.querySelectorAll(".view-btn");
+    const viewPanels = document.querySelectorAll(".view-panel");
+    let activeView = "forecastView";
+    let lastApiData = null;
+    let lastProductId = "";
 
-    function renderTable(rows) {
+    function setView(viewId) {
+      activeView = viewId;
+      viewPanels.forEach((panel) => panel.classList.toggle("active", panel.id === viewId));
+      viewButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.view === viewId));
+      renderResultPanel();
+    }
+
+    viewButtons.forEach((btn) => {
+      btn.addEventListener("click", () => setView(btn.dataset.view));
+    });
+
+    function renderForecastTable(rows) {
       if (!rows.length) {
         forecastBody.innerHTML = '<tr><td colspan="2">No forecast rows returned.</td></tr>';
         return;
       }
 
+      const fmtDate = (isoDate) => {
+        if (!isoDate) return "-";
+        const [y, m, d] = String(isoDate).split("-");
+        if (!y || !m || !d) return String(isoDate);
+        return `${d}-${m}-${y}`;
+      };
+
       forecastBody.innerHTML = rows
-        .map(r => `<tr><td>${r.date}</td><td>${Number(r.forecast_units_sold).toFixed(2)}</td></tr>`)
+        .map((r) => `<tr><td>${fmtDate(r.date)}</td><td>${Number(r.forecast_units_sold).toFixed(2)}</td></tr>`)
+        .join("");
+    }
+
+    function renderHistoryTable(rows) {
+      if (!rows.length) {
+        historyBody.innerHTML = '<tr><td colspan="2">No past rows returned.</td></tr>';
+        return;
+      }
+
+      historyBody.innerHTML = rows
+        .map(r => `<tr><td>${r.date}</td><td>${Number(r.actual_units_sold).toFixed(2)}</td></tr>`)
         .join("");
     }
 
@@ -314,6 +403,46 @@
       return forecasts[productId] || [];
     }
 
+    function extractHistory(apiData, productId) {
+      const histories = apiData.histories || {};
+      return histories[productId] || [];
+    }
+
+    function renderResultPanel() {
+      if (!lastApiData || !lastProductId) {
+        resultEl.textContent = "Raw API response will appear here.";
+        return;
+      }
+
+      if (activeView === "historyView") {
+        const historyRows = extractHistory(lastApiData, lastProductId);
+        const historyPayload = {
+          ui_mode: "past_sales",
+          ui_version: "v2026-02-17.2",
+          message: lastApiData.message,
+          model_info: lastApiData.model_info,
+          product_id: lastProductId,
+          history_count: historyRows.length,
+          history: historyRows,
+        };
+        resultEl.textContent = JSON.stringify(historyPayload, null, 2);
+        return;
+      }
+
+      const forecastRows = extractRows(lastApiData, lastProductId);
+      const forecastPayload = {
+        ui_mode: "future_forecast",
+        ui_version: "v2026-02-17.2",
+        message: lastApiData.message,
+        model_info: lastApiData.model_info,
+        product_id: lastProductId,
+        horizon: lastApiData.horizon,
+        forecast_count: forecastRows.length,
+        forecast: forecastRows,
+      };
+      resultEl.textContent = JSON.stringify(forecastPayload, null, 2);
+    }
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       statusEl.className = "status";
@@ -339,27 +468,37 @@
         });
 
         const data = await res.json();
-        resultEl.textContent = JSON.stringify(data, null, 2);
+        lastApiData = data;
+        lastProductId = productId;
 
         if (!res.ok) {
           statusEl.className = "status err";
           statusEl.textContent = `Failed (${res.status}): ${data.detail || "Unknown error"}`;
-          renderTable([]);
+          renderResultPanel();
+          renderForecastTable([]);
+          renderHistoryTable([]);
           renderChart([]);
           return;
         }
 
-        const rows = extractRows(data, productId);
-        renderTable(rows);
-        renderChart(rows);
+        const forecastRows = extractRows(data, productId);
+        const historyRows = extractHistory(data, productId);
+        renderForecastTable(forecastRows);
+        renderHistoryTable(historyRows);
+        renderChart(forecastRows);
+        setView("forecastView");
+        renderResultPanel();
 
         statusEl.className = "status ok";
-        statusEl.textContent = "Sales inserted and forecast table/chart updated.";
+        statusEl.textContent = "Sales inserted. Use the view buttons to switch past and future data.";
       } catch (err) {
         statusEl.className = "status err";
         statusEl.textContent = "Request failed. Is the FastAPI server running?";
         resultEl.textContent = String(err);
-        renderTable([]);
+        lastApiData = null;
+        lastProductId = "";
+        renderForecastTable([]);
+        renderHistoryTable([]);
         renderChart([]);
       }
     });

@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
 
 TARGET_COL = "units sold"
 DATE_COL = "date"
 PRODUCT_COL = "product id"
-MODEL_INFO = "RandomForestRegressor with lag + rolling + seasonal calendar features"
+MODEL_INFO = "LinearRegression with lag + rolling + seasonal calendar features"
 
 
 @dataclass
@@ -21,6 +21,26 @@ class TrainedForecastModel:
     target: str
     daily_history: pd.DataFrame
     last_date: pd.Timestamp
+
+
+def parse_date_series(values: pd.Series) -> pd.Series:
+    s = values.astype("string").str.strip()
+    parsed = pd.Series(pd.NaT, index=s.index, dtype="datetime64[ns]")
+
+    # Parse ISO first to avoid dayfirst ambiguity such as 2026-01-06 -> 2026-06-01.
+    iso_mask = s.str.fullmatch(r"\d{4}-\d{2}-\d{2}", na=False)
+    if iso_mask.any():
+        parsed.loc[iso_mask] = pd.to_datetime(s.loc[iso_mask], format="%Y-%m-%d", errors="coerce")
+
+    non_iso_mask = ~iso_mask
+    if non_iso_mask.any():
+        parsed.loc[non_iso_mask] = pd.to_datetime(s.loc[non_iso_mask], dayfirst=True, errors="coerce")
+
+    fallback_mask = parsed.isna() & s.notna()
+    if fallback_mask.any():
+        parsed.loc[fallback_mask] = pd.to_datetime(s.loc[fallback_mask], dayfirst=False, errors="coerce")
+
+    return parsed
 
 
 def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -40,7 +60,7 @@ def load_sales_data(csv_path: str | Path) -> pd.DataFrame:
     if TARGET_COL not in df.columns:
         raise ValueError(f"Missing required column: {TARGET_COL}")
 
-    df[DATE_COL] = pd.to_datetime(df[DATE_COL], dayfirst=True, errors="coerce")
+    df[DATE_COL] = parse_date_series(df[DATE_COL])
     df = df.dropna(subset=[DATE_COL, PRODUCT_COL, TARGET_COL]).sort_values(DATE_COL)
     return df
 
@@ -117,12 +137,7 @@ def train_forecast_model(daily: pd.DataFrame, target: str = TARGET_COL) -> Train
     if len(feat) < 30:
         raise ValueError("Not enough history to train model. Need at least 30 days of data.")
 
-    model = RandomForestRegressor(
-        n_estimators=400,
-        random_state=42,
-        min_samples_leaf=2,
-        n_jobs=-1,
-    )
+    model = LinearRegression()
     model.fit(feat[feature_cols], feat[target])
 
     return TrainedForecastModel(
@@ -192,12 +207,24 @@ def _feature_row(
     return pd.DataFrame([row], index=[forecast_date])
 
 
-def forecast_next_days(trained: TrainedForecastModel, horizon: int = 7) -> pd.DataFrame:
+def forecast_next_days(
+    trained: TrainedForecastModel,
+    horizon: int = 7,
+    anchor_date: Optional[pd.Timestamp] = None,
+) -> pd.DataFrame:
     if horizon <= 0:
         raise ValueError("horizon must be positive")
 
-    history = trained.daily_history.copy()
+    history = trained.daily_history.copy().sort_index()
     target = trained.target
+
+    start_date = trained.last_date
+    if anchor_date is not None:
+        anchor_date = pd.to_datetime(anchor_date).normalize()
+        history = history[history.index <= anchor_date]
+        if history.empty:
+            raise ValueError("anchor_date is earlier than available product history")
+        start_date = anchor_date
 
     static_values: Dict[str, float] = {}
     for col in trained.features:
@@ -205,7 +232,7 @@ def forecast_next_days(trained: TrainedForecastModel, horizon: int = 7) -> pd.Da
             static_values[col] = float(history[col].iloc[-1])
 
     rows = []
-    current_date = trained.last_date
+    current_date = start_date
 
     for _ in range(horizon):
         current_date = current_date + pd.Timedelta(days=1)

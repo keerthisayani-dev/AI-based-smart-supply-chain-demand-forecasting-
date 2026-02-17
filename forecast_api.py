@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import threading
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException
@@ -17,6 +17,7 @@ from forecasting_core import (
     build_daily_series,
     forecast_next_days,
     load_sales_data,
+    parse_date_series,
     train_forecast_model,
 )
 
@@ -87,11 +88,50 @@ def _append_sales_rows(records: List[SalesRecord]) -> pd.DataFrame:
     return combined
 
 
-def _forecast_for_product(df: pd.DataFrame, product_id: str, horizon: int) -> List[Dict[str, Any]]:
+def _forecast_for_product(
+    df: pd.DataFrame,
+    product_id: str,
+    horizon: int,
+    anchor_date: Optional[pd.Timestamp] = None,
+) -> List[Dict[str, Any]]:
     daily = build_daily_series(df, product_id=product_id)
     trained = train_forecast_model(daily, target=TARGET_COL)
-    forecast_df = forecast_next_days(trained, horizon=horizon)
+    forecast_df = forecast_next_days(trained, horizon=horizon, anchor_date=anchor_date)
     return forecast_df.to_dict(orient="records")
+
+
+def _history_for_product(
+    df: pd.DataFrame,
+    product_id: str,
+    lookback_days: int = 60,
+    anchor_date: Optional[pd.Timestamp] = None,
+) -> List[Dict[str, Any]]:
+    product_rows = df[df[PRODUCT_COL].astype(str) == str(product_id)].copy()
+    if product_rows.empty:
+        return []
+
+    product_rows[DATE_COL] = parse_date_series(product_rows[DATE_COL])
+    product_rows = product_rows.dropna(subset=[DATE_COL, TARGET_COL])
+
+    daily = (
+        product_rows.groupby(DATE_COL, as_index=False)[TARGET_COL]
+        .sum()
+        .sort_values(DATE_COL)
+    )
+    if anchor_date is not None:
+        anchor_date = pd.to_datetime(anchor_date).normalize()
+        daily = daily[daily[DATE_COL] <= anchor_date]
+
+    if lookback_days > 0:
+        daily = daily.tail(lookback_days)
+
+    return [
+        {
+            "date": d.date().isoformat(),
+            "actual_units_sold": round(float(v), 3),
+        }
+        for d, v in zip(daily[DATE_COL], daily[TARGET_COL])
+    ]
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -117,11 +157,13 @@ def get_forecast(product_id: str, horizon: int = DEFAULT_HORIZON) -> Dict[str, A
             rows = _forecast_for_product(df, product_id=product_id, horizon=horizon)
         except ValueError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
+        history = _history_for_product(df, product_id=product_id)
 
     return {
         "product_id": product_id,
         "horizon": horizon,
         "model_info": MODEL_INFO,
+        "history": history,
         "forecast": rows,
     }
 
@@ -137,17 +179,36 @@ def ingest_sales(request: SalesIngestRequest) -> Dict[str, Any]:
         combined = _append_sales_rows(request.records)
         combined = combined.copy()
         combined.columns = combined.columns.str.strip().str.lower()
-        combined[DATE_COL] = pd.to_datetime(combined[DATE_COL], dayfirst=True, errors="coerce")
+        combined[DATE_COL] = parse_date_series(combined[DATE_COL])
         combined = combined.dropna(subset=[DATE_COL, PRODUCT_COL, TARGET_COL])
 
         updated_products = sorted({str(r.product_id) for r in request.records})
+        anchors: Dict[str, pd.Timestamp] = {}
+        for pid in updated_products:
+            pid_dates = [r.date for r in request.records if str(r.product_id) == pid]
+            parsed_dates = parse_date_series(pd.Series(pid_dates))
+            parsed_dates = parsed_dates.dropna()
+            if not parsed_dates.empty:
+                anchors[pid] = parsed_dates.max().normalize()
+
         forecasts: Dict[str, Any] = {}
+        histories: Dict[str, Any] = {}
 
         for pid in updated_products:
             try:
-                forecasts[pid] = _forecast_for_product(combined, product_id=pid, horizon=request.horizon)
+                forecasts[pid] = _forecast_for_product(
+                    combined,
+                    product_id=pid,
+                    horizon=request.horizon,
+                    anchor_date=anchors.get(pid),
+                )
             except ValueError:
                 forecasts[pid] = []
+            histories[pid] = _history_for_product(
+                combined,
+                product_id=pid,
+                anchor_date=anchors.get(pid),
+            )
 
     return {
         "message": "Sales data appended and forecasts refreshed",
@@ -155,6 +216,7 @@ def ingest_sales(request: SalesIngestRequest) -> Dict[str, Any]:
         "updated_products": updated_products,
         "horizon": request.horizon,
         "forecasts": forecasts,
+        "histories": histories,
     }
 
 
