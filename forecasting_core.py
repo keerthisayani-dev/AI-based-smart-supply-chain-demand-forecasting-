@@ -70,13 +70,17 @@ def build_daily_series(df: pd.DataFrame, product_id: str) -> pd.DataFrame:
     if p.empty:
         raise ValueError(f"No rows found for product {product_id}")
 
-    agg_map: Dict[str, str] = {TARGET_COL: "sum"}
+    def _sum_preserve_missing(series: pd.Series) -> float:
+        # Keep all-missing groups as NaN so downstream ffill can carry forward prior known values.
+        return series.sum(min_count=1)
+
+    agg_map: Dict[str, Any] = {TARGET_COL: "sum"}
     if "inventory level" in p.columns:
-        agg_map["inventory level"] = "sum"
+        agg_map["inventory level"] = _sum_preserve_missing
     if "units ordered" in p.columns:
-        agg_map["units ordered"] = "sum"
+        agg_map["units ordered"] = _sum_preserve_missing
     if "demand forecast" in p.columns:
-        agg_map["demand forecast"] = "sum"
+        agg_map["demand forecast"] = _sum_preserve_missing
     if "price" in p.columns:
         agg_map["price"] = "mean"
     if "discount" in p.columns:

@@ -199,17 +199,6 @@
       font-weight: 600;
     }
 
-    pre {
-      margin: 0;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: #f4f9fc;
-      font: 0.8rem/1.45 "IBM Plex Mono", monospace;
-      overflow: auto;
-      min-height: 150px;
-    }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
@@ -224,7 +213,7 @@
   <section class="panel">
     <div class="header">
       <h1>Supply Chain Forecast Console</h1>
-      <p class="sub">Submit new sales rows and get refreshed demand forecast instantly. UI v2026-02-17.2</p>
+      <p class="sub">Submit new sales rows and get refreshed demand forecast instantly.</p>
     </div>
 
     <div class="content">
@@ -293,7 +282,6 @@
           </div>
         </div>
 
-        <pre id="result">Raw API response will appear here.</pre>
       </div>
     </div>
   </section>
@@ -301,22 +289,15 @@
   <script>
     const form = document.getElementById("salesForm");
     const statusEl = document.getElementById("status");
-    const resultEl = document.getElementById("result");
     const forecastBody = document.getElementById("forecastBody");
     const historyBody = document.getElementById("historyBody");
     const chartCanvas = document.getElementById("chartCanvas");
     const chartCtx = chartCanvas.getContext("2d");
     const viewButtons = document.querySelectorAll(".view-btn");
     const viewPanels = document.querySelectorAll(".view-panel");
-    let activeView = "forecastView";
-    let lastApiData = null;
-    let lastProductId = "";
-
     function setView(viewId) {
-      activeView = viewId;
       viewPanels.forEach((panel) => panel.classList.toggle("active", panel.id === viewId));
       viewButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.view === viewId));
-      renderResultPanel();
     }
 
     viewButtons.forEach((btn) => {
@@ -408,41 +389,6 @@
       return histories[productId] || [];
     }
 
-    function renderResultPanel() {
-      if (!lastApiData || !lastProductId) {
-        resultEl.textContent = "Raw API response will appear here.";
-        return;
-      }
-
-      if (activeView === "historyView") {
-        const historyRows = extractHistory(lastApiData, lastProductId);
-        const historyPayload = {
-          ui_mode: "past_sales",
-          ui_version: "v2026-02-17.2",
-          message: lastApiData.message,
-          model_info: lastApiData.model_info,
-          product_id: lastProductId,
-          history_count: historyRows.length,
-          history: historyRows,
-        };
-        resultEl.textContent = JSON.stringify(historyPayload, null, 2);
-        return;
-      }
-
-      const forecastRows = extractRows(lastApiData, lastProductId);
-      const forecastPayload = {
-        ui_mode: "future_forecast",
-        ui_version: "v2026-02-17.2",
-        message: lastApiData.message,
-        model_info: lastApiData.model_info,
-        product_id: lastProductId,
-        horizon: lastApiData.horizon,
-        forecast_count: forecastRows.length,
-        forecast: forecastRows,
-      };
-      resultEl.textContent = JSON.stringify(forecastPayload, null, 2);
-    }
-
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       statusEl.className = "status";
@@ -468,13 +414,10 @@
         });
 
         const data = await res.json();
-        lastApiData = data;
-        lastProductId = productId;
 
         if (!res.ok) {
           statusEl.className = "status err";
           statusEl.textContent = `Failed (${res.status}): ${data.detail || "Unknown error"}`;
-          renderResultPanel();
           renderForecastTable([]);
           renderHistoryTable([]);
           renderChart([]);
@@ -487,16 +430,12 @@
         renderHistoryTable(historyRows);
         renderChart(forecastRows);
         setView("forecastView");
-        renderResultPanel();
 
         statusEl.className = "status ok";
         statusEl.textContent = "Sales inserted. Use the view buttons to switch past and future data.";
       } catch (err) {
         statusEl.className = "status err";
         statusEl.textContent = "Request failed. Is the FastAPI server running?";
-        resultEl.textContent = String(err);
-        lastApiData = null;
-        lastProductId = "";
         renderForecastTable([]);
         renderHistoryTable([]);
         renderChart([]);
