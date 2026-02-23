@@ -9,16 +9,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg1: #f7f2e8;
-      --bg2: #e8f4ef;
+      --bg1: #f8f6f0;
+      --bg2: #eef6f4;
       --card: #ffffff;
-      --ink: #102a43;
-      --muted: #4f6378;
-      --accent: #0e7c66;
-      --accent-2: #f67e2b;
-      --line: #d3dde6;
-      --ok: #157f3b;
-      --err: #a11d33;
+      --ink: #14324d;
+      --muted: #5c7388;
+      --accent: #0f7f6a;
+      --accent-2: #f0873c;
+      --line: #cfdae5;
+      --ok: #1f7a45;
+      --err: #b42318;
+      --placeholder: #8297ab;
     }
 
     * { box-sizing: border-box; }
@@ -28,7 +29,7 @@
       font-family: "Space Grotesk", sans-serif;
       color: var(--ink);
       background: radial-gradient(circle at 20% 10%, #fff7df, transparent 36%),
-                  radial-gradient(circle at 80% 0%, #d8f4f0, transparent 32%),
+                  radial-gradient(circle at 80% 0%, #d9f0ec, transparent 32%),
                   linear-gradient(135deg, var(--bg1), var(--bg2));
       min-height: 100vh;
       display: grid;
@@ -37,145 +38,200 @@
     }
 
     .panel {
-      width: min(980px, 100%);
-      background: color-mix(in srgb, var(--card) 92%, #f1f7fa);
+      width: min(1020px, 100%);
+      background: color-mix(in srgb, var(--card) 94%, #f2f7fa);
       border: 1px solid var(--line);
-      border-radius: 18px;
-      box-shadow: 0 18px 30px rgba(16, 42, 67, 0.08);
+      border-radius: 20px;
+      box-shadow: 0 20px 38px rgba(19, 49, 71, 0.12);
       overflow: hidden;
       animation: fadeIn 420ms ease;
     }
 
     .header {
-      padding: 22px 24px 10px;
-      background: linear-gradient(90deg, rgba(14,124,102,0.08), rgba(246,126,43,0.06));
+      padding: 24px 26px 14px;
+      background: linear-gradient(90deg, rgba(15,127,106,0.10), rgba(240,135,60,0.08));
       border-bottom: 1px solid var(--line);
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(1.2rem, 2.5vw, 1.6rem);
-      letter-spacing: .2px;
+      font-size: clamp(1.24rem, 2.4vw, 1.85rem);
+      letter-spacing: .15px;
     }
 
     .sub {
-      margin: 8px 0 0;
+      margin: 9px 0 0;
       color: var(--muted);
-      font-size: .95rem;
+      font-size: .98rem;
     }
 
     .content {
       display: grid;
       grid-template-columns: 320px 1fr;
-      gap: 18px;
-      padding: 18px;
+      gap: 16px;
+      padding: 18px 20px 20px;
     }
 
     .card {
       border: 1px solid var(--line);
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 14px;
-      background: #fff;
+      background: linear-gradient(180deg, #fbfdff 0%, #f7fbff 100%);
     }
 
-    .field { margin-bottom: 10px; }
-    label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
-
-    input {
-      width: 100%;
-      border: 1px solid #b9c8d6;
-      border-radius: 10px;
-      padding: 10px;
-      font: inherit;
-      background: #f9fcff;
-    }
-
-    .submit-btn {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 11px;
-      font: 600 0.95rem "Space Grotesk", sans-serif;
-      color: #fff;
-      background: linear-gradient(90deg, var(--accent), #12a385);
-      cursor: pointer;
-      transition: transform .12s ease, filter .2s ease;
-    }
-
-    .submit-btn:hover { filter: brightness(1.02); }
-    .submit-btn:active { transform: translateY(1px); }
-
-    .status {
-      min-height: 24px;
-      margin-top: 10px;
-      font-size: .88rem;
+    .field { margin-bottom: 12px; }
+    label {
+      display: block;
+      font-size: .86rem;
+      color: var(--muted);
+      margin-bottom: 7px;
       font-weight: 500;
     }
 
-    .status.ok { color: var(--ok); }
-    .status.err { color: var(--err); }
+    input, select {
+      width: 100%;
+      border: 1px solid #afc1d2;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font: inherit;
+      background: #fbfdff;
+      color: #102a43;
+      transition: border-color .16s ease, box-shadow .16s ease, color .16s ease;
+    }
+
+    select.placeholder {
+      color: var(--placeholder);
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: #6f97ba;
+      box-shadow: 0 0 0 3px rgba(33, 118, 199, 0.14);
+    }
+
+    option {
+      color: #102a43;
+    }
+
+    .field-error {
+      min-height: 16px;
+      margin-top: 4px;
+      font-size: .80rem;
+      color: var(--err);
+      font-weight: 500;
+    }
+
+    .field-hint {
+      min-height: 16px;
+      margin-top: 4px;
+      font-size: .79rem;
+      color: #7c3300;
+      border-bottom: 2px solid #e8a06a;
+      padding: 2px 0;
+      display: none;
+    }
+
+    .field-hint.show {
+      display: block;
+    }
+
+    .input-invalid {
+      border-color: #cc5467 !important;
+      box-shadow: 0 0 0 3px rgba(161, 29, 51, 0.12) !important;
+    }
 
     .output {
       height: 100%;
       display: grid;
-      gap: 10px;
+      gap: 12px;
       grid-template-rows: auto auto 1fr;
     }
 
     .hint {
-      font-size: .85rem;
+      font-size: .9rem;
       color: var(--muted);
     }
 
-    .chart-box {
-      border: 1px solid var(--line);
+    .form-notice {
+      margin-top: 2px;
+      margin-bottom: 0;
+      font-size: .85rem;
+      color: #9f1239;
+      font-weight: 500;
+      background: rgba(159, 18, 57, 0.06);
+      border: 1px solid rgba(159, 18, 57, 0.18);
       border-radius: 10px;
-      background: #f4f9fc;
-      padding: 8px;
+      padding: 6px 10px;
     }
 
-    #chartCanvas {
+    .form-notice:empty {
+      display: none;
+    }
+
+    .quarter-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .quarter-card {
+      border: 1px solid #b5c8da;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #f4f9fd 0%, #eef6fc 100%);
+      padding: 10px 10px 11px;
+    }
+
+    .quarter-head {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .quarter-main {
+      font-weight: 700;
+      font-size: .98rem;
+      margin-bottom: 3px;
+      color: #20435f;
+    }
+
+    .trend-btn {
       width: 100%;
-      height: 170px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #d0dee9;
+      border-radius: 11px;
+      background: #fcfeff;
+      padding: 4px 6px;
+      cursor: pointer;
+      min-height: 48px;
+      margin-bottom: 8px;
+    }
+
+    .spark {
+      width: 100%;
+      height: 30px;
       display: block;
     }
 
-    .table-wrap {
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      overflow: auto;
-      max-height: 260px;
-    }
-
-    .view-switch {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .view-btn {
-      border: 1px solid #b9c8d6;
-      background: #f5fbff;
-      color: #20435f;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font: 600 0.9rem "Space Grotesk", sans-serif;
+    .quarter-btn {
+      width: 100%;
+      margin-top: 8px;
+      border: 1px solid #0f7f6a;
+      background: linear-gradient(90deg, #0f7f6a, #148f76);
+      color: #fff;
+      border-radius: 11px;
+      padding: 8px 10px;
+      font: 700 0.88rem "Space Grotesk", sans-serif;
+      letter-spacing: .1px;
       cursor: pointer;
+      transition: filter .15s ease, transform .08s ease;
     }
 
-    .view-btn.active {
-      border-color: #0e7c66;
-      background: #e8f7f3;
-      color: #0e7c66;
+    .quarter-btn:hover {
+      filter: brightness(1.03);
     }
 
-    .view-panel {
-      display: none;
-      gap: 10px;
-    }
-
-    .view-panel.active {
-      display: grid;
+    .quarter-btn:active {
+      transform: translateY(1px);
     }
 
     table {
@@ -213,7 +269,7 @@
   <section class="panel">
     <div class="header">
       <h1>Supply Chain Forecast Console</h1>
-      <p class="sub">Submit new sales rows and get refreshed demand forecast instantly.</p>
+      <p class="sub">Submit sales input and view forecast details.</p>
     </div>
 
     <div class="content">
@@ -221,230 +277,361 @@
         <div class="field">
           <label for="date">Date</label>
           <input id="date" name="date" type="date" required>
-        </div>
-        <div class="field">
-          <label for="product">Product ID</label>
-          <input id="product" name="product" type="text" value="P0001" required>
+          <div id="dateError" class="field-error"></div>
         </div>
         <div class="field">
           <label for="units">Units Sold</label>
           <input id="units" name="units" type="number" min="0" step="1" required>
+          <div id="unitsError" class="field-error"></div>
         </div>
-        <div class="field">
-          <label for="horizon">Forecast Horizon (days)</label>
-          <input id="horizon" name="horizon" type="number" min="1" value="7" required>
-        </div>
-
-        <button type="submit" class="submit-btn">Submit + Refresh Forecast</button>
-        <div id="status" class="status"></div>
       </form>
 
       <div class="card output">
-        <div class="view-switch">
-          <button id="showForecast" type="button" class="view-btn active" data-view="forecastView">Future Forecast</button>
-          <button id="showHistory" type="button" class="view-btn" data-view="historyView">Past Sales</button>
+        <div class="field">
+          <label for="category">Category</label>
+          <select id="category" name="category" required>
+            <option value="" selected disabled hidden>Select category</option>
+            <option value="Clothing">Clothing</option>
+            <option value="Toys">Toys</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Groceries">Groceries</option>
+            <option value="Furniture">Furniture</option>
+          </select>
+          <div id="categoryError" class="field-error"></div>
         </div>
-
-        <div id="forecastView" class="view-panel active">
-          <div class="hint">Future prediction view</div>
-          <div class="chart-box">
-            <canvas id="chartCanvas" width="560" height="170"></canvas>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Forecast Units</th>
-                </tr>
-              </thead>
-              <tbody id="forecastBody">
-                <tr><td colspan="2">Run a submission to view refreshed forecasts.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div id="historyView" class="view-panel">
-          <div class="hint">Past sales history view</div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Actual Units Sold</th>
-                </tr>
-              </thead>
-              <tbody id="historyBody">
-                <tr><td colspan="2">Run a submission to view past sales history.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
+        <div class="hint">Select quarter and month, then open forecast details.</div>
+        <div id="formNotice" class="form-notice"></div>
+        <div id="quarterGrid" class="quarter-grid"></div>
       </div>
     </div>
   </section>
 
   <script>
     const form = document.getElementById("salesForm");
-    const statusEl = document.getElementById("status");
-    const forecastBody = document.getElementById("forecastBody");
-    const historyBody = document.getElementById("historyBody");
-    const chartCanvas = document.getElementById("chartCanvas");
-    const chartCtx = chartCanvas.getContext("2d");
-    const viewButtons = document.querySelectorAll(".view-btn");
-    const viewPanels = document.querySelectorAll(".view-panel");
-    function setView(viewId) {
-      viewPanels.forEach((panel) => panel.classList.toggle("active", panel.id === viewId));
-      viewButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.view === viewId));
+    const quarterGrid = document.getElementById("quarterGrid");
+    const categoryEl = document.getElementById("category");
+    const dateEl = document.getElementById("date");
+    const unitsEl = document.getElementById("units");
+    const dateErrorEl = document.getElementById("dateError");
+    const unitsErrorEl = document.getElementById("unitsError");
+    const categoryErrorEl = document.getElementById("categoryError");
+    const formNoticeEl = document.getElementById("formNotice");
+    const quarterItems = [
+      { quarter: "Q1", label: "Quarter-1", months: ["January", "February", "March"] },
+      { quarter: "Q2", label: "Quarter-2", months: ["April", "May", "June"] },
+      { quarter: "Q3", label: "Quarter-3", months: ["July", "August", "September"] },
+      { quarter: "Q4", label: "Quarter-4", months: ["October", "November", "December"] },
+    ];
+    const quarterMonthMap = {
+      Q1: [0, 1, 2],
+      Q2: [3, 4, 5],
+      Q3: [6, 7, 8],
+      Q4: [9, 10, 11],
+    };
+    const FORECAST_CACHE_KEY = "dashboard_forecast_cache_v1";
+    let quarterStats = {};
+
+    function setFieldError(inputEl, errorEl, message) {
+      if (!inputEl || !errorEl) return;
+      errorEl.textContent = message || "";
+      inputEl.classList.toggle("input-invalid", Boolean(message));
     }
 
-    viewButtons.forEach((btn) => {
-      btn.addEventListener("click", () => setView(btn.dataset.view));
-    });
+    function setFormNotice(message) {
+      if (!formNoticeEl) return;
+      formNoticeEl.textContent = message || "";
+    }
 
-    function renderForecastTable(rows) {
-      if (!rows.length) {
-        forecastBody.innerHTML = '<tr><td colspan="2">No forecast rows returned.</td></tr>';
-        return;
+    function clearAllFormErrors() {
+      setFieldError(dateEl, dateErrorEl, "");
+      setFieldError(unitsEl, unitsErrorEl, "");
+      setFieldError(categoryEl, categoryErrorEl, "");
+      setFormNotice("");
+    }
+
+    function setMonthError(quarter, message) {
+      const monthSelect = document.getElementById(`month-start-${quarter}`);
+      const errorEl = document.getElementById(`month-error-${quarter}`);
+      if (!monthSelect || !errorEl) return;
+      errorEl.textContent = message || "";
+      monthSelect.classList.toggle("input-invalid", Boolean(message));
+    }
+
+    function setMonthHint(quarter, message) {
+      const hintEl = document.getElementById(`month-hint-${quarter}`);
+      if (!hintEl) return;
+      hintEl.textContent = message || "";
+      hintEl.classList.toggle("show", Boolean(message));
+    }
+
+    function applySelectPlaceholderState(selectEl) {
+      if (!selectEl) return;
+      selectEl.classList.toggle("placeholder", !selectEl.value);
+    }
+
+    function validateInputs() {
+      const dateValue = dateEl.value.trim();
+      const categoryValue = categoryEl.value.trim();
+      const unitsRaw = unitsEl.value.trim();
+      clearAllFormErrors();
+      let firstInvalidEl = null;
+
+      if (!dateValue) {
+        setFieldError(dateEl, dateErrorEl, "Date is required.");
+        if (!firstInvalidEl) firstInvalidEl = dateEl;
       }
 
-      const fmtDate = (isoDate) => {
-        if (!isoDate) return "-";
-        const [y, m, d] = String(isoDate).split("-");
-        if (!y || !m || !d) return String(isoDate);
-        return `${d}-${m}-${y}`;
+      if (!unitsRaw) {
+        setFieldError(unitsEl, unitsErrorEl, "Units Sold is required.");
+        if (!firstInvalidEl) firstInvalidEl = unitsEl;
+      }
+
+      const unitsNum = Number(unitsRaw);
+      if (unitsRaw && (!Number.isFinite(unitsNum) || unitsNum < 0)) {
+        setFieldError(unitsEl, unitsErrorEl, "Units Sold must be a valid non-negative number.");
+        if (!firstInvalidEl) firstInvalidEl = unitsEl;
+      }
+
+      if (!categoryValue) {
+        setFieldError(categoryEl, categoryErrorEl, "Category is required.");
+        if (!firstInvalidEl) firstInvalidEl = categoryEl;
+      }
+
+      if (firstInvalidEl) {
+        setFormNotice("Please fill in the details.");
+        firstInvalidEl.focus();
+        return null;
+      }
+
+      return {
+        date: dateValue,
+        category: categoryValue,
+        units: unitsNum,
       };
-
-      forecastBody.innerHTML = rows
-        .map((r) => `<tr><td>${fmtDate(r.date)}</td><td>${Number(r.forecast_units_sold).toFixed(2)}</td></tr>`)
-        .join("");
     }
 
-    function renderHistoryTable(rows) {
-      if (!rows.length) {
-        historyBody.innerHTML = '<tr><td colspan="2">No past rows returned.</td></tr>';
-        return;
-      }
-
-      historyBody.innerHTML = rows
-        .map(r => `<tr><td>${r.date}</td><td>${Number(r.actual_units_sold).toFixed(2)}</td></tr>`)
-        .join("");
-    }
-
-    function renderChart(rows) {
-      chartCtx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
-
-      if (!rows.length) {
-        chartCtx.fillStyle = "#4f6378";
-        chartCtx.font = "14px Space Grotesk";
-        chartCtx.fillText("No data", 12, 24);
-        return;
-      }
-
-      const values = rows.map(r => Number(r.forecast_units_sold));
-      const maxVal = Math.max(...values, 1);
-      const minVal = Math.min(...values, 0);
-      const pad = 24;
-      const w = chartCanvas.width - pad * 2;
-      const h = chartCanvas.height - pad * 2;
-
-      chartCtx.strokeStyle = "#d3dde6";
-      chartCtx.lineWidth = 1;
-      chartCtx.beginPath();
-      chartCtx.moveTo(pad, chartCanvas.height - pad);
-      chartCtx.lineTo(chartCanvas.width - pad, chartCanvas.height - pad);
-      chartCtx.stroke();
-
-      chartCtx.strokeStyle = "#0e7c66";
-      chartCtx.lineWidth = 2;
-      chartCtx.beginPath();
-
-      values.forEach((v, i) => {
-        const x = pad + (i * (w / Math.max(values.length - 1, 1)));
-        const y = pad + (h - ((v - minVal) / Math.max(maxVal - minVal, 1)) * h);
-        if (i === 0) chartCtx.moveTo(x, y);
-        else chartCtx.lineTo(x, y);
-      });
-      chartCtx.stroke();
-
-      chartCtx.fillStyle = "#f67e2b";
-      values.forEach((v, i) => {
-        const x = pad + (i * (w / Math.max(values.length - 1, 1)));
-        const y = pad + (h - ((v - minVal) / Math.max(maxVal - minVal, 1)) * h);
-        chartCtx.beginPath();
-        chartCtx.arc(x, y, 3, 0, Math.PI * 2);
-        chartCtx.fill();
+    function buildParams(extra = {}) {
+      const valid = validateInputs();
+      if (!valid) return null;
+      return new URLSearchParams({
+        date: valid.date,
+        category: valid.category,
+        units_sold: String(valid.units),
+        horizon: "90",
+        quarter: "",
+        month: "",
+        ...extra,
       });
     }
 
-    function extractRows(apiData, productId) {
-      const forecasts = apiData.forecasts || {};
-      return forecasts[productId] || [];
+    function openQuarterDetails(quarter) {
+      const monthStartEl = document.getElementById(`month-start-${quarter}`);
+      const monthStart = monthStartEl ? monthStartEl.value : "";
+      const valid = validateInputs();
+      let hasError = !valid;
+
+      if (!monthStart) {
+        setMonthError(quarter, `Select range for ${quarter}.`);
+        setFormNotice("Please fill in the details.");
+        if (!hasError && monthStartEl) monthStartEl.focus();
+        hasError = true;
+      } else {
+        setMonthError(quarter, "");
+      }
+
+      if (hasError || !valid) {
+        return;
+      }
+
+      const params = new URLSearchParams({
+        date: valid.date,
+        category: valid.category,
+        units_sold: String(valid.units),
+        horizon: "90",
+        quarter: quarter,
+        month: monthStart,
+        month_start: monthStart,
+        month_end: monthStart,
+      });
+      window.location.href = `/results?${params.toString()}`;
     }
 
-    function extractHistory(apiData, productId) {
-      const histories = apiData.histories || {};
-      return histories[productId] || [];
+    function parseRows(rows) {
+      return rows
+        .map((r) => ({
+          date: new Date(`${r.date}T00:00:00`),
+          value: Number(r.forecast_units_sold),
+        }))
+        .filter((r) => Number.isFinite(r.value) && !Number.isNaN(r.date.getTime()))
+        .sort((a, b) => a.date - b.date);
+    }
+
+    function svgSparkline(values, color) {
+      const w = 360;
+      const h = 34;
+      if (values.length < 2) {
+        return `
+          <svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true" shape-rendering="geometricPrecision">
+            <rect x="0" y="0" width="${w}" height="${h}" fill="rgba(16,42,67,0.03)" />
+            <text x="${w / 2}" y="${(h / 2) + 4}" text-anchor="middle" font-size="11" fill="#8aa0b5">Loading projection...</text>
+          </svg>
+        `;
+      }
+      const data = values;
+      const min = Math.min(...data);
+      const max = Math.max(...data);
+      const span = Math.max(1, max - min);
+      const points = data
+        .map((v, i) => {
+          const x = (i / (data.length - 1)) * w;
+          const y = ((max - v) / span) * (h - 4) + 2;
+          return `${x.toFixed(1)},${y.toFixed(1)}`;
+        })
+        .join(" ");
+      const end = points.split(" ").pop() || "0,0";
+      const first = points.split(" ")[0] || "0,0";
+      const [endX, endY] = end.split(",");
+      const [firstX] = first.split(",");
+      const fillColor = color === "#c02d3f" ? "rgba(192,45,63,0.18)" : "rgba(27,143,64,0.20)";
+      return `
+        <svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true" shape-rendering="geometricPrecision">
+          <polygon points="${points} ${endX},${h} ${firstX},${h}" fill="${fillColor}" />
+          <polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="${endX}" cy="${endY}" r="2" fill="${color}" />
+        </svg>
+      `;
+    }
+
+    function buildQuarterStats(forecastRows) {
+      const parsed = parseRows(forecastRows);
+      const out = {};
+      Object.entries(quarterMonthMap).forEach(([q, months]) => {
+        const values = parsed
+          .filter((r) => months.includes(r.date.getMonth()))
+          .map((r) => r.value);
+        const positive = values.length < 2 ? true : values[values.length - 1] >= values[0];
+        out[q] = { values, positive };
+      });
+      return out;
+    }
+
+    function readForecastCache() {
+      try {
+        const raw = localStorage.getItem(FORECAST_CACHE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    function writeForecastCache(cacheObj) {
+      try {
+        localStorage.setItem(FORECAST_CACHE_KEY, JSON.stringify(cacheObj));
+      } catch (_) {
+        // Ignore cache write failures (private mode/quota).
+      }
+    }
+
+    function renderQuarterCards() {
+      quarterGrid.innerHTML = quarterItems
+        .map((item) => `
+          <div class="quarter-card">
+            <div class="quarter-head">
+              <div class="quarter-main">${item.label}</div>
+            </div>
+            <button type="button" class="trend-btn" data-quarter="${item.quarter}" title="Open detailed projection">
+              ${svgSparkline(
+                quarterStats[item.quarter] ? quarterStats[item.quarter].values : [],
+                (quarterStats[item.quarter] && !quarterStats[item.quarter].positive) ? "#c02d3f" : "#1b8f40"
+              )}
+            </button>
+            <select id="month-start-${item.quarter}">
+              <option value="" selected disabled hidden>Select range</option>
+              ${item.months.map((m) => `<option value="${m}">${m}</option>`).join("")}
+            </select>
+            <div id="month-hint-${item.quarter}" class="field-hint"></div>
+            <div id="month-error-${item.quarter}" class="field-error"></div>
+            <button type="button" class="quarter-btn" data-quarter="${item.quarter}">Open Details</button>
+          </div>
+        `)
+        .join("");
+
+      document.querySelectorAll(".quarter-btn").forEach((btn) => {
+        btn.addEventListener("click", () => openQuarterDetails(btn.dataset.quarter));
+      });
+
+      document.querySelectorAll(".trend-btn").forEach((btn) => {
+        btn.addEventListener("click", () => openQuarterDetails(btn.dataset.quarter));
+      });
+
+      quarterItems.forEach((item) => {
+        const monthSelect = document.getElementById(`month-start-${item.quarter}`);
+        applySelectPlaceholderState(monthSelect);
+        if (monthSelect) {
+          monthSelect.addEventListener("change", () => {
+            applySelectPlaceholderState(monthSelect);
+            setMonthError(item.quarter, "");
+            setMonthHint(item.quarter, "");
+          });
+          monthSelect.addEventListener("mouseenter", () => {
+            if (!monthSelect.value) setMonthHint(item.quarter, "Please select a month in the list.");
+          });
+          monthSelect.addEventListener("mouseleave", () => setMonthHint(item.quarter, ""));
+          monthSelect.addEventListener("focus", () => {
+            if (!monthSelect.value) setMonthHint(item.quarter, "Please select a month in the list.");
+          });
+          monthSelect.addEventListener("blur", () => setMonthHint(item.quarter, ""));
+        }
+      });
+    }
+
+    async function loadQuarterProjections() {
+      const category = categoryEl.value.trim() || "Electronics";
+      const cache = readForecastCache();
+      const cachedRows = Array.isArray(cache[category]) ? cache[category] : [];
+      if (cachedRows.length) {
+        quarterStats = buildQuarterStats(cachedRows);
+        renderQuarterCards();
+      }
+      try {
+        const res = await fetch(`/forecast/${encodeURIComponent(category)}?horizon=365`);
+        const data = await res.json();
+        if (!res.ok) {
+          if (!cachedRows.length) {
+            quarterStats = {};
+            renderQuarterCards();
+          }
+          return;
+        }
+        const liveRows = Array.isArray(data.forecast) ? data.forecast : [];
+        quarterStats = buildQuarterStats(liveRows);
+        const nextCache = { ...cache, [category]: liveRows };
+        writeForecastCache(nextCache);
+        renderQuarterCards();
+      } catch (_) {
+        if (!cachedRows.length) {
+          quarterStats = {};
+          renderQuarterCards();
+        }
+      }
     }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      statusEl.className = "status";
-      statusEl.textContent = "Submitting sales record...";
-
-      const productId = document.getElementById("product").value.trim();
-      const payload = {
-        horizon: Number(document.getElementById("horizon").value),
-        records: [
-          {
-            date: document.getElementById("date").value,
-            product_id: productId,
-            units_sold: Number(document.getElementById("units").value),
-          }
-        ]
-      };
-
-      try {
-        const res = await fetch("/sales", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          statusEl.className = "status err";
-          statusEl.textContent = `Failed (${res.status}): ${data.detail || "Unknown error"}`;
-          renderForecastTable([]);
-          renderHistoryTable([]);
-          renderChart([]);
-          return;
-        }
-
-        const forecastRows = extractRows(data, productId);
-        const historyRows = extractHistory(data, productId);
-        renderForecastTable(forecastRows);
-        renderHistoryTable(historyRows);
-        renderChart(forecastRows);
-        setView("forecastView");
-
-        statusEl.className = "status ok";
-        statusEl.textContent = "Sales inserted. Use the view buttons to switch past and future data.";
-      } catch (err) {
-        statusEl.className = "status err";
-        statusEl.textContent = "Request failed. Is the FastAPI server running?";
-        renderForecastTable([]);
-        renderHistoryTable([]);
-        renderChart([]);
-      }
+      const params = buildParams();
+      if (!params) return;
+      window.location.href = `/results?${params.toString()}`;
     });
 
     const today = new Date().toISOString().slice(0, 10);
-    document.getElementById("date").value = today;
-    renderChart([]);
+    dateEl.value = today;
+    renderQuarterCards();
+    applySelectPlaceholderState(categoryEl);
+    categoryEl.addEventListener("change", () => applySelectPlaceholderState(categoryEl));
+    categoryEl.addEventListener("change", loadQuarterProjections);
+    loadQuarterProjections();
   </script>
 </body>
 </html>
