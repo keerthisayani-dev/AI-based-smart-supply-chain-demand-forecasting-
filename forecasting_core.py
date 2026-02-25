@@ -10,7 +10,8 @@ from sklearn.linear_model import LinearRegression
 
 TARGET_COL = "units sold"
 DATE_COL = "date"
-PRODUCT_COL = "product id"
+CATEGORY_COL = "category"
+PRODUCT_COL = CATEGORY_COL
 MODEL_INFO = "LinearRegression with lag + rolling + seasonal calendar features"
 
 
@@ -25,22 +26,15 @@ class TrainedForecastModel:
 
 def parse_date_series(values: pd.Series) -> pd.Series:
     s = values.astype("string").str.strip()
-    parsed = pd.Series(pd.NaT, index=s.index, dtype="datetime64[ns]")
-
-    # Parse ISO first to avoid dayfirst ambiguity such as 2026-01-06 -> 2026-06-01.
     iso_mask = s.str.fullmatch(r"\d{4}-\d{2}-\d{2}", na=False)
-    if iso_mask.any():
-        parsed.loc[iso_mask] = pd.to_datetime(s.loc[iso_mask], format="%Y-%m-%d", errors="coerce")
 
-    non_iso_mask = ~iso_mask
-    if non_iso_mask.any():
-        parsed.loc[non_iso_mask] = pd.to_datetime(s.loc[non_iso_mask], dayfirst=True, errors="coerce")
-
-    fallback_mask = parsed.isna() & s.notna()
-    if fallback_mask.any():
-        parsed.loc[fallback_mask] = pd.to_datetime(s.loc[fallback_mask], dayfirst=False, errors="coerce")
-
-    return parsed
+    # Use vectorized parsing paths and combine results instead of masked assignment,
+    # which avoids pandas out-of-bounds assignment failures on malformed historical dates.
+    iso_parsed = pd.to_datetime(s.where(iso_mask), format="%Y-%m-%d", errors="coerce")
+    non_iso_parsed = pd.to_datetime(s.where(~iso_mask), dayfirst=True, errors="coerce")
+    parsed = iso_parsed.fillna(non_iso_parsed)
+    fallback = pd.to_datetime(s, dayfirst=False, errors="coerce")
+    return parsed.fillna(fallback)
 
 
 def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -65,10 +59,10 @@ def load_sales_data(csv_path: str | Path) -> pd.DataFrame:
     return df
 
 
-def build_daily_series(df: pd.DataFrame, product_id: str) -> pd.DataFrame:
-    p = df[df[PRODUCT_COL].astype(str) == str(product_id)].copy()
+def build_daily_series(df: pd.DataFrame, category: str) -> pd.DataFrame:
+    p = df[df[PRODUCT_COL].astype(str) == str(category)].copy()
     if p.empty:
-        raise ValueError(f"No rows found for product {product_id}")
+        raise ValueError(f"No rows found for category {category}")
 
     def _sum_preserve_missing(series: pd.Series) -> float:
         # Keep all-missing groups as NaN so downstream ffill can carry forward prior known values.
@@ -235,14 +229,47 @@ def forecast_next_days(
         if col in history.columns and col != target:
             static_values[col] = float(history[col].iloc[-1])
 
+    # Build robust seasonal priors from non-recursive historical data.
+    hist_target = history[target].dropna()
+    baseline_mean = float(hist_target.mean()) if not hist_target.empty else 0.0
+    baseline_mean = max(0.0, baseline_mean)
+
+    dow_factor: Dict[int, float] = {i: 1.0 for i in range(7)}
+    month_factor: Dict[int, float] = {i: 1.0 for i in range(1, 13)}
+    if baseline_mean > 0 and not hist_target.empty:
+        dow_means = history.groupby(history.index.dayofweek)[target].mean()
+        for dow in range(7):
+            if dow in dow_means.index and pd.notna(dow_means.loc[dow]):
+                dow_factor[dow] = float(dow_means.loc[dow] / baseline_mean)
+
+        month_means = history.groupby(history.index.month)[target].mean()
+        for month in range(1, 13):
+            if month in month_means.index and pd.notna(month_means.loc[month]):
+                month_factor[month] = float(month_means.loc[month] / baseline_mean)
+
+    # Use empirical bounds to prevent explosive/flat recursive behavior.
+    q05 = float(hist_target.quantile(0.05)) if not hist_target.empty else 0.0
+    q95 = float(hist_target.quantile(0.95)) if not hist_target.empty else max(1.0, baseline_mean)
+    lower_bound = max(0.0, q05 * 0.75)
+    upper_bound = max(lower_bound + 1.0, q95 * 1.20)
+
     rows = []
     current_date = start_date
 
     for _ in range(horizon):
         current_date = current_date + pd.Timedelta(days=1)
         X_next = _feature_row(history, current_date, trained.features, target, static_values)
-        pred = float(trained.model.predict(X_next[trained.features])[0])
-        pred = max(0.0, pred)
+        raw_pred = float(trained.model.predict(X_next[trained.features])[0])
+        non_negative_pred = max(0.0, raw_pred)
+
+        dow = int(current_date.dayofweek)
+        month = int(current_date.month)
+        seasonal_target = baseline_mean * dow_factor.get(dow, 1.0) * month_factor.get(month, 1.0)
+        lag7 = float(history[target].iloc[-7]) if len(history) >= 7 else float(history[target].iloc[-1])
+
+        # Blend model output with learned seasonal priors and weekly persistence.
+        blended = (0.45 * non_negative_pred) + (0.35 * seasonal_target) + (0.20 * lag7)
+        pred = float(np.clip(blended, lower_bound, upper_bound))
 
         new_hist_row = {col: np.nan for col in history.columns}
         new_hist_row[target] = pred

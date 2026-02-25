@@ -126,13 +126,15 @@
       margin-top: 4px;
       font-size: .79rem;
       color: #7c3300;
-      border-bottom: 2px solid #e8a06a;
       padding: 2px 0;
-      display: none;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity .12s ease;
     }
 
     .field-hint.show {
-      display: block;
+      visibility: visible;
+      opacity: 1;
     }
 
     .input-invalid {
@@ -200,39 +202,18 @@
       border: 1px solid #d0dee9;
       border-radius: 11px;
       background: #fcfeff;
-      padding: 4px 6px;
+      padding: 8px 8px;
       cursor: pointer;
-      min-height: 48px;
+      min-height: 136px;
       margin-bottom: 8px;
     }
 
     .spark {
       width: 100%;
-      height: 30px;
+      height: 120px;
       display: block;
     }
 
-    .quarter-btn {
-      width: 100%;
-      margin-top: 8px;
-      border: 1px solid #0f7f6a;
-      background: linear-gradient(90deg, #0f7f6a, #148f76);
-      color: #fff;
-      border-radius: 11px;
-      padding: 8px 10px;
-      font: 700 0.88rem "Space Grotesk", sans-serif;
-      letter-spacing: .1px;
-      cursor: pointer;
-      transition: filter .15s ease, transform .08s ease;
-    }
-
-    .quarter-btn:hover {
-      filter: brightness(1.03);
-    }
-
-    .quarter-btn:active {
-      transform: translateY(1px);
-    }
 
     table {
       width: 100%;
@@ -316,6 +297,16 @@
     const unitsErrorEl = document.getElementById("unitsError");
     const categoryErrorEl = document.getElementById("categoryError");
     const formNoticeEl = document.getElementById("formNotice");
+    const pageParams = new URLSearchParams(location.search);
+    const isFileProtocol = location.protocol === "file:";
+    const apiBase = isFileProtocol ? "http://127.0.0.1:8000" : "";
+    const apiUrl = (path) => `${apiBase}${path}`;
+    const resultsUrl = (params) => {
+      if (isFileProtocol) {
+        return `forecast_results.html?${params.toString()}`;
+      }
+      return `/results?${params.toString()}`;
+    };
     const quarterItems = [
       { quarter: "Q1", label: "Quarter-1", months: ["January", "February", "March"] },
       { quarter: "Q2", label: "Quarter-2", months: ["April", "May", "June"] },
@@ -329,7 +320,12 @@
       Q4: [9, 10, 11],
     };
     const FORECAST_CACHE_KEY = "dashboard_forecast_cache_v1";
+    const QUARTER_HORIZON_DAYS = 365;
     let quarterStats = {};
+    const selectedMonthByQuarter = {};
+    const navEntry = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+    const isReload = (navEntry && navEntry.type === "reload")
+      || (performance.navigation && performance.navigation.type === 1);
 
     function setFieldError(inputEl, errorEl, message) {
       if (!inputEl || !errorEl) return;
@@ -424,36 +420,105 @@
       });
     }
 
+    function toIso(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    function hydrateDashboardStateFromQuery() {
+      if (isReload) return;
+      const qDate = (pageParams.get("date") || "").trim();
+      const qCategory = (pageParams.get("category") || "").trim();
+      const qUnits = (pageParams.get("units_sold") || "").trim();
+      const qQuarter = (pageParams.get("quarter") || "").trim().toUpperCase();
+      const qMonth = (pageParams.get("month") || "").trim();
+
+      if (qDate) dateEl.value = qDate;
+      if (qUnits) unitsEl.value = qUnits;
+      if (qCategory && Array.from(categoryEl.options).some((opt) => opt.value === qCategory)) {
+        categoryEl.value = qCategory;
+      }
+
+      if (qQuarter && quarterItems.some((item) => item.quarter === qQuarter)) {
+        selectedMonthByQuarter[qQuarter] = qMonth || "";
+      }
+    }
+
+    async function hydrateCategories() {
+      try {
+        const res = await fetch(apiUrl("/categories"));
+        const data = await res.json();
+        if (!res.ok || !Array.isArray(data.categories)) return;
+        const categories = data.categories
+          .map((item) => String(item).trim())
+          .filter(Boolean);
+        if (!categories.length) return;
+        const selected = (categoryEl.value || "").trim();
+        categoryEl.innerHTML = `
+          <option value="" selected disabled hidden>Select category</option>
+          ${categories.map((c) => `<option value="${c}">${c}</option>`).join("")}
+        `;
+        if (selected && categories.includes(selected)) {
+          categoryEl.value = selected;
+        }
+      } catch (_) {
+        // Keep static fallback options if categories API is unavailable.
+      }
+      applySelectPlaceholderState(categoryEl);
+    }
+
+    function deriveAnchorDate() {
+      const raw = dateEl.value.trim();
+      const parsed = new Date(`${raw}T00:00:00`);
+      if (!raw || Number.isNaN(parsed.getTime())) return "";
+      return toIso(new Date(parsed.getTime() - 86400000));
+    }
+
+    function deriveAnchorFromIsoDate(isoDate) {
+      const parsed = new Date(`${isoDate}T00:00:00`);
+      if (Number.isNaN(parsed.getTime())) return "";
+      return toIso(new Date(parsed.getTime() - 86400000));
+    }
+
+    function alignDateToMonth(baseIsoDate, monthName) {
+      const monthLookup = {
+        January: 0, February: 1, March: 2, April: 3, May: 4, June: 5,
+        July: 6, August: 7, September: 8, October: 9, November: 10, December: 11,
+      };
+      const targetMonth = monthLookup[monthName];
+      if (!Number.isInteger(targetMonth)) return baseIsoDate;
+      const base = new Date(`${baseIsoDate}T00:00:00`);
+      const baseYear = Number.isNaN(base.getTime()) ? new Date().getFullYear() : base.getFullYear();
+      const baseDay = Number.isNaN(base.getTime()) ? 1 : base.getDate();
+      const day = Math.max(1, Math.min(baseDay, 28));
+      return toIso(new Date(baseYear, targetMonth, day));
+    }
+
     function openQuarterDetails(quarter) {
       const monthStartEl = document.getElementById(`month-start-${quarter}`);
       const monthStart = monthStartEl ? monthStartEl.value : "";
       const valid = validateInputs();
-      let hasError = !valid;
-
+      if (!valid) return;
+      setMonthError(quarter, "");
       if (!monthStart) {
-        setMonthError(quarter, `Select range for ${quarter}.`);
-        setFormNotice("Please fill in the details.");
-        if (!hasError && monthStartEl) monthStartEl.focus();
-        hasError = true;
-      } else {
-        setMonthError(quarter, "");
-      }
-
-      if (hasError || !valid) {
+        setMonthError(quarter, "Please select a month.");
+        if (monthStartEl) monthStartEl.focus();
         return;
       }
 
+      const alignedDate = alignDateToMonth(valid.date, monthStart);
       const params = new URLSearchParams({
-        date: valid.date,
+        date: alignedDate,
         category: valid.category,
         units_sold: String(valid.units),
-        horizon: "90",
+        horizon: String(QUARTER_HORIZON_DAYS),
+        view_scope: "quarter",
         quarter: quarter,
         month: monthStart,
         month_start: monthStart,
         month_end: monthStart,
+        anchor_date: deriveAnchorFromIsoDate(alignedDate),
       });
-      window.location.href = `/results?${params.toString()}`;
+      window.location.href = resultsUrl(params);
     }
 
     function parseRows(rows) {
@@ -467,13 +532,14 @@
     }
 
     function svgSparkline(values, color) {
-      const w = 360;
-      const h = 34;
+      const w = 640;
+      const h = 132;
       if (values.length < 2) {
         return `
           <svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true" shape-rendering="geometricPrecision">
             <rect x="0" y="0" width="${w}" height="${h}" fill="rgba(16,42,67,0.03)" />
-            <text x="${w / 2}" y="${(h / 2) + 4}" text-anchor="middle" font-size="11" fill="#8aa0b5">Loading projection...</text>
+            <line x1="0" y1="${h * 0.5}" x2="${w}" y2="${h * 0.5}" stroke="rgba(112,121,131,0.45)" stroke-width="1" stroke-dasharray="4 7"/>
+            <line x1="${w / 2}" y1="10" x2="${w / 2}" y2="${h - 14}" stroke="rgba(112,121,131,0.24)" stroke-width="1"/>
           </svg>
         `;
       }
@@ -481,10 +547,13 @@
       const min = Math.min(...data);
       const max = Math.max(...data);
       const span = Math.max(1, max - min);
+      const topPad = 10;
+      const bottomPad = 14;
+      const drawH = h - topPad - bottomPad;
       const points = data
         .map((v, i) => {
           const x = (i / (data.length - 1)) * w;
-          const y = ((max - v) / span) * (h - 4) + 2;
+          const y = ((max - v) / span) * drawH + topPad;
           return `${x.toFixed(1)},${y.toFixed(1)}`;
         })
         .join(" ");
@@ -492,12 +561,17 @@
       const first = points.split(" ")[0] || "0,0";
       const [endX, endY] = end.split(",");
       const [firstX] = first.split(",");
-      const fillColor = color === "#c02d3f" ? "rgba(192,45,63,0.18)" : "rgba(27,143,64,0.20)";
+      const accent = "#c7222a";
+      const fillColor = "rgba(199,34,42,0.18)";
       return `
         <svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true" shape-rendering="geometricPrecision">
-          <polygon points="${points} ${endX},${h} ${firstX},${h}" fill="${fillColor}" />
-          <polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" />
-          <circle cx="${endX}" cy="${endY}" r="2" fill="${color}" />
+          <line x1="0" y1="${topPad}" x2="${w}" y2="${topPad}" stroke="rgba(95,124,152,0.20)" stroke-width="1"/>
+          <line x1="0" y1="${topPad + (drawH / 2)}" x2="${w}" y2="${topPad + (drawH / 2)}" stroke="rgba(112,121,131,0.55)" stroke-width="1" stroke-dasharray="4 7"/>
+          <line x1="0" y1="${h - bottomPad}" x2="${w}" y2="${h - bottomPad}" stroke="rgba(95,124,152,0.20)" stroke-width="1"/>
+          <line x1="${w / 2}" y1="${topPad}" x2="${w / 2}" y2="${h - bottomPad}" stroke="rgba(112,121,131,0.28)" stroke-width="1"/>
+          <polygon points="${points} ${endX},${h - bottomPad} ${firstX},${h - bottomPad}" fill="${fillColor}" />
+          <polyline points="${points}" fill="none" stroke="${accent}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="${endX}" cy="${endY}" r="6" fill="${accent}" />
         </svg>
       `;
     }
@@ -511,6 +585,20 @@
           .map((r) => r.value);
         const positive = values.length < 2 ? true : values[values.length - 1] >= values[0];
         out[q] = { values, positive };
+      });
+      return out;
+    }
+
+    function buildStableFallbackStats() {
+      const out = {};
+      quarterItems.forEach((item, idx) => {
+        const values = Array.from({ length: 24 }, (_, i) => {
+          const t = i / 23;
+          const seasonal = Math.sin((t * Math.PI * 2) + (idx * 0.8)) * 10;
+          const drift = (idx + 1) * 2 + (t * 6);
+          return 100 + seasonal + drift;
+        });
+        out[item.quarter] = { values, positive: true };
       });
       return out;
     }
@@ -553,14 +641,9 @@
             </select>
             <div id="month-hint-${item.quarter}" class="field-hint"></div>
             <div id="month-error-${item.quarter}" class="field-error"></div>
-            <button type="button" class="quarter-btn" data-quarter="${item.quarter}">Open Details</button>
           </div>
         `)
         .join("");
-
-      document.querySelectorAll(".quarter-btn").forEach((btn) => {
-        btn.addEventListener("click", () => openQuarterDetails(btn.dataset.quarter));
-      });
 
       document.querySelectorAll(".trend-btn").forEach((btn) => {
         btn.addEventListener("click", () => openQuarterDetails(btn.dataset.quarter));
@@ -570,49 +653,56 @@
         const monthSelect = document.getElementById(`month-start-${item.quarter}`);
         applySelectPlaceholderState(monthSelect);
         if (monthSelect) {
+          const selected = selectedMonthByQuarter[item.quarter];
+          if (selected && item.months.includes(selected)) {
+            monthSelect.value = selected;
+            applySelectPlaceholderState(monthSelect);
+          }
           monthSelect.addEventListener("change", () => {
+            selectedMonthByQuarter[item.quarter] = monthSelect.value || "";
             applySelectPlaceholderState(monthSelect);
             setMonthError(item.quarter, "");
             setMonthHint(item.quarter, "");
           });
-          monthSelect.addEventListener("mouseenter", () => {
-            if (!monthSelect.value) setMonthHint(item.quarter, "Please select a month in the list.");
-          });
-          monthSelect.addEventListener("mouseleave", () => setMonthHint(item.quarter, ""));
-          monthSelect.addEventListener("focus", () => {
-            if (!monthSelect.value) setMonthHint(item.quarter, "Please select a month in the list.");
-          });
-          monthSelect.addEventListener("blur", () => setMonthHint(item.quarter, ""));
         }
       });
     }
 
     async function loadQuarterProjections() {
-      const category = categoryEl.value.trim() || "Electronics";
+      const category = categoryEl.value.trim();
+      if (!category) {
+        quarterStats = buildStableFallbackStats();
+        renderQuarterCards();
+        return;
+      }
+      const anchorDate = deriveAnchorDate();
+      const cacheKey = `${category}|${anchorDate || "none"}`;
       const cache = readForecastCache();
-      const cachedRows = Array.isArray(cache[category]) ? cache[category] : [];
+      const cachedRows = Array.isArray(cache[cacheKey]) ? cache[cacheKey] : [];
       if (cachedRows.length) {
         quarterStats = buildQuarterStats(cachedRows);
         renderQuarterCards();
       }
       try {
-        const res = await fetch(`/forecast/${encodeURIComponent(category)}?horizon=365`);
+        const qs = new URLSearchParams({ horizon: String(QUARTER_HORIZON_DAYS) });
+        if (anchorDate) qs.set("anchor_date", anchorDate);
+        const res = await fetch(apiUrl(`/forecast/${encodeURIComponent(category)}?${qs.toString()}`));
         const data = await res.json();
         if (!res.ok) {
           if (!cachedRows.length) {
-            quarterStats = {};
+            quarterStats = buildStableFallbackStats();
             renderQuarterCards();
           }
           return;
         }
         const liveRows = Array.isArray(data.forecast) ? data.forecast : [];
         quarterStats = buildQuarterStats(liveRows);
-        const nextCache = { ...cache, [category]: liveRows };
+        const nextCache = { ...cache, [cacheKey]: liveRows };
         writeForecastCache(nextCache);
         renderQuarterCards();
       } catch (_) {
         if (!cachedRows.length) {
-          quarterStats = {};
+          quarterStats = buildStableFallbackStats();
           renderQuarterCards();
         }
       }
@@ -622,16 +712,36 @@
       e.preventDefault();
       const params = buildParams();
       if (!params) return;
-      window.location.href = `/results?${params.toString()}`;
+      window.location.href = resultsUrl(params);
     });
 
-    const today = new Date().toISOString().slice(0, 10);
-    dateEl.value = today;
-    renderQuarterCards();
-    applySelectPlaceholderState(categoryEl);
-    categoryEl.addEventListener("change", () => applySelectPlaceholderState(categoryEl));
-    categoryEl.addEventListener("change", loadQuarterProjections);
-    loadQuarterProjections();
+    async function initDashboard() {
+      const today = new Date().toISOString().slice(0, 10);
+      if (isReload) {
+        dateEl.value = "";
+        unitsEl.value = "";
+        categoryEl.value = "";
+        if (location.search) {
+          history.replaceState({}, "", location.pathname);
+        }
+      } else {
+        dateEl.value = today;
+      }
+
+      await hydrateCategories();
+      if (!isReload) {
+        hydrateDashboardStateFromQuery();
+      }
+
+      renderQuarterCards();
+      applySelectPlaceholderState(categoryEl);
+      categoryEl.addEventListener("change", () => applySelectPlaceholderState(categoryEl));
+      categoryEl.addEventListener("change", loadQuarterProjections);
+      dateEl.addEventListener("change", loadQuarterProjections);
+      loadQuarterProjections();
+    }
+
+    initDashboard();
   </script>
 </body>
 </html>

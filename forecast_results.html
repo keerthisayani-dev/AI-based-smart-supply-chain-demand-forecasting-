@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forecast Results</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ebf2f8;
+      --ink: #173753;
+      --muted: #4b6680;
+      --line: #c6d7e7;
+      --card: #ffffff;
+      --brand: #0f7f6a;
+      --brand-2: #1f8f49;
+    }
+    body { margin: 0; font-family: "Manrope", "Segoe UI", Arial, sans-serif; background: radial-gradient(circle at 8% -5%, #f8fcff 0%, transparent 34%), radial-gradient(circle at 92% 0%, #e5f4f0 0%, transparent 28%), linear-gradient(180deg, #eef4f9 0%, #e8f0f7 100%); color: var(--ink); }
+    .wrap { max-width: 1160px; margin: 24px auto; padding: 0 16px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 12px 26px rgba(15, 32, 52, 0.08); }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .topbar { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; padding-bottom: 12px; border-bottom: 1px solid #e3edf6; }
+    .controls { display: flex; gap: 10px; align-items: center; flex-wrap: nowrap; background: linear-gradient(180deg, #f9fcff 0%, #f3f8fd 100%); border: 1px solid #d7e5f2; border-radius: 12px; padding: 10px; justify-self: end; }
+    .calendar-picker { background: #ffffff; border: 1px solid #dbe8f3; border-radius: 11px; padding: 8px 10px; min-width: 250px; }
+    .calendar-head { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+    .weekday-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 5px; }
+    .weekday { text-align: center; font-size: 10px; font-weight: 800; color: #5d7891; text-transform: uppercase; }
+    .day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .day-cell { border: 1px solid #d2dfeb; border-radius: 8px; background: #fff; min-height: 30px; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #2b5272; cursor: pointer; transition: background .12s ease, border-color .12s ease, transform .12s ease; }
+    .day-cell:hover { border-color: #86a8c7; background: #f2f8ff; }
+    .day-cell.empty { border-color: transparent; background: transparent; cursor: default; }
+    .day-cell.active { border-color: #0f7f6a; background: linear-gradient(180deg, #14a17f 0%, #0f7f6a 100%); color: #fff; box-shadow: 0 4px 10px rgba(15,127,106,0.26); }
+    .controls label { color: var(--muted); font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: .45px; }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 780px) {
+      .topbar { grid-template-columns: 1fr; }
+      .controls { flex-wrap: wrap; }
+      .chart-grid { grid-template-columns: 1fr; }
+      .controls { width: 100%; }
+      .calendar-picker { width: 100%; }
+    }
+    .chip { border: 1px solid #c9dced; border-radius: 999px; padding: 7px 10px; font-size: 12px; font-weight: 700; color: #2b5577; background: #f7fbff; }
+    .btn { border: 1px solid #0f7f6a; background: linear-gradient(90deg, #0f7f6a, #148f76); color: #ffffff; border-radius: 10px; padding: 11px 13px; text-decoration: none; cursor: pointer; font-weight: 800; font-size: 12px; line-height: 1; letter-spacing: .3px; text-transform: uppercase; box-shadow: 0 6px 14px rgba(15, 127, 106, 0.18); white-space: nowrap; }
+    .btn:hover { filter: brightness(1.02); transform: translateY(-1px); }
+    .btn.secondary { border-color: #3f739c; background: linear-gradient(90deg, #4f7fa5, #5f90b7); }
+    select.date-part { appearance: none; -webkit-appearance: none; background: #ffffff; color: #14324d; border: 1px solid #a9bfd4; border-radius: 10px; padding: 8px 30px 8px 11px; min-height: 36px; font-weight: 800; font-size: 13px; line-height: 1; background-image: linear-gradient(45deg, transparent 50%, #4d6b86 50%), linear-gradient(135deg, #4d6b86 50%, transparent 50%); background-position: calc(100% - 16px) 15px, calc(100% - 11px) 15px; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+    #monthSel.date-part { min-width: 122px; }
+    #yearSel.date-part { min-width: 90px; }
+    select.date-part:focus { outline: none; border-color: #5b8fb8; box-shadow: 0 0 0 3px rgba(91, 143, 184, 0.18); }
+    h3 { margin: 0 0 12px; font-size: 1.15rem; letter-spacing: .1px; color: #123350; }
+    .chart-axis-months { margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: #6d7e8d; }
+    .chart-axis-months.hidden { display: none; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; overflow: hidden; border: 1px solid #d4e4f1; border-radius: 12px; }
+    th, td { padding: 11px 12px; border-bottom: 1px solid #e8eef4; text-align: left; font-size: 14px; }
+    th { color: #20435f; background: linear-gradient(180deg, #f5faff 0%, #edf5fc 100%); font-weight: 800; }
+    tbody tr:nth-child(even) td { background: #fbfdff; }
+    tbody tr:last-child td { border-bottom: none; }
+    canvas { width: 100%; height: 300px; display: block; }
+    #status { display: inline-flex; align-items: center; margin-top: 12px; color: #295579; font-weight: 800; min-height: 24px; border-radius: 999px; padding: 7px 12px; background: #eef6ff; border: 1px solid #d4e3f5; }
+    #status.ok { color: #166534; background: #ecfdf3; border-color: #b7ebcb; }
+    #status.err { color: #991b1b; background: #fff1f2; border-color: #fecdd3; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="topbar">
+        <a id="backBtn" class="btn" href="/">Back To Dashboard</a>
+        <div class="controls">
+          <div class="calendar-picker">
+            <div class="calendar-head">
+              <label for="monthSel">Month:</label>
+              <select id="monthSel" class="date-part"></select>
+              <label for="yearSel">Year:</label>
+              <select id="yearSel" class="date-part"></select>
+            </div>
+            <div class="weekday-row">
+              <div class="weekday">S</div><div class="weekday">M</div><div class="weekday">T</div>
+              <div class="weekday">W</div><div class="weekday">T</div><div class="weekday">F</div><div class="weekday">S</div>
+            </div>
+            <div id="dayGrid" class="day-grid"></div>
+          </div>
+          <input id="daySel" type="hidden" value="1">
+          <button id="apply" class="btn" type="button">Apply Date</button>
+          <button id="pastDemand" class="btn secondary" type="button">Past Demand</button>
+        </div>
+      </div>
+      <div id="dateRangeHint" style="margin-top:8px;font-size:12px;color:#4a6680;"></div>
+      <div id="chips" class="chips"></div>
+      <div id="status">Loading results...</div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="card">
+        <h3 id="chartTitle">3-Month Projection</h3>
+        <canvas id="chart"></canvas>
+        <div id="chartAxisMonths" class="chart-axis-months hidden">
+          <span id="chartStartMonth"></span>
+          <span id="chartEndMonth"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 id="monthChartTitle">Selected Month Projection</h3>
+        <canvas id="monthChart"></canvas>
+        <div id="monthAxisDates" class="chart-axis-months hidden">
+          <span id="monthStartDate"></span>
+          <span id="monthEndDate"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 id="tableTitle">Future Forecast</h3>
+      <table>
+        <thead><tr><th>Date</th><th id="valueHeader">Forecast Units</th></tr></thead>
+        <tbody id="rows"><tr><td colspan="2">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const p = new URLSearchParams(location.search);
+    const date = p.get("date") || new Date().toISOString().slice(0, 10);
+    const category = (p.get("category") || "Electronics").trim();
+    const units = Number(p.get("units_sold") || 0);
+    const horizon = Math.max(1, Number(p.get("horizon") || 90));
+    const selectedQuarter = (p.get("quarter") || "").toUpperCase();
+    const selectedMonthName = (p.get("month") || p.get("month_start") || "").trim();
+    const viewScope = (p.get("view_scope") || "").trim().toLowerCase();
+    const isFileProtocol = location.protocol === "file:";
+    const apiBase = isFileProtocol ? "http://127.0.0.1:8000" : "";
+    const apiUrl = (path) => `${apiBase}${path}`;
+    const dashboardUrl = (params) => {
+      if (isFileProtocol) {
+        return `sales_forecast_ui.html?${params.toString()}`;
+      }
+      return `/?${params.toString()}`;
+    };
+    const resultsUrl = (params) => {
+      if (isFileProtocol) {
+        return `forecast_results.html?${params.toString()}`;
+      }
+      return `/results?${params.toString()}`;
+    };
+
+    const el = {
+      monthSel: document.getElementById("monthSel"),
+      yearSel: document.getElementById("yearSel"),
+      daySel: document.getElementById("daySel"),
+      dayGrid: document.getElementById("dayGrid"),
+      backBtn: document.getElementById("backBtn"),
+      apply: document.getElementById("apply"),
+      pastDemand: document.getElementById("pastDemand"),
+      dateRangeHint: document.getElementById("dateRangeHint"),
+      chips: document.getElementById("chips"),
+      status: document.getElementById("status"),
+      rows: document.getElementById("rows"),
+      chart: document.getElementById("chart"),
+      chartAxisMonths: document.getElementById("chartAxisMonths"),
+      chartStartMonth: document.getElementById("chartStartMonth"),
+      chartEndMonth: document.getElementById("chartEndMonth"),
+      chartTitle: document.getElementById("chartTitle"),
+      monthChart: document.getElementById("monthChart"),
+      monthAxisDates: document.getElementById("monthAxisDates"),
+      monthStartDate: document.getElementById("monthStartDate"),
+      monthEndDate: document.getElementById("monthEndDate"),
+      monthChartTitle: document.getElementById("monthChartTitle"),
+      tableTitle: document.getElementById("tableTitle"),
+      valueHeader: document.getElementById("valueHeader"),
+    };
+
+    let viewMode = "future";
+    const quarterMonthMap = {
+      Q1: [0, 1, 2],
+      Q2: [3, 4, 5],
+      Q3: [6, 7, 8],
+      Q4: [9, 10, 11],
+    };
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
+    ];
+    const monthIndexByName = monthNames.reduce((acc, name, idx) => {
+      acc[name.toLowerCase()] = idx;
+      return acc;
+    }, {});
+    const isQuarterMode = () => Boolean(selectedQuarter && quarterMonthMap[selectedQuarter]);
+    const alignDateToQuarterMonth = (rawIsoDate) => {
+      const parsed = new Date(`${rawIsoDate}T00:00:00`);
+      if (Number.isNaN(parsed.getTime())) return rawIsoDate;
+      const selectedMonthIdx = monthIndexByName[selectedMonthName.toLowerCase()];
+      if (!isQuarterMode() || !Number.isInteger(selectedMonthIdx)) return rawIsoDate;
+      if (!quarterMonthMap[selectedQuarter].includes(selectedMonthIdx)) return rawIsoDate;
+      const day = Math.max(1, Math.min(parsed.getDate(), 28));
+      return toIso(new Date(parsed.getFullYear(), selectedMonthIdx, day));
+    };
+
+    const toIso = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const deriveAnchorFromDate = (rawDate) => {
+      const parsed = new Date(`${rawDate}T00:00:00`);
+      return Number.isNaN(parsed.getTime()) ? rawDate : toIso(new Date(parsed.getTime() - 86400000));
+    };
+    const effectiveDate = alignDateToQuarterMonth(date);
+    const dateObj = new Date(`${effectiveDate}T00:00:00`);
+    const anchorDate = Number.isNaN(dateObj.getTime()) ? effectiveDate : deriveAnchorFromDate(effectiveDate);
+
+    function renderChips() {
+      const activeMonthIdx = getSelectedMonthIndex();
+      const activeMonth = activeMonthIdx >= 0 ? monthNames[activeMonthIdx] : "";
+      const chips = [
+        `Date: ${effectiveDate}`,
+        `Category: ${category}`,
+        `Units Sold: ${Number.isFinite(units) ? units : "-"}`,
+        `Forecast Horizon: ${horizon} days`
+      ];
+      if (selectedQuarter) chips.push(`Quarter: ${selectedQuarter}`);
+      if (activeMonth) chips.push(`Month: ${activeMonth}`);
+      el.chips.innerHTML = chips.map((x) => `<span class="chip">${x}</span>`).join("");
+    }
+
+    function syncBackLink() {
+      const backParams = new URLSearchParams({
+        date: effectiveDate,
+        category,
+        units_sold: String(Number.isFinite(units) ? units : 0),
+      });
+      el.backBtn.href = dashboardUrl(backParams);
+    }
+
+    function getSelectedMonthIndex() {
+      const fromParam = monthIndexByName[selectedMonthName.toLowerCase()];
+      if (Number.isInteger(fromParam)) {
+        if (isQuarterMode()) {
+          return quarterMonthMap[selectedQuarter].includes(fromParam) ? fromParam : -1;
+        }
+        return fromParam;
+      }
+      const parsed = new Date(`${effectiveDate}T00:00:00`);
+      return Number.isNaN(parsed.getTime()) ? -1 : parsed.getMonth();
+    }
+
+    function monthNameFromIsoDate(isoDate) {
+      const parsed = new Date(`${isoDate}T00:00:00`);
+      if (Number.isNaN(parsed.getTime())) return "";
+      return monthNames[parsed.getMonth()] || "";
+    }
+
+    function parseIsoDate(isoDate) {
+      const parsed = new Date(`${isoDate}T00:00:00`);
+      if (Number.isNaN(parsed.getTime())) {
+        const now = new Date();
+        return { year: now.getFullYear(), month: now.getMonth(), day: now.getDate() };
+      }
+      return { year: parsed.getFullYear(), month: parsed.getMonth(), day: parsed.getDate() };
+    }
+
+    function daysInMonth(year, monthIdx) {
+      return new Date(year, monthIdx + 1, 0).getDate();
+    }
+
+    function populateYearOptions(baseYear) {
+      const minYear = 2025;
+      const maxYear = Math.max(baseYear + 50, 2035);
+      const years = Array.from({ length: (maxYear - minYear) + 1 }, (_, i) => minYear + i);
+      el.yearSel.innerHTML = years.map((y) => `<option value="${y}">${y}</option>`).join("");
+      el.yearSel.value = String(baseYear);
+    }
+
+    function populateDayOptions(year, monthIdx, preferredDay) {
+      const maxDay = daysInMonth(year, monthIdx);
+      const day = Math.max(1, Math.min(preferredDay, maxDay));
+      const firstWeekday = new Date(year, monthIdx, 1).getDay();
+      const blanks = Array.from({ length: firstWeekday }, () => `<button type="button" class="day-cell empty" tabindex="-1" aria-hidden="true"></button>`).join("");
+      const dayButtons = Array.from({ length: maxDay }, (_, i) => i + 1)
+        .map((d) => `<button type="button" class="day-cell${d === day ? " active" : ""}" data-day="${d}">${d}</button>`)
+        .join("");
+      el.dayGrid.innerHTML = `${blanks}${dayButtons}`;
+      el.daySel.value = String(day);
+    }
+
+    function getSelectedDateIso() {
+      const base = parseIsoDate(effectiveDate);
+      const year = Number(el.yearSel.value);
+      const monthIdx = Number(el.monthSel.value);
+      const day = Number(el.daySel.value);
+      const safeYear = Number.isInteger(year) ? year : base.year;
+      const safeMonth = Number.isInteger(monthIdx) ? monthIdx : base.month;
+      const safeDay = Number.isInteger(day) ? day : base.day;
+      return toIso(new Date(safeYear, safeMonth, safeDay));
+    }
+
+    function filterRowsByMonths(rows, allowedMonths) {
+      if (!allowedMonths || !allowedMonths.length) return rows;
+      return rows.filter((r) => {
+        const dt = new Date(`${r.date}T00:00:00`);
+        return !Number.isNaN(dt.getTime()) && allowedMonths.includes(dt.getMonth());
+      });
+    }
+
+    function filterRowsByDateRange(rows, startDate, endDate) {
+      return rows.filter((r) => {
+        const dt = new Date(`${r.date}T00:00:00`);
+        return !Number.isNaN(dt.getTime()) && dt >= startDate && dt <= endDate;
+      });
+    }
+
+    function getQuarterRows(rows) {
+      if (!isQuarterMode()) return rows;
+      return filterRowsByMonths(rows, quarterMonthMap[selectedQuarter]);
+    }
+
+    function getSelectedMonthRows(rows) {
+      const activeMonthIdx = getSelectedMonthIndex();
+      if (activeMonthIdx < 0) return rows;
+      return filterRowsByMonths(rows, [activeMonthIdx]);
+    }
+
+    function getSelectedMonthWindowRows(rows) {
+      const selected = new Date(`${effectiveDate}T00:00:00`);
+      if (Number.isNaN(selected.getTime())) return rows;
+      const endOfMonth = new Date(selected.getFullYear(), selected.getMonth() + 1, 0);
+      return filterRowsByDateRange(rows, selected, endOfMonth);
+    }
+
+    function getQuarterDateBounds(baseDateIso, yearOverride = null) {
+      if (!isQuarterMode()) return null;
+      const parsed = new Date(`${baseDateIso}T00:00:00`);
+      const year = Number.isInteger(yearOverride)
+        ? yearOverride
+        : (Number.isNaN(parsed.getTime()) ? new Date().getFullYear() : parsed.getFullYear());
+      const months = quarterMonthMap[selectedQuarter];
+      const start = new Date(year, months[0], 1);
+      const end = new Date(year, months[months.length - 1] + 1, 0);
+      return { start, end, months };
+    }
+
+    function getRequestConfig() {
+      if (!isQuarterMode()) {
+        return {
+          requestHorizon: horizon,
+          requestAnchorDate: anchorDate,
+        };
+      }
+      const selected = new Date(`${effectiveDate}T00:00:00`);
+      if (Number.isNaN(selected.getTime())) {
+        return {
+          requestHorizon: Math.max(30, Math.min(horizon, 120)),
+          requestAnchorDate: anchorDate,
+        };
+      }
+      const bounds = getQuarterDateBounds(effectiveDate, selected.getFullYear());
+      if (!bounds) {
+        return {
+          requestHorizon: Math.max(30, Math.min(horizon, 120)),
+          requestAnchorDate: anchorDate,
+        };
+      }
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const quarterHorizon = Math.floor((bounds.end.getTime() - bounds.start.getTime()) / msPerDay) + 1;
+      const quarterAnchorDate = toIso(new Date(bounds.start.getTime() - msPerDay));
+      return {
+        requestHorizon: Math.max(1, quarterHorizon),
+        requestAnchorDate: quarterAnchorDate,
+      };
+    }
+
+    function applyQuarterDateWindow(baseDateIso) {
+      const base = parseIsoDate(baseDateIso);
+      populateYearOptions(base.year);
+      const selectedYear = Number(el.yearSel.value);
+      const bounds = getQuarterDateBounds(baseDateIso, selectedYear);
+      const selectedMonthIdx = monthIndexByName[selectedMonthName.toLowerCase()];
+      const allowedMonths = bounds ? bounds.months : monthNames.map((_, idx) => idx);
+      const defaultMonth = (
+        Number.isInteger(selectedMonthIdx) && allowedMonths.includes(selectedMonthIdx)
+      ) ? selectedMonthIdx : (
+        allowedMonths.includes(base.month) ? base.month : allowedMonths[0]
+      );
+
+      el.monthSel.innerHTML = allowedMonths
+        .map((idx) => `<option value="${idx}">${monthNames[idx]}</option>`)
+        .join("");
+      el.monthSel.value = String(defaultMonth);
+      populateDayOptions(selectedYear, defaultMonth, base.day);
+
+      if (!bounds) {
+        if (el.dateRangeHint) el.dateRangeHint.textContent = "";
+        return;
+      }
+      if (el.dateRangeHint) {
+        const firstMonth = monthNames[bounds.months[0]];
+        const lastMonth = monthNames[bounds.months[bounds.months.length - 1]];
+        el.dateRangeHint.textContent = `Allowed date range: ${firstMonth} 1 to ${lastMonth} ${bounds.end.getDate()}, ${selectedYear}.`;
+      }
+    }
+
+    function getLatestMonthIndex(rows) {
+      let latest = null;
+      rows.forEach((r) => {
+        const dt = new Date(`${r.date}T00:00:00`);
+        if (Number.isNaN(dt.getTime())) return;
+        if (!latest || dt > latest) latest = dt;
+      });
+      return latest ? latest.getMonth() : -1;
+    }
+
+    function getTableRows(rows) {
+      if (viewMode === "past") return rows;
+      const quarterRows = getQuarterRows(rows);
+      if (isQuarterMode()) {
+        const monthRows = getSelectedMonthRows(quarterRows);
+        return getSelectedMonthWindowRows(monthRows);
+      }
+      return rows;
+    }
+
+    function compactNumber(v) {
+      if (!Number.isFinite(v)) return "-";
+      return Math.round(v).toLocaleString("en-US");
+    }
+
+    function drawSmoothPath(ctx, points) {
+      if (!points.length) return;
+      if (points.length === 1) {
+        ctx.moveTo(points[0].x, points[0].y);
+        return;
+      }
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i - 1] || points[i];
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const p3 = points[i + 2] || p2;
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+      }
+    }
+
+    function drawChart(canvasEl, rows) {
+      const c = canvasEl;
+      const ctx = c.getContext("2d");
+      const w = c.clientWidth || 920;
+      const h = c.clientHeight || 280;
+      const dpr = devicePixelRatio || 1;
+      c.width = Math.floor(w * dpr);
+      c.height = Math.floor(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+
+      const pad = { l: 14, r: 16, t: 18, b: 32 };
+      const pw = w - pad.l - pad.r;
+      const ph = h - pad.t - pad.b;
+      const lineColor = "#c7222a";
+      const axisColor = "#5a7690";
+      const gridColor = "rgba(81, 107, 130, 0.12)";
+
+      ctx.fillStyle = "#fbfdff";
+      ctx.fillRect(pad.l, pad.t, pw, ph);
+
+      if (!rows.length) {
+        ctx.fillStyle = "#6f879b";
+        ctx.font = "600 13px Segoe UI, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("No data available", pad.l + pw / 2, pad.t + ph / 2);
+        return;
+      }
+
+      const vals = rows.map((r) => r.value);
+      const rawMin = Math.min(...vals);
+      const rawMax = Math.max(...vals);
+      const range = Math.max(1, rawMax - rawMin);
+      const min = Math.max(0, rawMin - range * 0.08);
+      const max = rawMax + range * 0.12;
+      const span = Math.max(1, max - min);
+      const x = (i) => pad.l + (rows.length > 1 ? (i / (rows.length - 1)) * pw : pw / 2);
+      const y = (v) => pad.t + ((max - v) / span) * ph;
+
+      // Technical chart guides: one dashed midline + center divider.
+      const midY = pad.t + (ph / 2);
+      ctx.save();
+      ctx.strokeStyle = "rgba(112,121,131,0.55)";
+      ctx.setLineDash([3, 7]);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pad.l, midY);
+      ctx.lineTo(w - pad.r, midY);
+      ctx.stroke();
+      ctx.restore();
+
+      const centerX = pad.l + (pw / 2);
+      ctx.strokeStyle = "rgba(112,121,131,0.24)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(centerX, pad.t);
+      ctx.lineTo(centerX, h - pad.b);
+      ctx.stroke();
+
+      const points = rows.map((r, i) => ({ x: x(i), y: y(r.value) }));
+      const last = points[points.length - 1];
+
+      const areaGradient = ctx.createLinearGradient(0, pad.t, 0, h - pad.b);
+      areaGradient.addColorStop(0, "rgba(199,34,42,0.20)");
+      areaGradient.addColorStop(1, "rgba(199,34,42,0.03)");
+
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, h - pad.b);
+      drawSmoothPath(ctx, points);
+      ctx.lineTo(last.x, h - pad.b);
+      ctx.closePath();
+      ctx.fillStyle = areaGradient;
+      ctx.fill();
+
+      ctx.beginPath();
+      drawSmoothPath(ctx, points);
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+
+      ctx.fillStyle = lineColor;
+      ctx.beginPath();
+      ctx.arc(last.x, last.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Keep x-axis clean: no date labels.
+    }
+
+    const RESULTS_CACHE_KEY = "forecast_results_cache_v1";
+
+    function readResultsCache() {
+      try {
+        const raw = localStorage.getItem(RESULTS_CACHE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    function writeResultsCache(cacheObj) {
+      try {
+        localStorage.setItem(RESULTS_CACHE_KEY, JSON.stringify(cacheObj));
+      } catch (_) {
+        // Ignore cache write failure in private mode/quota cases.
+      }
+    }
+
+    function renderProjection(forecastRows, historyRows) {
+      const sourceRows = viewMode === "past" ? historyRows : forecastRows;
+      const quarterRows = getQuarterRows(sourceRows);
+      const isQuarterScope = isQuarterMode();
+      let monthRows = getSelectedMonthRows(quarterRows);
+      if (isQuarterScope && viewMode !== "past") {
+        monthRows = getSelectedMonthWindowRows(monthRows);
+      }
+      const rows = getTableRows(sourceRows);
+      const activeMonthIdx = getSelectedMonthIndex();
+      let monthTitleIdx = activeMonthIdx;
+      if (viewMode === "past" && !monthRows.length) {
+        const fallbackIdx = getLatestMonthIndex(quarterRows);
+        if (fallbackIdx >= 0) {
+          monthRows = filterRowsByMonths(quarterRows, [fallbackIdx]);
+          monthTitleIdx = fallbackIdx;
+        }
+      }
+      const monthLabel = monthTitleIdx >= 0 ? ` ${monthNames[monthTitleIdx]}` : "";
+      const quarterMonths = quarterMonthMap[selectedQuarter] || [];
+      const quarterStartMonth = (isQuarterScope && quarterMonths.length)
+        ? monthNames[quarterMonths[0]]
+        : "";
+      const quarterEndMonth = (isQuarterScope && quarterMonths.length)
+        ? monthNames[quarterMonths[quarterMonths.length - 1]]
+        : "";
+      const selectedDateObj = new Date(`${effectiveDate}T00:00:00`);
+      const monthEnd = Number.isNaN(selectedDateObj.getTime())
+        ? ""
+        : toIso(new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth() + 1, 0));
+      el.chartTitle.textContent = isQuarterScope
+        ? `${selectedQuarter} 3-Month Projection`
+        : "3-Month Projection";
+      el.chartStartMonth.textContent = quarterStartMonth;
+      el.chartEndMonth.textContent = quarterEndMonth;
+      el.chartAxisMonths.classList.toggle("hidden", !isQuarterScope);
+      el.monthChartTitle.textContent = isQuarterScope
+        ? `${selectedQuarter}${monthLabel} Projection`
+        : `Selected${monthLabel} Projection`;
+      el.monthStartDate.textContent = isQuarterScope ? effectiveDate : "";
+      el.monthEndDate.textContent = isQuarterScope ? monthEnd : "";
+      el.monthAxisDates.classList.toggle("hidden", !isQuarterScope);
+      el.tableTitle.textContent = viewMode === "past"
+        ? "Past Demand (Latest Valid Dates)"
+        : (isQuarterScope ? `${selectedQuarter}${monthLabel} Future Forecast` : "Future Forecast");
+      el.valueHeader.textContent = viewMode === "past" ? "Actual Units" : "Forecast Units";
+      el.pastDemand.textContent = viewMode === "past" ? "Future Forecast" : "Past Demand";
+      el.rows.innerHTML = rows.length
+        ? rows.map((r) => `<tr><td>${r.date}</td><td>${r.value.toFixed(2)}</td></tr>`).join("")
+        : `<tr><td colspan="2">${viewMode === "past" ? "No past demand rows returned." : "No forecast rows returned."}</td></tr>`;
+      drawChart(el.chart, quarterRows);
+      drawChart(el.monthChart, monthRows);
+    }
+
+    async function run() {
+      renderChips();
+      syncBackLink();
+      const { requestHorizon, requestAnchorDate } = getRequestConfig();
+      const cacheKey = `${category}|${requestHorizon}|${requestAnchorDate}|${selectedQuarter}|${selectedMonthName}`;
+      const cache = readResultsCache();
+      const cached = cache[cacheKey];
+      if (
+        cached
+        && Array.isArray(cached.forecastRows)
+        && Array.isArray(cached.historyRows)
+      ) {
+        renderProjection(cached.forecastRows, cached.historyRows);
+        el.status.className = "ok";
+        el.status.textContent = "Loaded cached results.";
+      }
+      try {
+        const qs = new URLSearchParams({ horizon: String(requestHorizon) });
+        qs.set("history_lookback_days", String(Math.max(requestHorizon, 365)));
+        qs.set("anchor_date", requestAnchorDate);
+        const res = await fetch(apiUrl(`/forecast/${encodeURIComponent(category)}?${qs.toString()}`));
+        const data = await res.json();
+        if (!res.ok) {
+          el.status.className = "err";
+          el.status.textContent = `Failed (${res.status}): ${data.detail || "Unknown error"}`;
+          return;
+        }
+        const forecastRows = (Array.isArray(data.forecast) ? data.forecast : [])
+          .map((r) => ({ date: String(r.date), value: Math.max(0, Number(r.forecast_units_sold)) }))
+          .filter((r) => Number.isFinite(r.value));
+        const historyRows = (Array.isArray(data.history) ? data.history : [])
+          .map((r) => ({ date: String(r.date), value: Math.max(0, Number(r.actual_units_sold)) }))
+          .filter((r) => Number.isFinite(r.value));
+        renderProjection(forecastRows, historyRows);
+        const nextCache = {
+          ...cache,
+          [cacheKey]: { forecastRows, historyRows },
+        };
+        writeResultsCache(nextCache);
+        el.status.className = "ok";
+        el.status.textContent = viewMode === "past" ? "Past demand loaded." : "Results loaded.";
+      } catch (e) {
+        el.status.className = "err";
+        el.status.textContent = `Request failed: ${e && e.message ? e.message : "Unknown error"}`;
+      }
+    }
+
+    applyQuarterDateWindow(effectiveDate);
+    el.monthSel.addEventListener("change", () => {
+      const base = parseIsoDate(effectiveDate);
+      const year = Number(el.yearSel.value) || base.year;
+      const monthIdx = Number(el.monthSel.value);
+      populateDayOptions(year, monthIdx, Number(el.daySel.value || base.day));
+    });
+    el.yearSel.addEventListener("change", () => {
+      const base = parseIsoDate(effectiveDate);
+      const year = Number(el.yearSel.value) || base.year;
+      const monthIdx = Number(el.monthSel.value);
+      populateDayOptions(year, monthIdx, Number(el.daySel.value || base.day));
+      const bounds = getQuarterDateBounds(toIso(new Date(year, monthIdx, 1)), year);
+      if (bounds && el.dateRangeHint) {
+        const firstMonth = monthNames[bounds.months[0]];
+        const lastMonth = monthNames[bounds.months[bounds.months.length - 1]];
+        el.dateRangeHint.textContent = `Allowed date range: ${firstMonth} 1 to ${lastMonth} ${bounds.end.getDate()}, ${year}.`;
+      }
+    });
+    el.dayGrid.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const day = Number(target.dataset.day);
+      if (!Number.isInteger(day)) return;
+      el.daySel.value = String(day);
+      const currentMonth = Number(el.monthSel.value);
+      const base = parseIsoDate(effectiveDate);
+      populateDayOptions(base.year, currentMonth, day);
+    });
+    el.apply.onclick = () => {
+      const next = new URLSearchParams(location.search);
+      const nextDate = getSelectedDateIso();
+      const bounds = getQuarterDateBounds(nextDate);
+      const picked = new Date(`${nextDate}T00:00:00`);
+      if (bounds) {
+        if (Number.isNaN(picked.getTime()) || picked < bounds.start || picked > bounds.end) {
+          el.status.className = "err";
+          el.status.textContent = `Select a date only within ${selectedQuarter}.`;
+          return;
+        }
+      }
+      next.set("date", nextDate);
+      next.set("anchor_date", deriveAnchorFromDate(nextDate));
+      if (isQuarterMode() && !Number.isNaN(picked.getTime())) {
+        const nextMonth = monthNameFromIsoDate(nextDate);
+        if (nextMonth) {
+          next.set("month", nextMonth);
+          next.set("month_start", nextMonth);
+          next.set("month_end", nextMonth);
+        }
+      }
+      if (!next.get("category")) next.set("category", category);
+      if (!next.get("units_sold")) next.set("units_sold", String(Number.isFinite(units) ? units : 0));
+      if (!next.get("horizon")) next.set("horizon", String(horizon));
+      location.href = resultsUrl(next);
+    };
+
+    el.pastDemand.onclick = () => {
+      viewMode = viewMode === "past" ? "future" : "past";
+      run();
+    };
+
+    run();
+  </script>
+</body>
+</html>
