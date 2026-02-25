@@ -543,35 +543,47 @@
           </svg>
         `;
       }
-      const data = values;
+      const data = values.length < 4
+        ? values
+        : values.map((v, i, arr) => {
+            const prev = i > 0 ? arr[i - 1] : v;
+            const next = i < arr.length - 1 ? arr[i + 1] : v;
+            // Smooth noisy quarter traces for a stable dashboard look.
+            return (prev * 0.25) + (v * 0.5) + (next * 0.25);
+          });
       const min = Math.min(...data);
       const max = Math.max(...data);
       const span = Math.max(1, max - min);
       const topPad = 10;
       const bottomPad = 14;
       const drawH = h - topPad - bottomPad;
-      const points = data
-        .map((v, i) => {
-          const x = (i / (data.length - 1)) * w;
-          const y = ((max - v) / span) * drawH + topPad;
-          return `${x.toFixed(1)},${y.toFixed(1)}`;
-        })
-        .join(" ");
-      const end = points.split(" ").pop() || "0,0";
-      const first = points.split(" ")[0] || "0,0";
-      const [endX, endY] = end.split(",");
-      const [firstX] = first.split(",");
-      const accent = "#c7222a";
-      const fillColor = "rgba(199,34,42,0.18)";
+      const points = data.map((v, i) => ({
+        x: (i / (data.length - 1)) * w,
+        y: ((max - v) / span) * drawH + topPad,
+      }));
+      const first = points[0];
+      const last = points[points.length - 1];
+      const accent = color || "#c7222a";
+      const fillColor = (accent === "#c02d3f" || accent === "#c7222a")
+        ? "rgba(199,34,42,0.16)"
+        : "rgba(27,143,64,0.14)";
+
+      const linePath = points.map((pt, i) => {
+        if (i === 0) return `M ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+        const prev = points[i - 1];
+        const cx = ((prev.x + pt.x) / 2).toFixed(1);
+        return `Q ${prev.x.toFixed(1)} ${prev.y.toFixed(1)} ${cx} ${((prev.y + pt.y) / 2).toFixed(1)} T ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+      }).join(" ");
+
+      const areaPath = `${linePath} L ${last.x.toFixed(1)} ${(h - bottomPad).toFixed(1)} L ${first.x.toFixed(1)} ${(h - bottomPad).toFixed(1)} Z`;
       return `
         <svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true" shape-rendering="geometricPrecision">
-          <line x1="0" y1="${topPad}" x2="${w}" y2="${topPad}" stroke="rgba(95,124,152,0.20)" stroke-width="1"/>
-          <line x1="0" y1="${topPad + (drawH / 2)}" x2="${w}" y2="${topPad + (drawH / 2)}" stroke="rgba(112,121,131,0.55)" stroke-width="1" stroke-dasharray="4 7"/>
-          <line x1="0" y1="${h - bottomPad}" x2="${w}" y2="${h - bottomPad}" stroke="rgba(95,124,152,0.20)" stroke-width="1"/>
-          <line x1="${w / 2}" y1="${topPad}" x2="${w / 2}" y2="${h - bottomPad}" stroke="rgba(112,121,131,0.28)" stroke-width="1"/>
-          <polygon points="${points} ${endX},${h - bottomPad} ${firstX},${h - bottomPad}" fill="${fillColor}" />
-          <polyline points="${points}" fill="none" stroke="${accent}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-          <circle cx="${endX}" cy="${endY}" r="6" fill="${accent}" />
+          <rect x="0" y="0" width="${w}" height="${h}" fill="rgba(246,250,254,0.92)" />
+          <line x1="0" y1="${topPad + (drawH / 2)}" x2="${w}" y2="${topPad + (drawH / 2)}" stroke="rgba(112,121,131,0.35)" stroke-width="1" stroke-dasharray="4 7"/>
+          <line x1="${w / 2}" y1="${topPad}" x2="${w / 2}" y2="${h - bottomPad}" stroke="rgba(112,121,131,0.18)" stroke-width="1"/>
+          <path d="${areaPath}" fill="${fillColor}" />
+          <path d="${linePath}" fill="none" stroke="${accent}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="${last.x.toFixed(1)}" cy="${last.y.toFixed(1)}" r="4.8" fill="${accent}" />
         </svg>
       `;
     }
@@ -591,14 +603,12 @@
 
     function buildStableFallbackStats() {
       const out = {};
-      quarterItems.forEach((item, idx) => {
-        const values = Array.from({ length: 24 }, (_, i) => {
-          const t = i / 23;
-          const seasonal = Math.sin((t * Math.PI * 2) + (idx * 0.8)) * 10;
-          const drift = (idx + 1) * 2 + (t * 6);
-          return 100 + seasonal + drift;
-        });
-        out[item.quarter] = { values, positive: true };
+      const template = Array.from({ length: 24 }, (_, i) => {
+        const t = i / 23;
+        return 100 + (Math.sin(t * Math.PI * 2) * 10) + (t * 6);
+      });
+      quarterItems.forEach((item) => {
+        out[item.quarter] = { values: [...template], positive: true };
       });
       return out;
     }
@@ -669,43 +679,9 @@
     }
 
     async function loadQuarterProjections() {
-      const category = categoryEl.value.trim();
-      if (!category) {
-        quarterStats = buildStableFallbackStats();
-        renderQuarterCards();
-        return;
-      }
-      const anchorDate = deriveAnchorDate();
-      const cacheKey = `${category}|${anchorDate || "none"}`;
-      const cache = readForecastCache();
-      const cachedRows = Array.isArray(cache[cacheKey]) ? cache[cacheKey] : [];
-      if (cachedRows.length) {
-        quarterStats = buildQuarterStats(cachedRows);
-        renderQuarterCards();
-      }
-      try {
-        const qs = new URLSearchParams({ horizon: String(QUARTER_HORIZON_DAYS) });
-        if (anchorDate) qs.set("anchor_date", anchorDate);
-        const res = await fetch(apiUrl(`/forecast/${encodeURIComponent(category)}?${qs.toString()}`));
-        const data = await res.json();
-        if (!res.ok) {
-          if (!cachedRows.length) {
-            quarterStats = buildStableFallbackStats();
-            renderQuarterCards();
-          }
-          return;
-        }
-        const liveRows = Array.isArray(data.forecast) ? data.forecast : [];
-        quarterStats = buildQuarterStats(liveRows);
-        const nextCache = { ...cache, [cacheKey]: liveRows };
-        writeForecastCache(nextCache);
-        renderQuarterCards();
-      } catch (_) {
-        if (!cachedRows.length) {
-          quarterStats = buildStableFallbackStats();
-          renderQuarterCards();
-        }
-      }
+      // Keep dashboard quarter trend charts static/identical across selections.
+      quarterStats = buildStableFallbackStats();
+      renderQuarterCards();
     }
 
     form.addEventListener("submit", async (e) => {
