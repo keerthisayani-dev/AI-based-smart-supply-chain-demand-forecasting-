@@ -17,49 +17,54 @@
       --brand: #0f7f6a;
       --brand-2: #1f8f49;
     }
-    body { margin: 0; font-family: "Manrope", "Segoe UI", Arial, sans-serif; background: radial-gradient(circle at 8% -5%, #f8fcff 0%, transparent 34%), radial-gradient(circle at 92% 0%, #e5f4f0 0%, transparent 28%), linear-gradient(180deg, #eef4f9 0%, #e8f0f7 100%); color: var(--ink); }
-    .wrap { max-width: 1160px; margin: 24px auto; padding: 0 16px; }
+    body { margin: 0; min-height: 100vh; font-family: "Manrope", "Segoe UI", Arial, sans-serif; font-size: 18px; background: radial-gradient(circle at 8% -5%, #f8fcff 0%, transparent 34%), radial-gradient(circle at 92% 0%, #e5f4f0 0%, transparent 28%), linear-gradient(180deg, #eef4f9 0%, #e8f0f7 100%); color: var(--ink); }
+    .wrap { width: 100%; min-height: 100vh; margin: 0; padding: 14px; }
     .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 12px 26px rgba(15, 32, 52, 0.08); }
     .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .topbar { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; padding-bottom: 12px; border-bottom: 1px solid #e3edf6; }
+    .topbar { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; padding-bottom: 12px; border-bottom: 1px solid #e3edf6; }
+    .top-left { display: grid; gap: 8px; align-content: start; justify-items: start; }
     .controls { display: flex; gap: 10px; align-items: center; flex-wrap: nowrap; background: linear-gradient(180deg, #f9fcff 0%, #f3f8fd 100%); border: 1px solid #d7e5f2; border-radius: 12px; padding: 10px; justify-self: end; }
     .calendar-picker { background: #ffffff; border: 1px solid #dbe8f3; border-radius: 11px; padding: 8px 10px; min-width: 250px; }
     .calendar-head { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
     .weekday-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 5px; }
-    .weekday { text-align: center; font-size: 10px; font-weight: 800; color: #5d7891; text-transform: uppercase; }
+    .weekday { text-align: center; font-size: 12px; font-weight: 800; color: #5d7891; text-transform: uppercase; }
     .day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-    .day-cell { border: 1px solid #d2dfeb; border-radius: 8px; background: #fff; min-height: 30px; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #2b5272; cursor: pointer; transition: background .12s ease, border-color .12s ease, transform .12s ease; }
+    .day-cell { border: 1px solid #d2dfeb; border-radius: 8px; background: #fff; min-height: 34px; display: grid; place-items: center; font-size: 14px; font-weight: 700; color: #2b5272; cursor: pointer; transition: background .12s ease, border-color .12s ease, transform .12s ease; }
     .day-cell:hover { border-color: #86a8c7; background: #f2f8ff; }
     .day-cell.empty { border-color: transparent; background: transparent; cursor: default; }
     .day-cell.active { border-color: #0f7f6a; background: linear-gradient(180deg, #14a17f 0%, #0f7f6a 100%); color: #fff; box-shadow: 0 4px 10px rgba(15,127,106,0.26); }
-    .controls label { color: var(--muted); font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: .45px; }
-    .chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    .controls label { color: var(--muted); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: .45px; }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 0; }
     .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 780px) {
       .topbar { grid-template-columns: 1fr; }
+      .top-left { gap: 7px; }
       .controls { flex-wrap: wrap; }
       .chart-grid { grid-template-columns: 1fr; }
       .controls { width: 100%; }
       .calendar-picker { width: 100%; }
+      .wrap { padding: 10px; }
     }
-    .chip { border: 1px solid #c9dced; border-radius: 999px; padding: 7px 10px; font-size: 12px; font-weight: 700; color: #2b5577; background: #f7fbff; }
-    .btn { border: 1px solid #0f7f6a; background: linear-gradient(90deg, #0f7f6a, #148f76); color: #ffffff; border-radius: 10px; padding: 11px 13px; text-decoration: none; cursor: pointer; font-weight: 800; font-size: 12px; line-height: 1; letter-spacing: .3px; text-transform: uppercase; box-shadow: 0 6px 14px rgba(15, 127, 106, 0.18); white-space: nowrap; }
+    .chip { border: 1px solid #9fbad2; border-radius: 999px; padding: 10px 14px; font-size: 18px; font-weight: 800; color: #173f63; background: #f2f8ff; }
+    #dateRangeHint { font-size: 1.2rem !important; font-weight: 700; color: #1f4769 !important; }
+    .btn { border: 1px solid #0f7f6a; background: linear-gradient(90deg, #0f7f6a, #148f76); color: #ffffff; border-radius: 10px; padding: 13px 16px; text-decoration: none; cursor: pointer; font-weight: 800; font-size: 14px; line-height: 1; letter-spacing: .3px; text-transform: uppercase; box-shadow: 0 6px 14px rgba(15, 127, 106, 0.18); white-space: nowrap; }
+    #backBtn { display: inline-flex; width: auto; justify-self: start; }
     .btn:hover { filter: brightness(1.02); transform: translateY(-1px); }
     .btn.secondary { border-color: #3f739c; background: linear-gradient(90deg, #4f7fa5, #5f90b7); }
-    select.date-part { appearance: none; -webkit-appearance: none; background: #ffffff; color: #14324d; border: 1px solid #a9bfd4; border-radius: 10px; padding: 8px 30px 8px 11px; min-height: 36px; font-weight: 800; font-size: 13px; line-height: 1; background-image: linear-gradient(45deg, transparent 50%, #4d6b86 50%), linear-gradient(135deg, #4d6b86 50%, transparent 50%); background-position: calc(100% - 16px) 15px, calc(100% - 11px) 15px; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+    select.date-part { appearance: none; -webkit-appearance: none; background: #ffffff; color: #14324d; border: 1px solid #a9bfd4; border-radius: 10px; padding: 9px 32px 9px 12px; min-height: 40px; font-weight: 800; font-size: 15px; line-height: 1; background-image: linear-gradient(45deg, transparent 50%, #4d6b86 50%), linear-gradient(135deg, #4d6b86 50%, transparent 50%); background-position: calc(100% - 16px) 17px, calc(100% - 11px) 17px; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
     #monthSel.date-part { min-width: 122px; }
     #yearSel.date-part { min-width: 90px; }
     select.date-part:focus { outline: none; border-color: #5b8fb8; box-shadow: 0 0 0 3px rgba(91, 143, 184, 0.18); }
-    h3 { margin: 0 0 12px; font-size: 1.15rem; letter-spacing: .1px; color: #123350; }
-    .chart-axis-months { margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: #6d7e8d; }
+    h3 { margin: 0 0 12px; font-size: 1.6rem; letter-spacing: .1px; color: #123350; }
+    .chart-axis-months { margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 700; color: #6d7e8d; }
     .chart-axis-months.hidden { display: none; }
     table { width: 100%; border-collapse: separate; border-spacing: 0; overflow: hidden; border: 1px solid #d4e4f1; border-radius: 12px; }
-    th, td { padding: 11px 12px; border-bottom: 1px solid #e8eef4; text-align: left; font-size: 14px; }
+    th, td { padding: 13px 14px; border-bottom: 1px solid #e8eef4; text-align: left; font-size: 18px; }
     th { color: #20435f; background: linear-gradient(180deg, #f5faff 0%, #edf5fc 100%); font-weight: 800; }
     tbody tr:nth-child(even) td { background: #fbfdff; }
     tbody tr:last-child td { border-bottom: none; }
     canvas { width: 100%; height: 300px; display: block; }
-    #status { display: inline-flex; align-items: center; margin-top: 12px; color: #295579; font-weight: 800; min-height: 24px; border-radius: 999px; padding: 7px 12px; background: #eef6ff; border: 1px solid #d4e3f5; }
+    #status { display: inline-flex; align-items: center; width: fit-content; margin-top: 0; color: #295579; font-weight: 800; min-height: 28px; border-radius: 999px; padding: 9px 14px; font-size: 1.4rem; background: #eef6ff; border: 1px solid #d4e3f5; }
     #status.ok { color: #166534; background: #ecfdf3; border-color: #b7ebcb; }
     #status.err { color: #991b1b; background: #fff1f2; border-color: #fecdd3; }
   </style>
@@ -68,7 +73,12 @@
   <div class="wrap">
     <div class="card">
       <div class="topbar">
-        <a id="backBtn" class="btn" href="/">Back To Dashboard</a>
+        <div class="top-left">
+          <a id="backBtn" class="btn" href="/">Back To Dashboard</a>
+          <div id="dateRangeHint" style="font-size:12px;color:#4a6680;"></div>
+          <div id="chips" class="chips"></div>
+          <div id="status">Loading results...</div>
+        </div>
         <div class="controls">
           <div class="calendar-picker">
             <div class="calendar-head">
@@ -88,9 +98,6 @@
           <button id="pastDemand" class="btn secondary" type="button">Past Demand</button>
         </div>
       </div>
-      <div id="dateRangeHint" style="margin-top:8px;font-size:12px;color:#4a6680;"></div>
-      <div id="chips" class="chips"></div>
-      <div id="status">Loading results...</div>
     </div>
 
     <div class="chart-grid">
@@ -263,11 +270,11 @@
     }
 
     function populateYearOptions(baseYear) {
-      const minYear = 2025;
-      const maxYear = Math.max(baseYear + 50, 2035);
-      const years = Array.from({ length: (maxYear - minYear) + 1 }, (_, i) => minYear + i);
+      const minYear = 2026;
+      const maxYear = minYear + 4;
+      const years = Array.from({ length: 5 }, (_, i) => minYear + i);
       el.yearSel.innerHTML = years.map((y) => `<option value="${y}">${y}</option>`).join("");
-      el.yearSel.value = String(baseYear);
+      el.yearSel.value = years.includes(baseYear) ? String(baseYear) : String(minYear);
     }
 
     function populateDayOptions(year, monthIdx, preferredDay) {

@@ -1,7 +1,9 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
+from pathlib import Path
 
-df = pd.read_csv("retail_store_inventory.csv")
+BASE_DIR = Path(__file__).resolve().parents[1]
+df = pd.read_csv(BASE_DIR / "Dataset" / "retail_store_inventory.csv")
 df.columns = df.columns.str.strip().str.lower()
 
 df["date"] = pd.to_datetime(df["date"], format="mixed", dayfirst=True, errors="coerce")
