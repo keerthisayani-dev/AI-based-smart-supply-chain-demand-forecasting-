@@ -59,8 +59,8 @@ def load_sales_data(csv_path: str | Path) -> pd.DataFrame:
     return df
 
 
-def build_daily_series(df: pd.DataFrame, category: str) -> pd.DataFrame:
-    p = df[df[PRODUCT_COL].astype(str) == str(category)].copy()
+def build_daily_series(df: pd.DataFrame, category: str, selector_col: str = PRODUCT_COL) -> pd.DataFrame:
+    p = df[df[selector_col].astype(str) == str(category)].copy()
     if p.empty:
         raise ValueError(f"No rows found for category {category}")
 

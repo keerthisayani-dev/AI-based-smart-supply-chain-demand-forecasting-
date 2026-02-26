@@ -10,22 +10,41 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+try:
+    from pydantic import ConfigDict  # pydantic v2
+except ImportError:  # pydantic v1
+    ConfigDict = None
 
-from forecasting_core import (
-    PRODUCT_COL,
-    TARGET_COL,
-    DATE_COL,
-    MODEL_INFO,
-    build_daily_series,
-    forecast_next_days,
-    load_sales_data,
-    parse_date_series,
-    train_forecast_model,
-)
+try:
+    from .forecasting_core import (
+        PRODUCT_COL,
+        TARGET_COL,
+        DATE_COL,
+        MODEL_INFO,
+        build_daily_series,
+        forecast_next_days,
+        load_sales_data,
+        parse_date_series,
+        train_forecast_model,
+    )
+except ImportError:  # Allows running as a script from Backend/
+    from forecasting_core import (
+        PRODUCT_COL,
+        TARGET_COL,
+        DATE_COL,
+        MODEL_INFO,
+        build_daily_series,
+        forecast_next_days,
+        load_sales_data,
+        parse_date_series,
+        train_forecast_model,
+    )
 
-CSV_PATH = Path("retail_store_inventory.csv")
-UI_PATH = Path("sales_forecast_ui.html")
-RESULTS_UI_PATH = Path("forecast_results.html")
+BASE_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = BASE_DIR.parent
+CSV_PATH = PROJECT_DIR / "Dataset" / "retail_store_inventory.csv"
+UI_PATH = PROJECT_DIR / "Frontend" / "sales_forecast_ui.html"
+RESULTS_UI_PATH = PROJECT_DIR / "Frontend" / "forecast_results.html"
 DEFAULT_HORIZON = 7
 
 app = FastAPI(title="Supply Chain Forecasting Engine", version="1.1.0")
@@ -51,11 +70,15 @@ _engine_cache = _EngineCache()
 
 class SalesRecord(BaseModel):
     date: str
-    category: str
     units_sold: float
+    category: Optional[str] = None
+    product_id: Optional[str] = None
 
-    class Config:
-        extra = "allow"
+    if ConfigDict is not None:
+        model_config = ConfigDict(extra="allow")
+    else:
+        class Config:
+            extra = "allow"
 
 
 class SalesIngestRequest(BaseModel):
@@ -72,28 +95,35 @@ def _norm_key(value: Any) -> str:
     return _norm_text(value).lower()
 
 
-def _resolve_category(df: pd.DataFrame, category: str) -> str:
-    # Resolve user input to dataset category with case-insensitive matching.
+def _resolve_selector(df: pd.DataFrame, category: str) -> tuple[str, str]:
+    # Resolve user input against product/category columns with case-insensitive matching.
     requested = _norm_key(category)
     if not requested:
         raise ValueError("category cannot be empty")
 
-    values = df[PRODUCT_COL].dropna().astype(str).map(str.strip)
-    if values.empty:
-        raise ValueError("No category data available")
+    candidate_cols: List[str] = []
+    if "product id" in df.columns:
+        candidate_cols.append("product id")
+    if PRODUCT_COL in df.columns and PRODUCT_COL not in candidate_cols:
+        candidate_cols.append(PRODUCT_COL)
 
-    exact = values[values == category]
-    if not exact.empty:
-        return str(exact.iloc[0])
+    for col in candidate_cols:
+        values = df[col].dropna().astype(str).map(str.strip)
+        if values.empty:
+            continue
 
-    lower_map: Dict[str, str] = {}
-    for v in values:
-        k = v.lower()
-        if k not in lower_map:
-            lower_map[k] = v
+        exact = values[values == category]
+        if not exact.empty:
+            return col, str(exact.iloc[0])
 
-    if requested in lower_map:
-        return lower_map[requested]
+        lower_map: Dict[str, str] = {}
+        for v in values:
+            k = v.lower()
+            if k not in lower_map:
+                lower_map[k] = v
+        if requested in lower_map:
+            return col, lower_map[requested]
+
     raise ValueError(f"No rows found for category {category}")
 
 
@@ -119,12 +149,12 @@ def _get_cached_df() -> pd.DataFrame:
     return _engine_cache.df
 
 
-def _get_trained_model(df: pd.DataFrame, resolved_category: str) -> Any:
-    key = _norm_key(resolved_category)
+def _get_trained_model(df: pd.DataFrame, resolved_category: str, selector_col: str) -> Any:
+    key = f"{selector_col}|{_norm_key(resolved_category)}"
     if key in _engine_cache.trained_by_category:
         return _engine_cache.trained_by_category[key]
 
-    daily = build_daily_series(df, category=resolved_category)
+    daily = build_daily_series(df, category=resolved_category, selector_col=selector_col)
     trained = train_forecast_model(daily, target=TARGET_COL)
     _engine_cache.trained_by_category[key] = trained
     return trained
@@ -148,7 +178,25 @@ def _normalize_payload_record(r: SalesRecord) -> Dict[str, Any]:
     for key, value in extras.items():
         out[key.strip().lower()] = value
 
+    # Accept product-id style payloads by mapping them to API's category field.
+    if PRODUCT_COL not in out:
+        if "product id" in out and _norm_text(out["product id"]):
+            out[PRODUCT_COL] = out["product id"]
+        elif "product_id" in out and _norm_text(out["product_id"]):
+            out[PRODUCT_COL] = out["product_id"]
+
+    if PRODUCT_COL in out and not _norm_text(out[PRODUCT_COL]):
+        out.pop(PRODUCT_COL, None)
+
     return out
+
+
+def _record_identifier(record: SalesRecord) -> str:
+    if record.category is not None and _norm_text(record.category):
+        return _norm_text(record.category)
+    if getattr(record, "product_id", None) is not None and _norm_text(record.product_id):
+        return _norm_text(record.product_id)
+    return ""
 
 
 def _append_sales_rows(records: List[SalesRecord], persist: bool = True) -> pd.DataFrame:
@@ -160,7 +208,10 @@ def _append_sales_rows(records: List[SalesRecord], persist: bool = True) -> pd.D
         return existing
 
     if DATE_COL not in new_rows.columns or PRODUCT_COL not in new_rows.columns or TARGET_COL not in new_rows.columns:
-        raise HTTPException(status_code=400, detail="Each record requires date, category, units_sold")
+        raise HTTPException(
+            status_code=400,
+            detail="Each record requires date, units_sold, and category (or product_id/product id).",
+        )
 
     if PRODUCT_COL in existing.columns and PRODUCT_COL in new_rows.columns:
         existing_values = existing[PRODUCT_COL].dropna().astype(str).map(str.strip)
@@ -169,8 +220,9 @@ def _append_sales_rows(records: List[SalesRecord], persist: bool = True) -> pd.D
             lk = v.lower()
             if lk not in canonical_map:
                 canonical_map[lk] = v
-        new_rows[PRODUCT_COL] = new_rows[PRODUCT_COL].astype(str).map(str.strip).map(
-            lambda c: canonical_map.get(c.lower(), c)
+        normalized = new_rows[PRODUCT_COL].astype("string").str.strip()
+        new_rows[PRODUCT_COL] = normalized.map(
+            lambda c: canonical_map.get(c.lower(), c) if isinstance(c, str) and c else c
         )
 
     for col in existing.columns:
@@ -193,8 +245,8 @@ def _forecast_for_category(
     horizon: int,
     anchor_date: Optional[pd.Timestamp] = None,
 ) -> List[Dict[str, Any]]:
-    resolved_category = _resolve_category(df, category)
-    trained = _get_trained_model(df, resolved_category)
+    selector_col, resolved_category = _resolve_selector(df, category)
+    trained = _get_trained_model(df, resolved_category, selector_col=selector_col)
     forecast_df = forecast_next_days(trained, horizon=horizon, anchor_date=anchor_date)
     return forecast_df.to_dict(orient="records")
 
@@ -205,8 +257,8 @@ def _history_for_category(
     lookback_days: int = 60,
     anchor_date: Optional[pd.Timestamp] = None,
 ) -> List[Dict[str, Any]]:
-    resolved_category = _resolve_category(df, category)
-    category_rows = df[df[PRODUCT_COL].astype(str).str.strip() == resolved_category].copy()
+    selector_col, resolved_category = _resolve_selector(df, category)
+    category_rows = df[df[selector_col].astype(str).str.strip() == resolved_category].copy()
     if category_rows.empty:
         return []
 
@@ -267,7 +319,11 @@ def get_categories() -> Dict[str, Any]:
             .map(str.strip)
         )
         categories = sorted({v for v in values if v})
-    return {"categories": categories}
+        product_ids: List[str] = []
+        if "product id" in df.columns:
+            pvalues = df["product id"].dropna().astype(str).map(str.strip)
+            product_ids = sorted({v for v in pvalues if v})
+    return {"categories": categories, "product_ids": product_ids}
 
 
 @app.get("/forecast/{category}")
@@ -334,17 +390,27 @@ def ingest_sales(request: SalesIngestRequest) -> Dict[str, Any]:
         combined[DATE_COL] = parse_date_series(combined[DATE_COL])
         combined = combined.dropna(subset=[DATE_COL, PRODUCT_COL, TARGET_COL])
 
-        requested_categories = sorted({_norm_text(r.category) for r in request.records})
+        requested_categories = sorted({cid for cid in (_record_identifier(r) for r in request.records) if cid})
+        if not requested_categories:
+            raise HTTPException(
+                status_code=400,
+                detail="records must include category or product_id/product id.",
+            )
         updated_categories = []
         for c in requested_categories:
             try:
-                updated_categories.append(_resolve_category(combined, c))
+                _, resolved = _resolve_selector(combined, c)
+                updated_categories.append(resolved)
             except ValueError:
                 updated_categories.append(c)
         updated_categories = sorted(set(updated_categories))
         anchors: Dict[str, pd.Timestamp] = {}
         for category in updated_categories:
-            category_dates = [r.date for r in request.records if _norm_key(r.category) == _norm_key(category)]
+            category_dates = [
+                r.date
+                for r in request.records
+                if _norm_key(_record_identifier(r)) == _norm_key(category)
+            ]
             parsed_dates = parse_date_series(pd.Series(category_dates))
             parsed_dates = parsed_dates.dropna()
             if not parsed_dates.empty:
