@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 
@@ -75,14 +75,17 @@ print("Test range     :", test.index.min().date(), "to", test.index.max().date()
 
 y_test = test[TARGET].astype(float)
 
-# LINEAR REGRESSION MODEL
+# EXTRA TREES MODEL
 feat = daily.copy()
 
 # Lag + time features
 feat["lag_1"] = feat[TARGET].shift(1)
 feat["lag_7"] = feat[TARGET].shift(7)
+feat["lag_14"] = feat[TARGET].shift(14)
+feat["lag_28"] = feat[TARGET].shift(28)
 feat["rolling_mean_7"] = feat[TARGET].shift(1).rolling(7).mean()
 feat["rolling_mean_14"] = feat[TARGET].shift(1).rolling(14).mean()
+feat["rolling_std_7"] = feat[TARGET].shift(1).rolling(7).std()
 feat["dayofweek"] = feat.index.dayofweek
 feat["month"] = feat.index.month
 
@@ -101,42 +104,45 @@ y_test_lr = test_lr[TARGET]
 
 # Align same dates
 common_dates = y_test.index.intersection(y_test_lr.index)
-
 y_actual = y_test.loc[common_dates]
-
 X_test = X_test.loc[common_dates]
 
-lr = LinearRegression()
-lr.fit(X_train, y_train_lr)
-lr_pred = pd.Series(lr.predict(X_test), index=common_dates)
+model = ExtraTreesRegressor(
+    n_estimators=500,
+    random_state=42,
+    n_jobs=-1,
+)
+model.fit(X_train, y_train_lr)
+train_pred = pd.Series(model.predict(X_train), index=X_train.index)
+test_pred = pd.Series(model.predict(X_test), index=common_dates)
 
 compare = pd.DataFrame({
     "Actual": y_actual,
-    "LR_Pred": lr_pred
+    "Predicted": test_pred,
 })
 
 print("\n--- Actual vs Predicted ---")
 print(compare.head(10))
 
-# ---- Linear Regression Metrics ----
-lr_mae = mean_absolute_error(compare["Actual"], compare["LR_Pred"])
-lr_mse = mean_squared_error(compare["Actual"], compare["LR_Pred"])
-lr_rmse = np.sqrt(lr_mse)
-lr_r2 = r2_score(compare["Actual"], compare["LR_Pred"])
+# ---- Metrics ----
+test_mae = mean_absolute_error(compare["Actual"], compare["Predicted"])
+test_mse = mean_squared_error(compare["Actual"], compare["Predicted"])
+test_rmse = np.sqrt(test_mse)
+test_r2 = r2_score(compare["Actual"], compare["Predicted"])
 
-print("\n===== Linear Regression Evaluation =====")
-print("MAE :", round(lr_mae, 3))
-print("MSE :", round(lr_mse, 3))
-print("RMSE:", round(lr_rmse, 3))
-print("R2  :", round(lr_r2, 3))
-print("Accuracy (%):", round(lr_r2 * 100, 2))
+print("\n===== Model Evaluation (ExtraTreesRegressor) =====")
+print("\nMAE  :", round(test_mae, 3))
+print("MSE  :", round(test_mse, 3))
+print("RMSE :", round(test_rmse, 3))
+print("R2   :", round(test_r2, 3))
+print("Accuracy (%):", round(test_r2 * 100, 2))
 
-# 6) GRAPH: ACTUAL vs LINEAR
+# GRAPH: ACTUAL vs PREDICTED
 plt.figure(figsize=(12,6))
 plt.plot(compare.index, compare["Actual"], label="Actual")
-plt.plot(compare.index, compare["LR_Pred"], label="Linear Regression Prediction")
+plt.plot(compare.index, compare["Predicted"], label="Model Prediction")
 
-plt.title("Actual vs Predicted Demand")
+plt.title("Actual vs Predicted Demand (ExtraTreesRegressor)")
 plt.xlabel("Date")
 plt.ylabel("Units Sold")
 plt.legend()
