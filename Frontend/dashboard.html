@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>EXAFLUENCE - Smart Supply Chain Demand Forecasting</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link rel="stylesheet" href="/assets/css/dashboard_glass.css" />
+</head>
+<body>
+  <div class="mesh-bg" aria-hidden="true"></div>
+
+  <nav class="top-nav">
+    <div class="logo-text">EXAFLUENCE</div>
+    <div class="nav-menu">
+      <a href="#">Dashboard</a>
+      <a href="#">Forecast</a>
+      <a href="#">Reports</a>
+    </div>
+  </nav>
+
+  <main class="page-shell">
+    <section class="hero">
+      <h1>EXAFLUENCE</h1>
+      <p class="hero-sub">Smart Supply Chain Demand Forecasting</p>
+      <p class="hero-desc">Configure category and date range to generate AI-powered demand projections.</p>
+    </section>
+
+    <section id="forecastPanel" class="glass-panel config-panel">
+      <div class="field">
+        <label for="category">Category</label>
+        <select id="category" autocomplete="off">
+          <option value="" selected disabled hidden>Select category</option>
+        </select>
+      </div>
+
+      <div class="date-grid">
+        <div class="field">
+          <label for="fromDate">From Date</label>
+          <input id="fromDate" type="text" autocomplete="off" placeholder="Select start date" />
+        </div>
+        <div class="field">
+          <label for="toDate">To Date</label>
+          <input id="toDate" type="text" autocomplete="off" placeholder="Select end date" />
+        </div>
+      </div>
+
+      <p class="helper-text">Choose a date range between 2025 and 2031 for forecasting.</p>
+      <button id="generateBtn" class="btn-primary cta-main" type="button">Generate Forecast</button>
+    </section>
+  </main>
+
+  <footer class="page-footer">© EXAFLUENCE - AI Demand Forecasting System</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script>
+    const categoryEl = document.getElementById("category");
+    const fromDateEl = document.getElementById("fromDate");
+    const toDateEl = document.getElementById("toDate");
+    const ALLOWED_MIN_DATE = "2025-01-01";
+    const ALLOWED_MAX_DATE = "2031-12-31";
+    let fromPicker = null;
+    let toPicker = null;
+
+    function apiBase() {
+      return "http://127.0.0.1:8000";
+    }
+
+    function setDefaultDates() {
+      fromDateEl.value = "";
+      toDateEl.value = "";
+    }
+
+    function initDatePickers() {
+      if (fromPicker) fromPicker.destroy();
+      if (toPicker) toPicker.destroy();
+
+      fromPicker = flatpickr(fromDateEl, {
+        dateFormat: "Y-m-d",
+        allowInput: false,
+        monthSelectorType: "static",
+        minDate: ALLOWED_MIN_DATE,
+        maxDate: ALLOWED_MAX_DATE,
+      });
+      toPicker = flatpickr(toDateEl, {
+        dateFormat: "Y-m-d",
+        allowInput: false,
+        monthSelectorType: "static",
+        minDate: ALLOWED_MIN_DATE,
+        maxDate: ALLOWED_MAX_DATE,
+      });
+    }
+
+    async function loadCategories() {
+      try {
+        const resp = await fetch(`${apiBase()}/categories`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+
+        const categories = Array.isArray(data.categories) ? data.categories : [];
+        const dropdownValues = [...new Set(categories.map(v => String(v).trim()).filter(Boolean))].sort();
+
+        categoryEl.innerHTML = '<option value="" selected disabled hidden>Select category</option>';
+        dropdownValues.forEach((cat) => {
+          const opt = document.createElement("option");
+          opt.value = cat;
+          opt.textContent = cat;
+          categoryEl.appendChild(opt);
+        });
+      } catch (err) {
+        console.error(`Failed to load categories: ${err.message}`);
+      }
+    }
+
+    function clearInputState() {
+      categoryEl.innerHTML = "";
+      fromDateEl.value = "";
+      toDateEl.value = "";
+    }
+
+    function initializeDefaults() {
+      clearInputState();
+      setDefaultDates();
+      initDatePickers();
+      loadCategories();
+    }
+
+    function goToResults(mode = "forecast") {
+      const category = categoryEl.value;
+      const fromDate = fromDateEl.value;
+      const toDate = toDateEl.value;
+
+      if (!category) {
+        alert("Please select a category.");
+        return;
+      }
+      if (!fromDate || !toDate) {
+        alert("Please select From Date and To Date.");
+        return;
+      }
+      if (new Date(fromDate) > new Date(toDate)) {
+        alert("From Date must be earlier than or equal to To Date.");
+        return;
+      }
+
+      const minAllowed = new Date(ALLOWED_MIN_DATE);
+      const maxAllowed = new Date(ALLOWED_MAX_DATE);
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      if (from < minAllowed || from > maxAllowed || to < minAllowed || to > maxAllowed) {
+        alert("Please select dates between 2025 and 2031.");
+        return;
+      }
+
+      const resultUrl = `/dashboard/results?category=${encodeURIComponent(category)}&from=${encodeURIComponent(fromDate)}&to=${encodeURIComponent(toDate)}&mode=${encodeURIComponent(mode)}`;
+      window.location.href = resultUrl;
+    }
+
+    const navEntry = performance.getEntriesByType("navigation")[0];
+    if (navEntry && navEntry.type === "reload") {
+      clearInputState();
+    }
+
+    initializeDefaults();
+    window.addEventListener("pageshow", initializeDefaults);
+    document.getElementById("generateBtn").addEventListener("click", () => goToResults("forecast"));
+  </script>
+</body>
+</html>

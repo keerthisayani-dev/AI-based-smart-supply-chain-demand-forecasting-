@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 import threading
+import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -8,7 +7,9 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 try:
     from pydantic import ConfigDict  # pydantic v2
@@ -43,8 +44,10 @@ except ImportError:  # Allows running as a script from Backend/
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = BASE_DIR.parent
 CSV_PATH = PROJECT_DIR / "Dataset" / "retail_store_inventory.csv"
-UI_PATH = PROJECT_DIR / "Frontend" / "sales_forecast_ui.html"
-RESULTS_UI_PATH = PROJECT_DIR / "Frontend" / "forecast_results.html"
+FRONTEND_LOGIN_HTML_PATH = PROJECT_DIR / "Frontend" / "login.html"
+FRONTEND_HTML_PATH = PROJECT_DIR / "Frontend" / "dashboard.html"
+FRONTEND_RESULTS_HTML_PATH = PROJECT_DIR / "Frontend" / "dashboard_results.html"
+HISTORY_DB_PATH = PROJECT_DIR / "Backend" / "forecast_history.db"
 DEFAULT_HORIZON = 7
 
 app = FastAPI(title="Supply Chain Forecasting Engine", version="1.1.0")
@@ -55,6 +58,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.mount("/assets", StaticFiles(directory=PROJECT_DIR / "Frontend" / "assets"), name="assets")
 _engine_lock = threading.Lock()
 
 
@@ -66,6 +70,123 @@ class _EngineCache:
 
 
 _engine_cache = _EngineCache()
+
+
+def _get_history_db_conn() -> sqlite3.Connection:
+    conn = sqlite3.connect(HISTORY_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def _init_history_db() -> None:
+    with _get_history_db_conn() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS forecast_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                category TEXT NOT NULL,
+                anchor_date TEXT,
+                horizon INTEGER NOT NULL,
+                history_lookback_days INTEGER NOT NULL,
+                history_points INTEGER NOT NULL,
+                forecast_points INTEGER NOT NULL,
+                latest_actual REAL,
+                total_forecast REAL,
+                average_forecast REAL
+            )
+            """
+        )
+        conn.commit()
+
+
+def _save_forecast_history(
+    *,
+    category: str,
+    anchor_date: Optional[str],
+    horizon: int,
+    history_lookback_days: int,
+    history: List[Dict[str, Any]],
+    forecast: List[Dict[str, Any]],
+) -> None:
+    latest_actual: Optional[float] = None
+    if history:
+        try:
+            latest_actual = float(history[-1].get("actual_units_sold"))
+        except (TypeError, ValueError):
+            latest_actual = None
+
+    forecast_vals: List[float] = []
+    for row in forecast:
+        try:
+            forecast_vals.append(float(row.get("forecast_units_sold")))
+        except (TypeError, ValueError):
+            continue
+
+    total_forecast = float(sum(forecast_vals)) if forecast_vals else 0.0
+    avg_forecast = (total_forecast / len(forecast_vals)) if forecast_vals else 0.0
+
+    with _get_history_db_conn() as conn:
+        conn.execute(
+            """
+            INSERT INTO forecast_history (
+                category,
+                anchor_date,
+                horizon,
+                history_lookback_days,
+                history_points,
+                forecast_points,
+                latest_actual,
+                total_forecast,
+                average_forecast
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                category,
+                anchor_date,
+                int(horizon),
+                int(history_lookback_days),
+                int(len(history)),
+                int(len(forecast)),
+                latest_actual,
+                total_forecast,
+                avg_forecast,
+            ),
+        )
+        conn.commit()
+
+
+def _load_recent_history(category: Optional[str] = None, limit: int = 20) -> List[Dict[str, Any]]:
+    safe_limit = max(1, min(limit, 100))
+    query = """
+        SELECT
+            id,
+            created_at,
+            category,
+            anchor_date,
+            horizon,
+            history_lookback_days,
+            history_points,
+            forecast_points,
+            latest_actual,
+            total_forecast,
+            average_forecast
+        FROM forecast_history
+    """
+    params: List[Any] = []
+    if category:
+        query += " WHERE lower(category) = lower(?) "
+        params.append(category)
+    query += " ORDER BY id DESC LIMIT ?"
+    params.append(safe_limit)
+
+    with _get_history_db_conn() as conn:
+        rows = conn.execute(query, params).fetchall()
+
+    return [dict(r) for r in rows]
+
+
+_init_history_db()
 
 
 class SalesRecord(BaseModel):
@@ -286,21 +407,39 @@ def _history_for_category(
     ]
 
 
-@app.get("/", response_class=HTMLResponse)
-def index() -> str:
-    if UI_PATH.exists():
-        return UI_PATH.read_text(encoding="utf-8")
-    return "<h1>UI file not found</h1><p>Create sales_forecast_ui.html in the project root.</p>"
+@app.get("/", include_in_schema=False)
+def index() -> RedirectResponse:
+    return RedirectResponse(url="/login", status_code=307)
 
 
-@app.get("/results", response_class=HTMLResponse)
-def results_page() -> str:
-    if RESULTS_UI_PATH.exists():
-        return RESULTS_UI_PATH.read_text(encoding="utf-8")
-    # Graceful fallback: keep navigation working even if details page was removed.
-    if UI_PATH.exists():
-        return UI_PATH.read_text(encoding="utf-8")
-    return "<h1>UI file not found</h1><p>Create sales_forecast_ui.html in the project root.</p>"
+@app.get("/login", include_in_schema=False)
+def login() -> FileResponse:
+    if not FRONTEND_LOGIN_HTML_PATH.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"Login file not found at {FRONTEND_LOGIN_HTML_PATH}",
+        )
+    return FileResponse(FRONTEND_LOGIN_HTML_PATH)
+
+
+@app.get("/dashboard", include_in_schema=False)
+def dashboard() -> FileResponse:
+    if not FRONTEND_HTML_PATH.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"Dashboard file not found at {FRONTEND_HTML_PATH}",
+        )
+    return FileResponse(FRONTEND_HTML_PATH)
+
+
+@app.get("/dashboard/results", include_in_schema=False)
+def dashboard_results() -> FileResponse:
+    if not FRONTEND_RESULTS_HTML_PATH.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"Dashboard results file not found at {FRONTEND_RESULTS_HTML_PATH}",
+        )
+    return FileResponse(FRONTEND_RESULTS_HTML_PATH)
 
 
 @app.get("/health")
@@ -362,6 +501,14 @@ def get_forecast(
             lookback_days=history_lookback_days,
             anchor_date=parsed_anchor,
         )
+        _save_forecast_history(
+            category=category,
+            anchor_date=anchor_date,
+            horizon=horizon,
+            history_lookback_days=history_lookback_days,
+            history=history,
+            forecast=rows,
+        )
 
     return {
         "category": category,
@@ -371,6 +518,18 @@ def get_forecast(
         "model_info": MODEL_INFO,
         "history": history,
         "forecast": rows,
+    }
+
+
+@app.get("/forecast-history")
+def get_forecast_history(
+    category: Optional[str] = None,
+    limit: int = 20,
+) -> Dict[str, Any]:
+    items = _load_recent_history(category=category, limit=limit)
+    return {
+        "count": len(items),
+        "items": items,
     }
 
 

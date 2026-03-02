@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - EXAFLUENCE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --text: #22315d;
+      --muted: #6f7b9e;
+      --card: rgba(255, 255, 255, 0.72);
+      --border: rgba(182, 193, 220, 0.62);
+      --exa-blue: #0b3d96;
+      --fluence-red: #a62a2a;
+      --accent-start: #1d4a98;
+      --accent-mid: #465e9f;
+      --accent-end: #8e3642;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(1180px 560px at 8% 6%, rgba(193, 210, 240, 0.34), transparent 62%),
+        radial-gradient(920px 420px at 90% 16%, rgba(248, 229, 216, 0.22), transparent 64%),
+        radial-gradient(860px 420px at 82% 88%, rgba(208, 221, 247, 0.3), transparent 66%),
+        linear-gradient(145deg, #f8f9fb 0%, #f2f4f8 48%, #edf2fa 100%);
+      padding: 20px;
+    }
+
+    .login-card {
+      width: min(480px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      backdrop-filter: blur(12px);
+      box-shadow:
+        0 20px 38px rgba(55, 72, 120, 0.12),
+        0 2px 0 rgba(255, 255, 255, 0.6) inset;
+      padding: 28px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 42px;
+      line-height: 1;
+      letter-spacing: 0.2px;
+      font-weight: 800;
+    }
+
+    .brand-exa { color: var(--exa-blue); }
+    .brand-fluence { color: var(--fluence-red); }
+
+    .subtitle {
+      margin: 10px 0 20px;
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    input {
+      width: 100%;
+      height: 46px;
+      padding: 0 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(180, 191, 220, 0.72);
+      background: rgba(248, 250, 255, 0.92);
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: rgba(103, 128, 185, 0.9);
+      box-shadow: 0 0 0 3px rgba(150, 169, 216, 0.3);
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .row a {
+      color: #445ea8;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .row a:hover { text-decoration: underline; }
+
+    .btn {
+      width: 100%;
+      height: 46px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(92deg, var(--accent-start) 0%, var(--accent-mid) 52%, var(--accent-end) 100%);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 22px rgba(73, 87, 141, 0.24);
+      transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+      box-shadow: 0 14px 26px rgba(73, 87, 141, 0.28);
+    }
+
+    .sso-btn {
+      margin-top: 10px;
+      width: 100%;
+      height: 44px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(245, 248, 255, 0.9);
+      color: var(--text);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .note {
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .footer {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main class="login-card">
+    <h1 class="title"><span class="brand-exa">EXA</span><span class="brand-fluence">FLUENCE</span></h1>
+    <p class="subtitle">Smart Supply Chain Demand Forecasting</p>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="email">Work Email</label>
+        <input id="email" type="email" required placeholder="name@company.com" />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" required placeholder="Enter password" />
+      </div>
+      <div class="row">
+        <label><input type="checkbox" id="rememberMe" style="height:auto;width:auto;" /> Remember me</label>
+        <a href="#" onclick="event.preventDefault();">Forgot password?</a>
+      </div>
+      <button class="btn" type="submit">Sign In</button>
+      <button class="sso-btn" type="button" onclick="window.location.href='/dashboard'">Sign in with SSO</button>
+    </form>
+
+    <p class="note">Authorized users only. Activity is monitored.</p>
+    <p class="footer">© 2026 Exafluence</p>
+  </main>
+
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      window.location.href = "/dashboard";
+    });
+  </script>
+</body>
+</html>

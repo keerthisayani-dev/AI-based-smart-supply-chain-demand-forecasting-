@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forecast Results - EXAFLUENCE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --bg-1: #0b1220;
+      --bg-2: #0f172a;
+      --bg-3: #111827;
+      --primary: #3b82f6;
+      --secondary: #06b6d4;
+      --highlight: #8b5cf6;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --glass: rgba(255, 255, 255, 0.06);
+      --glass-border: rgba(255, 255, 255, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background: linear-gradient(145deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-3) 100%);
+    }
+
+    .mesh-bg {
+      position: fixed;
+      inset: -20%;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(800px 460px at 10% 12%, rgba(59, 130, 246, 0.18), transparent 62%),
+        radial-gradient(760px 440px at 88% 18%, rgba(6, 182, 212, 0.14), transparent 64%),
+        radial-gradient(680px 420px at 50% 92%, rgba(139, 92, 246, 0.12), transparent 66%);
+      filter: blur(10px);
+      animation: floatMesh 16s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatMesh {
+      0% { transform: translate3d(-2%, -1%, 0) scale(1); }
+      100% { transform: translate3d(2%, 1%, 0) scale(1.03); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .top-nav,
+    .page-shell,
+    .page-footer {
+      position: relative;
+      z-index: 2;
+    }
+
+    .top-nav {
+      position: sticky;
+      top: 12px;
+      margin: 14px auto 0;
+      width: min(1240px, calc(100% - 24px));
+      padding: 10px 16px;
+      border-radius: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+      animation: fadeUp 0.45s ease;
+    }
+
+    .logo-text {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--highlight) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .nav-menu {
+      display: flex;
+      gap: 16px;
+    }
+
+    .nav-menu a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .nav-menu a:hover { color: var(--text); }
+
+    .page-shell {
+      width: min(1240px, calc(100% - 24px));
+      margin: 20px auto 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .glass-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 24px;
+      backdrop-filter: blur(18px);
+      box-shadow: 0 20px 48px rgba(3, 7, 18, 0.44);
+      animation: fadeUp 0.45s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .glass-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 24px 52px rgba(3, 7, 18, 0.52);
+    }
+
+    .header-card {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .header-card h1 {
+      margin: 0;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    #contextText,
+    #sourceText {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .view-switch { display: flex; gap: 8px; flex-wrap: wrap; }
+    .download-group { display: flex; gap: 8px; align-items: center; }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #f8fbff;
+      background: linear-gradient(92deg, var(--primary) 0%, var(--secondary) 55%, var(--highlight) 100%);
+      box-shadow: 0 10px 24px rgba(59, 130, 246, 0.26);
+      transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.05);
+      box-shadow: 0 14px 30px rgba(59, 130, 246, 0.31);
+    }
+
+    .btn-secondary {
+      color: #f8fbff;
+      border: 1px solid rgba(80, 140, 246, 0.55);
+      background: linear-gradient(92deg, var(--primary) 0%, var(--secondary) 55%, var(--highlight) 100%);
+      box-shadow: 0 10px 24px rgba(59, 130, 246, 0.24);
+    }
+
+    .download-select {
+      min-width: 150px;
+      height: 38px;
+      border-radius: 999px;
+      padding: 0 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #f8fbff;
+      border: 1px solid rgba(80, 140, 246, 0.55);
+      background: linear-gradient(92deg, var(--primary) 0%, var(--secondary) 55%, var(--highlight) 100%);
+      outline: none;
+      box-shadow: 0 10px 24px rgba(59, 130, 246, 0.24);
+      color-scheme: dark;
+    }
+
+    .download-select option {
+      background: #111827;
+      color: #e5e7eb;
+    }
+
+    .btn-active {
+      color: #ffffff;
+      border: 1px solid rgba(130, 177, 255, 0.9);
+      background: linear-gradient(92deg, #5ea2ff 0%, #43caee 55%, #9f7aff 100%);
+      box-shadow: 0 12px 28px rgba(59, 130, 246, 0.34);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      position: relative;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      border-radius: 16px;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .metric::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      box-shadow: inset 0 0 22px rgba(59, 130, 246, 0.08);
+      pointer-events: none;
+    }
+
+    .metric-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 15px;
+      height: 15px;
+      color: #8fa8de;
+      opacity: 0.9;
+    }
+
+    .metric .k {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .metric .v {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .chart-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .chart-head h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .chart-head .icon-btn {
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 12px;
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.55);
+    }
+
+    .chart-head .icon-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    #chart {
+      height: 420px;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .table-title {
+      margin: 0 0 10px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .table-wrap {
+      max-height: 360px;
+      overflow: auto;
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    th, td {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      padding: 10px 9px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: rgba(30, 41, 59, 0.96);
+      color: #c8d4f2;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      text-transform: lowercase;
+    }
+
+    tbody tr:nth-child(odd) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    tbody tr:hover {
+      background: rgba(59, 130, 246, 0.14);
+    }
+
+    .page-footer {
+      position: relative;
+      z-index: 2;
+      width: min(1240px, calc(100% - 24px));
+      margin: 0 auto 14px;
+      border-radius: 14px;
+      padding: 12px 14px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+    }
+
+    @media (max-width: 980px) {
+      .metrics,
+      .data-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .top-nav {
+        padding: 10px 12px;
+      }
+
+      .nav-menu a:last-child {
+        display: none;
+      }
+
+      .glass-card {
+        padding: 18px;
+      }
+
+      .header-card h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mesh-bg" aria-hidden="true"></div>
+
+  <nav class="top-nav">
+    <div class="logo-text">EXAFLUENCE</div>
+    <div class="nav-menu">
+      <a href="#">Dashboard</a>
+      <a href="#">Forecast</a>
+      <a href="#">Reports</a>
+    </div>
+  </nav>
+
+  <main class="page-shell">
+    <section class="glass-card header-card">
+      <div>
+        <h1>Forecast Results</h1>
+        <p id="contextText">Loading...</p>
+        <p id="sourceText">Source: Walmart</p>
+      </div>
+      <div class="actions">
+        <div class="view-switch">
+          <button class="btn btn-secondary" id="forecastViewBtn" type="button">Forecast View</button>
+          <button class="btn btn-secondary" id="pastViewBtn" type="button">Past Demand View</button>
+        </div>
+        <div class="download-group">
+          <select id="downloadType" class="download-select" aria-label="Download type">
+            <option value="" selected disabled hidden>Download</option>
+            <option value="csv">CSV</option>
+            <option value="pdf">PDF</option>
+          </select>
+        </div>
+        <button class="btn" id="backBtn" type="button">Back</button>
+      </div>
+    </section>
+
+    <section class="metrics">
+      <article class="glass-card metric">
+        <i data-lucide="boxes" class="metric-icon"></i>
+        <div class="k" id="kTotalLabel">Total Forecast Units</div>
+        <div class="v" id="mTotal">0</div>
+      </article>
+      <article class="glass-card metric">
+        <i data-lucide="activity" class="metric-icon"></i>
+        <div class="k" id="kAvgLabel">Average Daily Forecast</div>
+        <div class="v" id="mAvg">0</div>
+      </article>
+      <article class="glass-card metric">
+        <i data-lucide="alert-triangle" class="metric-icon"></i>
+        <div class="k">Latest Actual Units</div>
+        <div class="v" id="mActual">0</div>
+      </article>
+    </section>
+
+    <section class="glass-card">
+      <div class="chart-head">
+        <h3>Demand Trend and Forecast</h3>
+        <button class="icon-btn" type="button" title="Export chart">
+          <i data-lucide="download"></i>
+        </button>
+      </div>
+      <div id="chart"></div>
+    </section>
+
+    <section class="data-grid">
+      <article class="glass-card">
+        <h3 class="table-title" id="historyTitle">Recent History</h3>
+        <div id="historyTable"></div>
+      </article>
+      <article class="glass-card">
+        <h3 class="table-title" id="forecastTitle">Forecast Output</h3>
+        <div id="forecastTable"></div>
+      </article>
+    </section>
+  </main>
+
+  <footer class="page-footer">© EXAFLUENCE - AI Demand Forecasting System</footer>
+
+  <script>
+    const exportState = {
+      category: "",
+      fromDate: "",
+      toDate: "",
+      total: 0,
+      avg: 0,
+      latestActual: 0,
+      historyRows: [],
+      historyCols: [],
+      forecastRows: [],
+      forecastCols: [],
+    };
+    let currentMode = "forecast";
+
+    function apiBase() {
+      return "http://127.0.0.1:8000";
+    }
+
+    function toNum(v) {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function renderTable(target, rows, cols) {
+      if (!rows.length) {
+        target.innerHTML = "<p style='color:#94A3B8'>No data</p>";
+        return;
+      }
+      const head = cols.map(c => `<th>${c}</th>`).join("");
+      const body = rows.map(r => `<tr>${cols.map(c => `<td>${r[c] ?? ""}</td>`).join("")}</tr>`).join("");
+      target.innerHTML = `<div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+    }
+
+    function renderRecentHistory(items) {
+      const mapped = items.map((r) => ({
+        created_at: r.created_at || "",
+        category: r.category || "",
+        latest_actual: toNum(r.latest_actual).toFixed(1),
+        total_forecast: toNum(r.total_forecast).toFixed(1),
+      }));
+      exportState.historyRows = mapped;
+      exportState.historyCols = ["created_at", "category", "latest_actual", "total_forecast"];
+      renderTable(
+        document.getElementById("historyTable"),
+        mapped,
+        exportState.historyCols
+      );
+    }
+
+    function groupMonthlyActual(historyRows) {
+      const m = new Map();
+      historyRows.forEach((r) => {
+        const d = new Date(r.date);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        const v = toNum(r.actual_units_sold);
+        m.set(key, (m.get(key) || 0) + v);
+      });
+      return Array.from(m.entries())
+        .map(([month, actual_units_sold]) => ({ month, actual_units_sold: actual_units_sold.toFixed(1) }))
+        .sort((a, b) => a.month.localeCompare(b.month));
+    }
+
+    async function loadRecentHistory(category) {
+      try {
+        const historyResp = await fetch(`${apiBase()}/forecast-history?category=${encodeURIComponent(category)}&limit=12`);
+        if (!historyResp.ok) return false;
+        const historyPayload = await historyResp.json();
+        const items = Array.isArray(historyPayload.items) ? historyPayload.items : [];
+        if (!items.length) return false;
+        renderRecentHistory(items);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function escapeCsv(value) {
+      const s = String(value ?? "");
+      if (s.includes(",") || s.includes("\"") || s.includes("\n")) {
+        return `"${s.replaceAll("\"", "\"\"")}"`;
+      }
+      return s;
+    }
+
+    function downloadTextFile(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function buildCsv() {
+      const lines = [];
+      lines.push("EXAFLUENCE Smart Supply Chain Demand Forecasting");
+      lines.push(`Category,${escapeCsv(exportState.category)}`);
+      lines.push(`From Date,${escapeCsv(exportState.fromDate)}`);
+      lines.push(`To Date,${escapeCsv(exportState.toDate)}`);
+      lines.push(`Total Forecast Units,${exportState.total.toFixed(1)}`);
+      lines.push(`Average Daily Forecast,${exportState.avg.toFixed(2)}`);
+      lines.push(`Latest Actual Units,${exportState.latestActual.toFixed(1)}`);
+      lines.push("");
+
+      lines.push("Recent History");
+      lines.push(exportState.historyCols.map(escapeCsv).join(","));
+      exportState.historyRows.forEach((row) => {
+        lines.push(exportState.historyCols.map((c) => escapeCsv(row[c])).join(","));
+      });
+      lines.push("");
+
+      lines.push("Forecast Output");
+      lines.push(exportState.forecastCols.map(escapeCsv).join(","));
+      exportState.forecastRows.forEach((row) => {
+        lines.push(exportState.forecastCols.map((c) => escapeCsv(row[c])).join(","));
+      });
+
+      return lines.join("\n");
+    }
+
+    function downloadCsv() {
+      if (!exportState.category) {
+        alert("No forecast data available to download.");
+        return;
+      }
+      const filename = `forecast_${exportState.category.replaceAll(" ", "_")}_${exportState.toDate}.csv`;
+      downloadTextFile(filename, buildCsv(), "text/csv;charset=utf-8;");
+    }
+
+    function downloadPdf() {
+      if (!exportState.category) {
+        alert("No forecast data available to download.");
+        return;
+      }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
+
+      doc.setFontSize(14);
+      doc.text("EXAFLUENCE - Smart Supply Chain Demand Forecasting", 40, 40);
+      doc.setFontSize(10);
+      doc.text(`Category: ${exportState.category}`, 40, 62);
+      doc.text(`Period: ${exportState.fromDate} to ${exportState.toDate}`, 40, 78);
+      doc.text(`Total Forecast Units: ${exportState.total.toFixed(1)}`, 40, 94);
+      doc.text(`Average Daily Forecast: ${exportState.avg.toFixed(2)}`, 40, 110);
+      doc.text(`Latest Actual Units: ${exportState.latestActual.toFixed(1)}`, 40, 126);
+
+      doc.autoTable({
+        startY: 145,
+        head: [exportState.historyCols],
+        body: exportState.historyRows.map((r) => exportState.historyCols.map((c) => String(r[c] ?? ""))),
+        theme: "grid",
+        headStyles: { fillColor: [59, 130, 246] },
+        styles: { fontSize: 8 },
+      });
+
+      const nextY = doc.lastAutoTable.finalY + 16;
+      doc.autoTable({
+        startY: nextY,
+        head: [exportState.forecastCols],
+        body: exportState.forecastRows.map((r) => exportState.forecastCols.map((c) => String(r[c] ?? ""))),
+        theme: "grid",
+        headStyles: { fillColor: [59, 130, 246] },
+        styles: { fontSize: 8 },
+      });
+
+      const filename = `forecast_${exportState.category.replaceAll(" ", "_")}_${exportState.toDate}.pdf`;
+      doc.save(filename);
+    }
+
+    function buildDateTicks(fromDate, toDate, stepDays = 3) {
+      const ticks = [];
+      const start = new Date(fromDate);
+      const end = new Date(toDate);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
+        return ticks;
+      }
+
+      const d = new Date(start);
+      while (d <= end) {
+        ticks.push(d.toISOString().slice(0, 10));
+        d.setDate(d.getDate() + stepDays);
+      }
+
+      const endIso = end.toISOString().slice(0, 10);
+      if (!ticks.includes(endIso)) {
+        ticks.push(endIso);
+      }
+      return ticks;
+    }
+
+    async function loadResults() {
+      const params = new URLSearchParams(window.location.search);
+      const category = params.get("category") || "";
+      const fromDate = params.get("from") || "";
+      const toDate = params.get("to") || "";
+      const mode = (params.get("mode") || "forecast").toLowerCase();
+      currentMode = mode === "past" ? "past" : "forecast";
+      const contextEl = document.getElementById("contextText");
+      const totalLabel = document.getElementById("kTotalLabel");
+      const avgLabel = document.getElementById("kAvgLabel");
+      const historyTitle = document.getElementById("historyTitle");
+      const forecastTitle = document.getElementById("forecastTitle");
+      const forecastViewBtn = document.getElementById("forecastViewBtn");
+      const pastViewBtn = document.getElementById("pastViewBtn");
+
+      forecastViewBtn.classList.toggle("btn-active", currentMode === "forecast");
+      pastViewBtn.classList.toggle("btn-active", currentMode === "past");
+
+      if (!category || !fromDate || !toDate) {
+        contextEl.textContent = "Missing input values. Please go back and select category and dates.";
+        return;
+      }
+
+      contextEl.textContent = `Category: ${category} | Period: ${fromDate} to ${toDate} | View: ${mode === "past" ? "Past Demand" : "Forecast"}`;
+      exportState.category = category;
+      exportState.fromDate = fromDate;
+      exportState.toDate = toDate;
+
+      const fromDateObj = new Date(fromDate);
+      const toDateObj = new Date(toDate);
+      const periodDays = Math.max(1, Math.floor((toDateObj - fromDateObj) / 86400000) + 1);
+      const lookback = Math.max(60, periodDays);
+      const anchorForForecast = new Date(fromDateObj);
+      anchorForForecast.setDate(anchorForForecast.getDate() - 1);
+      const forecastAnchorDate = anchorForForecast.toISOString().slice(0, 10);
+
+      try {
+        async function fetchForecastPayload(anchorDate, horizonDays) {
+          const url = `${apiBase()}/forecast/${encodeURIComponent(category)}?horizon=${horizonDays}&history_lookback_days=${lookback}&anchor_date=${anchorDate}`;
+          const resp = await fetch(url);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          return resp.json();
+        }
+
+        const requestAnchor = currentMode === "forecast" ? forecastAnchorDate : toDate;
+        const data = await fetchForecastPayload(requestAnchor, periodDays);
+
+        const history = Array.isArray(data.history) ? data.history : [];
+        const forecast = Array.isArray(data.forecast) ? data.forecast : [];
+
+        const fromTs = new Date(fromDate).getTime();
+        const toTs = new Date(toDate).getTime();
+        const filteredHistory = history.filter(r => {
+          const t = new Date(r.date).getTime();
+          return t >= fromTs && t <= toTs;
+        });
+        const filteredForecast = forecast.filter(r => {
+          const t = new Date(r.date).getTime();
+          return t >= fromTs && t <= toTs;
+        });
+
+        const totalForecast = filteredForecast.reduce((s, r) => s + toNum(r.forecast_units_sold), 0);
+        const avgForecast = filteredForecast.length ? totalForecast / filteredForecast.length : 0;
+        const totalPast = filteredHistory.reduce((s, r) => s + toNum(r.actual_units_sold), 0);
+        const avgPast = filteredHistory.length ? totalPast / filteredHistory.length : 0;
+        const latestActual = filteredHistory.length ? toNum(filteredHistory[filteredHistory.length - 1].actual_units_sold) : 0;
+        exportState.total = mode === "past" ? totalPast : totalForecast;
+        exportState.avg = mode === "past" ? avgPast : avgForecast;
+        exportState.latestActual = latestActual;
+
+        totalLabel.textContent = mode === "past" ? "Total Past Demand" : "Total Forecast Units";
+        avgLabel.textContent = mode === "past" ? "Average Daily Demand" : "Average Daily Forecast";
+        historyTitle.textContent = "Recent History";
+        forecastTitle.textContent = mode === "past" ? "Monthly Past Demand" : "Forecast Output";
+
+        if (currentMode === "past" && !filteredHistory.length) {
+          contextEl.textContent = `${contextEl.textContent} | Note: No actuals available in selected period.`;
+        }
+        if (currentMode === "forecast" && !filteredForecast.length) {
+          contextEl.textContent = `${contextEl.textContent} | Note: No forecast generated for selected period.`;
+        }
+
+        document.getElementById("mTotal").textContent = exportState.total.toFixed(1);
+        document.getElementById("mAvg").textContent = exportState.avg.toFixed(2);
+        document.getElementById("mActual").textContent = latestActual.toFixed(1);
+
+        const series = [
+          {
+            x: filteredHistory.map(r => r.date),
+            y: filteredHistory.map(r => toNum(r.actual_units_sold)),
+            mode: "lines+markers",
+            name: "Actual",
+            line: { color: "#06B6D4", width: 3 },
+            marker: { color: "#06B6D4", size: 6 }
+          }
+        ];
+        if (mode !== "past") {
+          series.push({
+            x: filteredForecast.map(r => r.date),
+            y: filteredForecast.map(r => toNum(r.forecast_units_sold)),
+            mode: "lines+markers",
+            name: "Forecast",
+            line: { color: "#8B5CF6", width: 3 },
+            marker: { color: "#8B5CF6", size: 6 },
+            fill: "tozeroy",
+            fillcolor: "rgba(139, 92, 246, 0.08)"
+          });
+        }
+
+        const tickVals = buildDateTicks(fromDate, toDate, 3);
+
+        Plotly.newPlot("chart", series, {
+          title: mode === "past" ? `Past Demand Trend: ${category}` : `Demand Trend and Forecast: ${category}`,
+          paper_bgcolor: "rgba(0,0,0,0)",
+          plot_bgcolor: "rgba(0,0,0,0)",
+          font: { color: "#E5E7EB" },
+          titlefont: { color: "#E5E7EB" },
+          xaxis: {
+            title: "Date",
+            tickfont: { color: "#94A3B8" },
+            titlefont: { color: "#94A3B8" },
+            gridcolor: "rgba(148, 163, 184, 0.18)",
+            zerolinecolor: "rgba(148, 163, 184, 0.2)",
+            range: [fromDate, toDate],
+            tickmode: "array",
+            tickvals: tickVals,
+            tickformat: "%b %-d",
+          },
+          yaxis: {
+            title: "Units Sold",
+            tickfont: { color: "#94A3B8" },
+            titlefont: { color: "#94A3B8" },
+            gridcolor: "rgba(148, 163, 184, 0.18)",
+            zerolinecolor: "rgba(148, 163, 184, 0.2)",
+          },
+          legend: { font: { color: "#E5E7EB" } },
+          margin: { t: 44, l: 50, r: 20, b: 50 }
+        }, {
+          responsive: true
+        });
+
+        exportState.historyCols = ["date", "actual_units_sold"];
+        exportState.historyRows = [...filteredHistory].reverse();
+        if (mode === "past") {
+          const monthly = groupMonthlyActual(filteredHistory);
+          exportState.forecastCols = ["month", "actual_units_sold"];
+          exportState.forecastRows = monthly;
+        } else {
+          exportState.forecastCols = ["date", "forecast_units_sold"];
+          exportState.forecastRows = filteredForecast;
+        }
+
+        const loadedRecent = await loadRecentHistory(category);
+        if (!loadedRecent) {
+          renderTable(
+            document.getElementById("historyTable"),
+            exportState.historyRows,
+            exportState.historyCols
+          );
+        }
+        renderTable(
+          document.getElementById("forecastTable"),
+          exportState.forecastRows,
+          exportState.forecastCols
+        );
+
+      } catch (err) {
+        contextEl.textContent = `Failed to fetch forecast: ${err.message}`;
+      }
+    }
+
+    document.getElementById("backBtn").addEventListener("click", () => {
+      window.location.href = "/dashboard";
+    });
+    document.getElementById("forecastViewBtn").addEventListener("click", () => {
+      if (currentMode === "forecast") return;
+      const params = new URLSearchParams(window.location.search);
+      params.set("mode", "forecast");
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState({}, "", newUrl);
+      loadResults();
+    });
+    document.getElementById("pastViewBtn").addEventListener("click", () => {
+      if (currentMode === "past") return;
+      const params = new URLSearchParams(window.location.search);
+      params.set("mode", "past");
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState({}, "", newUrl);
+      loadResults();
+    });
+    document.getElementById("downloadType").addEventListener("change", (e) => {
+      const type = e.target.value;
+      if (type === "csv") {
+        downloadCsv();
+      } else if (type === "pdf") {
+        downloadPdf();
+      }
+      // Keep dropdown usable for repeated downloads.
+      e.target.value = "";
+    });
+
+    loadResults();
+    window.addEventListener("load", () => {
+      if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+</html>
