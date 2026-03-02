@@ -49,6 +49,11 @@ FRONTEND_HTML_PATH = PROJECT_DIR / "Frontend" / "dashboard.html"
 FRONTEND_RESULTS_HTML_PATH = PROJECT_DIR / "Frontend" / "dashboard_results.html"
 HISTORY_DB_PATH = PROJECT_DIR / "Backend" / "forecast_history.db"
 DEFAULT_HORIZON = 7
+NO_CACHE_HEADERS = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
 
 app = FastAPI(title="Supply Chain Forecasting Engine", version="1.1.0")
 app.add_middleware(
@@ -436,7 +441,7 @@ def login() -> FileResponse:
             status_code=404,
             detail=f"Login file not found at {FRONTEND_LOGIN_HTML_PATH}",
         )
-    return FileResponse(FRONTEND_LOGIN_HTML_PATH)
+    return FileResponse(FRONTEND_LOGIN_HTML_PATH, headers=NO_CACHE_HEADERS)
 
 
 @app.get("/dashboard", include_in_schema=False)
@@ -446,7 +451,7 @@ def dashboard() -> FileResponse:
             status_code=404,
             detail=f"Dashboard file not found at {FRONTEND_HTML_PATH}",
         )
-    return FileResponse(FRONTEND_HTML_PATH)
+    return FileResponse(FRONTEND_HTML_PATH, headers=NO_CACHE_HEADERS)
 
 
 @app.get("/dashboard/results", include_in_schema=False)
@@ -456,7 +461,7 @@ def dashboard_results() -> FileResponse:
             status_code=404,
             detail=f"Dashboard results file not found at {FRONTEND_RESULTS_HTML_PATH}",
         )
-    return FileResponse(FRONTEND_RESULTS_HTML_PATH)
+    return FileResponse(FRONTEND_RESULTS_HTML_PATH, headers=NO_CACHE_HEADERS)
 
 
 @app.get("/health")

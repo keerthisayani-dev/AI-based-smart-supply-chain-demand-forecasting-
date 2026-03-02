@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Forecast Results - DemandIQ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -80,17 +83,29 @@
       backdrop-filter: blur(18px);
       box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
       animation: fadeUp 0.45s ease;
+      z-index: 50;
     }
 
     .logo-link {
       display: inline-flex;
       align-items: center;
+      gap: 0;
+      line-height: 1;
       text-decoration: none;
     }
 
+    .logo-icon {
+      width: 46px;
+      height: 46px;
+      flex: 0 0 46px;
+      display: block;
+      transform: translateY(3px);
+    }
+
     .logo-wordmark {
-      font-size: 31px;
+      font-size: 46px;
       line-height: 1;
+      display: block;
       font-weight: 800;
       letter-spacing: -0.5px;
       color: #f3f7ff;
@@ -107,17 +122,48 @@
 
     .nav-menu {
       display: flex;
-      gap: 16px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .top-nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: nowrap;
+      justify-content: flex-end;
+    }
+
+    .top-nav-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: nowrap;
     }
 
     .nav-menu a {
-      color: var(--muted);
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #f8fbff;
       text-decoration: none;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 700;
+      line-height: 1;
+      border-radius: 999px;
+      padding: 0 14px;
+      border: 1px solid rgba(80, 140, 246, 0.55);
+      background: linear-gradient(92deg, var(--primary) 0%, var(--secondary) 55%, var(--highlight) 100%);
+      box-shadow: 0 10px 24px rgba(59, 130, 246, 0.24);
+      transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
     }
 
-    .nav-menu a:hover { color: var(--text); }
+    .nav-menu a:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.05);
+      box-shadow: 0 14px 30px rgba(59, 130, 246, 0.31);
+    }
 
     .page-shell {
       width: min(1240px, calc(100% - 24px));
@@ -158,6 +204,7 @@
     }
 
     #contextText,
+    #reportText,
     #sourceText {
       margin-top: 8px;
       color: var(--muted);
@@ -166,15 +213,19 @@
     }
 
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .view-switch { display: flex; gap: 8px; flex-wrap: wrap; }
     .download-group { display: flex; gap: 8px; align-items: center; }
 
     .btn {
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       border: none;
       border-radius: 999px;
-      padding: 10px 16px;
+      padding: 0 16px;
       font-size: 13px;
       font-weight: 700;
+      line-height: 1;
       cursor: pointer;
       color: #f8fbff;
       background: linear-gradient(92deg, var(--primary) 0%, var(--secondary) 55%, var(--highlight) 100%);
@@ -195,24 +246,79 @@
       box-shadow: 0 10px 24px rgba(59, 130, 246, 0.24);
     }
 
-    .download-select {
-      min-width: 150px;
+    .download-dropdown {
+      position: relative;
+      min-width: 118px;
+      z-index: 60;
+    }
+
+    .download-toggle {
+      width: 100%;
       height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      border: 1px solid rgba(80, 140, 246, 0.55);
       border-radius: 999px;
-      padding: 0 12px;
+      padding: 0 10px;
       font-size: 13px;
       font-weight: 700;
       color: #f8fbff;
-      border: 1px solid rgba(80, 140, 246, 0.55);
+      cursor: pointer;
       background: linear-gradient(92deg, var(--primary) 0%, var(--secondary) 55%, var(--highlight) 100%);
-      outline: none;
       box-shadow: 0 10px 24px rgba(59, 130, 246, 0.24);
-      color-scheme: dark;
+      transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
     }
 
-    .download-select option {
-      background: #111827;
+    .download-toggle:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.05);
+      box-shadow: 0 14px 30px rgba(59, 130, 246, 0.31);
+    }
+
+    .download-caret {
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid #f8fbff;
+    }
+
+    .download-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      min-width: 140px;
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid rgba(80, 140, 246, 0.35);
+      background: rgba(15, 23, 42, 0.98);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+      display: none;
+      z-index: 80;
+    }
+
+    .download-menu.open {
+      display: grid;
+      gap: 4px;
+    }
+
+    .download-item {
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: rgba(30, 41, 59, 0.68);
       color: #e5e7eb;
+      border-radius: 8px;
+      padding: 8px 10px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .download-item:hover {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: rgba(96, 165, 250, 0.45);
     }
 
     .btn-active {
@@ -425,10 +531,40 @@
     @media (max-width: 760px) {
       .top-nav {
         padding: 10px 12px;
+        gap: 10px;
       }
 
-      .nav-menu a:last-child {
-        display: none;
+      .logo-icon {
+        width: 32px;
+        height: 32px;
+        flex-basis: 32px;
+        transform: none;
+      }
+
+      .logo-wordmark {
+        font-size: 32px;
+      }
+
+      .top-nav-right {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+
+      .nav-menu {
+        gap: 10px;
+      }
+
+      .nav-menu a {
+        font-size: 12px;
+        height: 34px;
+        padding: 0 11px;
+      }
+
+      .top-nav-actions .btn,
+      .download-toggle {
+        font-size: 12px;
+        height: 34px;
       }
 
       .glass-card {
@@ -446,35 +582,39 @@
 
   <nav class="top-nav">
     <a class="logo-link" href="/dashboard" aria-label="DemandIQ Home">
+      <img class="logo-icon" src="/assets/img/demandiq_icon.svg" alt="" aria-hidden="true" />
       <span class="logo-wordmark">Demand<span class="iq">IQ</span></span>
     </a>
-    <div class="nav-menu">
-      <a href="#">Dashboard</a>
-      <a href="#">Forecast</a>
-      <a href="#">Reports</a>
+    <div class="top-nav-right">
+      <div class="nav-menu">
+        <a href="/dashboard" id="navDashboard">Dashboard</a>
+        <a href="#" id="navReports">Reports</a>
+      </div>
+      <div class="top-nav-actions">
+        <button class="btn btn-secondary" id="modeToggleBtn" type="button">Past Demand View</button>
+        <div class="download-dropdown" id="downloadDropdown">
+          <button class="download-toggle" id="downloadToggleBtn" type="button" aria-haspopup="menu" aria-expanded="false">
+            <span>Download</span>
+            <span class="download-caret" aria-hidden="true"></span>
+          </button>
+          <div class="download-menu" id="downloadMenu" role="menu" aria-label="Download menu">
+            <button class="download-item" type="button" data-download-type="csv" role="menuitem">CSV</button>
+            <button class="download-item" type="button" data-download-type="pdf" role="menuitem">PDF</button>
+          </div>
+        </div>
+        <button class="btn" id="backBtn" type="button">Back</button>
+        <button class="btn" id="logoutBtn" type="button">Logout</button>
+      </div>
     </div>
   </nav>
 
   <main class="page-shell">
     <section class="glass-card header-card">
       <div>
-        <h1>Forecast Results</h1>
+        <h1 id="resultsPageTitle">Forecast Results</h1>
         <p id="contextText">Loading...</p>
+        <p id="reportText">Report: Forecast Report</p>
         <p id="sourceText">Source: Walmart</p>
-      </div>
-      <div class="actions">
-        <div class="view-switch">
-          <button class="btn btn-secondary" id="forecastViewBtn" type="button">Forecast View</button>
-          <button class="btn btn-secondary" id="pastViewBtn" type="button">Past Demand View</button>
-        </div>
-        <div class="download-group">
-          <select id="downloadType" class="download-select" aria-label="Download type">
-            <option value="" selected disabled hidden>Download</option>
-            <option value="csv">CSV</option>
-            <option value="pdf">PDF</option>
-          </select>
-        </div>
-        <button class="btn" id="backBtn" type="button">Back</button>
       </div>
     </section>
 
@@ -733,43 +873,168 @@
       downloadTextFile(filename, buildCsv(), "text/csv;charset=utf-8;");
     }
 
-    function downloadPdf() {
+    async function getSvgAsPngDataUrl(svgPath, size = 84) {
+      try {
+        const resp = await fetch(svgPath, { cache: "no-store" });
+        if (!resp.ok) return null;
+
+        const svgText = await resp.text();
+        const svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+        const svgUrl = URL.createObjectURL(svgBlob);
+
+        const img = await new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error("Failed to load SVG image"));
+          image.src = svgUrl;
+        });
+
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          URL.revokeObjectURL(svgUrl);
+          return null;
+        }
+        ctx.clearRect(0, 0, size, size);
+        ctx.drawImage(img, 0, 0, size, size);
+        URL.revokeObjectURL(svgUrl);
+        return canvas.toDataURL("image/png");
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async function downloadPdf() {
       if (!exportState.category) {
         alert("No forecast data available to download.");
         return;
       }
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 40;
+      const modeLabel = currentMode === "past" ? "Past Demand" : "Forecast";
+      const generatedAt = new Date().toLocaleString();
+      const primaryBlue = [59, 130, 246];
 
+      const logoDataUrl = await getSvgAsPngDataUrl("/assets/img/demandiq_icon.svg", 84);
+      const logoSize = 28;
+      const brandGap = 0;
+      const brandTextY = 67;
+      const demandText = "Demand";
+      const iqText = "IQ";
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(24);
+      const demandWidth = doc.getTextWidth(demandText);
+      const iqWidth = doc.getTextWidth(iqText);
+      const titleWidth = demandWidth + iqWidth;
+      const brandWidth = logoSize + brandGap + titleWidth;
+      const brandLeftX = (pageWidth - brandWidth) / 2;
+      const logoX = brandLeftX;
+      // Align logo vertically with the wordmark baseline for a professional lockup.
+      const logoY = brandTextY - logoSize + 8;
+      const textX = logoX + logoSize + brandGap;
+      if (logoDataUrl) {
+        doc.addImage(logoDataUrl, "PNG", logoX, logoY, logoSize, logoSize);
+      }
+
+      doc.setTextColor(17, 24, 39);
+      doc.text(demandText, textX, brandTextY);
+      doc.setTextColor(99, 102, 241);
+      doc.text(iqText, textX + demandWidth, brandTextY);
       doc.setFontSize(14);
-      doc.text("DemandIQ - Smart Supply Chain Demand Forecasting", 40, 40);
-      doc.setFontSize(10);
-      doc.text(`Category: ${exportState.category}`, 40, 62);
-      doc.text(`Period: ${exportState.fromDate} to ${exportState.toDate}`, 40, 78);
-      doc.text(`Total Forecast Units: ${exportState.total.toFixed(1)}`, 40, 94);
-      doc.text(`Average Daily Forecast: ${exportState.avg.toFixed(2)}`, 40, 110);
-      doc.text(`Latest Actual Units: ${exportState.latestActual.toFixed(1)}`, 40, 126);
+      doc.setTextColor(59, 130, 246);
+      doc.text(`${modeLabel} Results Report`, pageWidth / 2, 92, { align: "center" });
 
+      doc.setFillColor(246, 249, 255);
+      doc.roundedRect(margin, 106, pageWidth - (margin * 2), 74, 8, 8, "F");
+      doc.setDrawColor(220, 228, 244);
+      doc.roundedRect(margin, 106, pageWidth - (margin * 2), 74, 8, 8, "S");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(71, 85, 105);
+      doc.text(`Category: ${exportState.category}`, margin + 14, 128);
+      doc.text(`Period: ${exportState.fromDate} to ${exportState.toDate}`, margin + 14, 146);
+      doc.text(`View: ${modeLabel}`, margin + 14, 164);
+      doc.text(`Generated: ${generatedAt}`, pageWidth - margin - 14, 128, { align: "right" });
+
+      const cardsTop = 196;
+      const cardGap = 10;
+      const cardWidth = (pageWidth - (margin * 2) - (cardGap * 2)) / 3;
+      const metrics = [
+        { label: currentMode === "past" ? "Total Past Demand" : "Total Forecast Units", value: exportState.total.toFixed(1) },
+        { label: currentMode === "past" ? "Average Daily Demand" : "Average Daily Forecast", value: exportState.avg.toFixed(2) },
+        { label: "Latest Actual Units", value: exportState.latestActual.toFixed(1) },
+      ];
+      metrics.forEach((metric, i) => {
+        const x = margin + i * (cardWidth + cardGap);
+        doc.setFillColor(239, 246, 255);
+        doc.roundedRect(x, cardsTop, cardWidth, 52, 8, 8, "F");
+        doc.setDrawColor(191, 219, 254);
+        doc.roundedRect(x, cardsTop, cardWidth, 52, 8, 8, "S");
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(71, 85, 105);
+        doc.text(metric.label, x + 10, cardsTop + 16);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(15, 23, 42);
+        doc.text(metric.value, x + 10, cardsTop + 36);
+      });
+
+      const drawSectionHeader = (title, y) => {
+        doc.setFillColor(...primaryBlue);
+        doc.roundedRect(margin, y, pageWidth - (margin * 2), 20, 5, 5, "F");
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(255, 255, 255);
+        doc.text(title, margin + 10, y + 14);
+      };
+
+      drawSectionHeader("Recent History", 262);
       doc.autoTable({
-        startY: 145,
+        startY: 286,
         head: [exportState.historyCols],
         body: exportState.historyRows.map((r) => exportState.historyCols.map((c) => String(r[c] ?? ""))),
-        theme: "grid",
-        headStyles: { fillColor: [59, 130, 246] },
-        styles: { fontSize: 8 },
+        theme: "striped",
+        styles: { fontSize: 8, textColor: [30, 41, 59], cellPadding: 5, lineColor: [226, 232, 240], lineWidth: 0.3 },
+        headStyles: { fillColor: primaryBlue, textColor: [255, 255, 255], fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: margin, right: margin },
       });
 
-      const nextY = doc.lastAutoTable.finalY + 16;
+      let nextY = doc.lastAutoTable.finalY + 16;
+      if (nextY > pageHeight - 140) {
+        doc.addPage();
+        nextY = 50;
+      }
+
+      drawSectionHeader(currentMode === "past" ? "Past Demand Output" : "Forecast Output", nextY);
       doc.autoTable({
-        startY: nextY,
+        startY: nextY + 24,
         head: [exportState.forecastCols],
         body: exportState.forecastRows.map((r) => exportState.forecastCols.map((c) => String(r[c] ?? ""))),
-        theme: "grid",
-        headStyles: { fillColor: [59, 130, 246] },
-        styles: { fontSize: 8 },
+        theme: "striped",
+        styles: { fontSize: 8, textColor: [30, 41, 59], cellPadding: 5, lineColor: [226, 232, 240], lineWidth: 0.3 },
+        headStyles: { fillColor: primaryBlue, textColor: [255, 255, 255], fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: margin, right: margin },
       });
 
-      const filename = `forecast_${exportState.category.replaceAll(" ", "_")}_${exportState.toDate}.pdf`;
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i += 1) {
+        doc.setPage(i);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`DemandIQ | Generated ${generatedAt}`, margin, pageHeight - 18);
+        doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 18, { align: "right" });
+      }
+
+      const filename = `${modeLabel.toLowerCase().replaceAll(" ", "_")}_${exportState.category.replaceAll(" ", "_")}_${exportState.toDate}.pdf`;
       doc.save(filename);
     }
 
@@ -803,16 +1068,17 @@
       const mode = (params.get("mode") || "forecast").toLowerCase();
       currentMode = mode === "past" ? "past" : "forecast";
       const contextEl = document.getElementById("contextText");
+      const reportTextEl = document.getElementById("reportText");
+      const pageTitle = document.getElementById("resultsPageTitle");
+      const modeToggleBtn = document.getElementById("modeToggleBtn");
       const totalLabel = document.getElementById("kTotalLabel");
       const avgLabel = document.getElementById("kAvgLabel");
       const historyTitle = document.getElementById("historyTitle");
       const forecastTitle = document.getElementById("forecastTitle");
       const granularitySwitch = document.getElementById("granularitySwitch");
-      const forecastViewBtn = document.getElementById("forecastViewBtn");
-      const pastViewBtn = document.getElementById("pastViewBtn");
-
-      forecastViewBtn.classList.toggle("btn-active", currentMode === "forecast");
-      pastViewBtn.classList.toggle("btn-active", currentMode === "past");
+      pageTitle.textContent = currentMode === "past" ? "Past Demand Results" : "Forecast Results";
+      reportTextEl.textContent = currentMode === "past" ? "Report: Past Demand Report" : "Report: Forecast Report";
+      modeToggleBtn.textContent = currentMode === "past" ? "Forecast View" : "Past Demand View";
 
       if (!category || !fromDate || !toDate) {
         contextEl.textContent = "Missing input values. Please go back and select category and dates.";
@@ -1035,37 +1301,71 @@
     document.getElementById("backBtn").addEventListener("click", () => {
       window.location.href = "/dashboard";
     });
-    document.getElementById("forecastViewBtn").addEventListener("click", () => {
-      if (currentMode === "forecast") return;
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      sessionStorage.removeItem("dashboard_form_state_v1");
+      sessionStorage.setItem("dashboard_force_clear_v1", "1");
+      window.location.href = "/login";
+    });
+    document.getElementById("modeToggleBtn").addEventListener("click", () => {
       const params = new URLSearchParams(window.location.search);
-      params.set("mode", "forecast");
+      params.set("mode", currentMode === "past" ? "forecast" : "past");
       const newUrl = `${window.location.pathname}?${params.toString()}`;
       window.history.replaceState({}, "", newUrl);
       loadResults();
     });
-    document.getElementById("pastViewBtn").addEventListener("click", () => {
-      if (currentMode === "past") return;
-      const params = new URLSearchParams(window.location.search);
-      params.set("mode", "past");
-      const newUrl = `${window.location.pathname}?${params.toString()}`;
-      window.history.replaceState({}, "", newUrl);
-      loadResults();
+    const downloadDropdown = document.getElementById("downloadDropdown");
+    const downloadToggleBtn = document.getElementById("downloadToggleBtn");
+    const downloadMenu = document.getElementById("downloadMenu");
+    function closeDownloadMenu() {
+      downloadMenu.classList.remove("open");
+      downloadToggleBtn.setAttribute("aria-expanded", "false");
+    }
+    downloadToggleBtn.addEventListener("click", () => {
+      const willOpen = !downloadMenu.classList.contains("open");
+      if (willOpen) {
+        downloadMenu.classList.add("open");
+        downloadToggleBtn.setAttribute("aria-expanded", "true");
+      } else {
+        closeDownloadMenu();
+      }
     });
-    document.getElementById("downloadType").addEventListener("change", (e) => {
-      const type = e.target.value;
+    downloadMenu.addEventListener("click", async (e) => {
+      const item = e.target.closest("[data-download-type]");
+      if (!item) return;
+      const type = item.getAttribute("data-download-type");
+      closeDownloadMenu();
       if (type === "csv") {
         downloadCsv();
       } else if (type === "pdf") {
-        downloadPdf();
+        try {
+          await downloadPdf();
+        } catch (_) {
+          alert("Failed to generate PDF. Please try again.");
+        }
       }
-      // Keep dropdown usable for repeated downloads.
-      e.target.value = "";
+    });
+    document.addEventListener("click", (e) => {
+      if (!downloadDropdown.contains(e.target)) {
+        closeDownloadMenu();
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeDownloadMenu();
+      }
     });
     document.querySelectorAll("[data-granularity]").forEach((btn) => {
       btn.addEventListener("click", () => {
         tableGranularity = btn.getAttribute("data-granularity") || "daily";
         applyGranularityTable();
       });
+    });
+    document.getElementById("navReports").addEventListener("click", (e) => {
+      e.preventDefault();
+      const reportsSection = document.querySelector(".data-grid");
+      if (reportsSection) {
+        reportsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
 
     loadResults();

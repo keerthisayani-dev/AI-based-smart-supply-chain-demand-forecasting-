@@ -16,17 +16,6 @@
 <body>
   <div class="mesh-bg" aria-hidden="true"></div>
 
-  <nav class="top-nav">
-    <a class="logo-link" href="/dashboard" aria-label="DemandIQ Home">
-      <span class="logo-wordmark">Demand<span class="iq">IQ</span></span>
-    </a>
-    <div class="nav-menu">
-      <a href="#">Dashboard</a>
-      <a href="#">Forecast</a>
-      <a href="#">Reports</a>
-    </div>
-  </nav>
-
   <main class="page-shell">
     <section class="hero">
       <h1 class="hero-title">
@@ -43,16 +32,19 @@
         <select id="category" autocomplete="off">
           <option value="" selected disabled hidden>Select category</option>
         </select>
+        <div id="categoryError" class="field-error" role="alert" aria-live="polite"></div>
       </div>
 
       <div class="date-grid">
         <div class="field">
           <label for="fromDate">From Date</label>
           <input id="fromDate" type="text" autocomplete="off" placeholder="Select start date" />
+          <div id="fromDateError" class="field-error" role="alert" aria-live="polite"></div>
         </div>
         <div class="field">
           <label for="toDate">To Date</label>
           <input id="toDate" type="text" autocomplete="off" placeholder="Select end date" />
+          <div id="toDateError" class="field-error" role="alert" aria-live="polite"></div>
         </div>
       </div>
 
@@ -68,10 +60,33 @@
     const categoryEl = document.getElementById("category");
     const fromDateEl = document.getElementById("fromDate");
     const toDateEl = document.getElementById("toDate");
+    const categoryErrorEl = document.getElementById("categoryError");
+    const fromDateErrorEl = document.getElementById("fromDateError");
+    const toDateErrorEl = document.getElementById("toDateError");
     const ALLOWED_MIN_DATE = "2025-01-01";
     const ALLOWED_MAX_DATE = "2031-12-31";
+    const DASHBOARD_STATE_KEY = "dashboard_form_state_v1";
+    const DASHBOARD_FORCE_CLEAR_KEY = "dashboard_force_clear_v1";
     let fromPicker = null;
     let toPicker = null;
+
+    function setFieldError(inputEl, errorEl, message) {
+      errorEl.textContent = String(message || "");
+      errorEl.classList.add("is-visible");
+      inputEl.classList.add("input-error");
+    }
+
+    function clearFieldError(inputEl, errorEl) {
+      errorEl.textContent = "";
+      errorEl.classList.remove("is-visible");
+      inputEl.classList.remove("input-error");
+    }
+
+    function clearAllErrors() {
+      clearFieldError(categoryEl, categoryErrorEl);
+      clearFieldError(fromDateEl, fromDateErrorEl);
+      clearFieldError(toDateEl, toDateErrorEl);
+    }
 
     function apiBase() {
       return "http://127.0.0.1:8000";
@@ -102,7 +117,7 @@
       });
     }
 
-    async function loadCategories() {
+    async function loadCategories(preferredCategory = "") {
       try {
         const resp = await fetch(`${apiBase()}/categories`);
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -118,8 +133,13 @@
           opt.textContent = cat;
           categoryEl.appendChild(opt);
         });
+
+        if (preferredCategory && dropdownValues.includes(preferredCategory)) {
+          categoryEl.value = preferredCategory;
+        }
       } catch (err) {
         console.error(`Failed to load categories: ${err.message}`);
+        setFieldError(categoryEl, categoryErrorEl, "Unable to load categories. Please refresh and try again.");
       }
     }
 
@@ -129,51 +149,134 @@
       toDateEl.value = "";
     }
 
-    function initializeDefaults() {
-      clearInputState();
-      setDefaultDates();
-      initDatePickers();
-      loadCategories();
+    function saveDashboardState() {
+      const state = {
+        category: categoryEl.value || "",
+        fromDate: fromDateEl.value || "",
+        toDate: toDateEl.value || "",
+      };
+      sessionStorage.setItem(DASHBOARD_STATE_KEY, JSON.stringify(state));
     }
 
-    function goToResults(mode = "forecast") {
+    function clearDashboardState() {
+      sessionStorage.removeItem(DASHBOARD_STATE_KEY);
+    }
+
+    function readDashboardState() {
+      try {
+        const raw = sessionStorage.getItem(DASHBOARD_STATE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return {
+          category: String(parsed?.category || ""),
+          fromDate: String(parsed?.fromDate || ""),
+          toDate: String(parsed?.toDate || ""),
+        };
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function getNavigationType() {
+      const navEntry = performance.getEntriesByType("navigation")[0];
+      return navEntry ? navEntry.type : "";
+    }
+
+    function consumeForceClearFlag() {
+      const shouldClear = sessionStorage.getItem(DASHBOARD_FORCE_CLEAR_KEY) === "1";
+      if (shouldClear) {
+        sessionStorage.removeItem(DASHBOARD_FORCE_CLEAR_KEY);
+      }
+      return shouldClear;
+    }
+
+    async function initializeDefaults() {
+      clearAllErrors();
+      const shouldClearFromReload = getNavigationType() === "reload";
+      const shouldClearFromLogout = consumeForceClearFlag();
+      const shouldClear = shouldClearFromReload || shouldClearFromLogout;
+      const savedState = shouldClear ? null : readDashboardState();
+
+      if (shouldClear) {
+        clearDashboardState();
+      }
+
+      clearInputState();
+      initDatePickers();
+      setDefaultDates();
+      await loadCategories(savedState?.category || "");
+
+      if (savedState?.fromDate) {
+        fromPicker.setDate(savedState.fromDate, true, "Y-m-d");
+      }
+      if (savedState?.toDate) {
+        toPicker.setDate(savedState.toDate, true, "Y-m-d");
+      }
+    }
+
+    function validateInputs() {
+      clearAllErrors();
       const category = categoryEl.value;
       const fromDate = fromDateEl.value;
       const toDate = toDateEl.value;
 
+      let hasError = false;
       if (!category) {
-        alert("Please select a category.");
-        return;
+        setFieldError(categoryEl, categoryErrorEl, "Please select a category.");
+        hasError = true;
       }
-      if (!fromDate || !toDate) {
-        alert("Please select From Date and To Date.");
-        return;
+      if (!fromDate) {
+        setFieldError(fromDateEl, fromDateErrorEl, "Please select a start date.");
+        hasError = true;
       }
-      if (new Date(fromDate) > new Date(toDate)) {
-        alert("From Date must be earlier than or equal to To Date.");
-        return;
+      if (!toDate) {
+        setFieldError(toDateEl, toDateErrorEl, "Please select an end date.");
+        hasError = true;
+      }
+      if (hasError) {
+        return false;
+      }
+
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      if (from > to) {
+        setFieldError(toDateEl, toDateErrorEl, "To Date must be on or after From Date.");
+        return false;
       }
 
       const minAllowed = new Date(ALLOWED_MIN_DATE);
       const maxAllowed = new Date(ALLOWED_MAX_DATE);
-      const from = new Date(fromDate);
-      const to = new Date(toDate);
-      if (from < minAllowed || from > maxAllowed || to < minAllowed || to > maxAllowed) {
-        alert("Please select dates between 2025 and 2031.");
+      if (from < minAllowed || from > maxAllowed) {
+        setFieldError(fromDateEl, fromDateErrorEl, "Use a date between 2025 and 2031.");
+        hasError = true;
+      }
+      if (to < minAllowed || to > maxAllowed) {
+        setFieldError(toDateEl, toDateErrorEl, "Use a date between 2025 and 2031.");
+        hasError = true;
+      }
+      return !hasError;
+    }
+
+    function goToResults(mode = "forecast") {
+      clearAllErrors();
+      const category = categoryEl.value;
+      const fromDate = fromDateEl.value;
+      const toDate = toDateEl.value;
+
+      if (!validateInputs()) {
         return;
       }
 
+      saveDashboardState();
       const resultUrl = `/dashboard/results?category=${encodeURIComponent(category)}&from=${encodeURIComponent(fromDate)}&to=${encodeURIComponent(toDate)}&mode=${encodeURIComponent(mode)}`;
       window.location.href = resultUrl;
     }
 
-    const navEntry = performance.getEntriesByType("navigation")[0];
-    if (navEntry && navEntry.type === "reload") {
-      clearInputState();
-    }
-
     initializeDefaults();
     window.addEventListener("pageshow", initializeDefaults);
+    categoryEl.addEventListener("change", () => clearFieldError(categoryEl, categoryErrorEl));
+    fromDateEl.addEventListener("input", () => clearFieldError(fromDateEl, fromDateErrorEl));
+    toDateEl.addEventListener("input", () => clearFieldError(toDateEl, toDateErrorEl));
     document.getElementById("generateBtn").addEventListener("click", () => goToResults("forecast"));
   </script>
 </body>
