@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Forecast Results - EXAFLUENCE</title>
+  <title>Forecast Results - DemandIQ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
@@ -82,13 +82,26 @@
       animation: fadeUp 0.45s ease;
     }
 
-    .logo-text {
-      font-size: 19px;
+    .logo-link {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+    }
+
+    .logo-wordmark {
+      font-size: 31px;
+      line-height: 1;
       font-weight: 800;
-      letter-spacing: 0.3px;
-      background: linear-gradient(90deg, var(--primary) 0%, var(--highlight) 100%);
+      letter-spacing: -0.5px;
+      color: #f3f7ff;
+    }
+
+    .logo-wordmark .iq {
+      display: inline-block;
+      background: linear-gradient(90deg, #37d6ff 0%, #7c4dff 100%);
       -webkit-background-clip: text;
       background-clip: text;
+      -webkit-text-fill-color: transparent;
       color: transparent;
     }
 
@@ -303,6 +316,45 @@
       font-weight: 700;
     }
 
+    .table-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .granularity-switch {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .mini-btn {
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      background: rgba(15, 23, 42, 0.66);
+      cursor: pointer;
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    .mini-btn:hover {
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+    }
+
+    .mini-btn.active {
+      color: #f8fbff;
+      border: 1px solid rgba(80, 140, 246, 0.55);
+      background: linear-gradient(92deg, var(--primary) 0%, var(--secondary) 55%, var(--highlight) 100%);
+      box-shadow: 0 8px 18px rgba(59, 130, 246, 0.2);
+    }
+
     .table-wrap {
       max-height: 360px;
       overflow: auto;
@@ -393,7 +445,9 @@
   <div class="mesh-bg" aria-hidden="true"></div>
 
   <nav class="top-nav">
-    <div class="logo-text">EXAFLUENCE</div>
+    <a class="logo-link" href="/dashboard" aria-label="DemandIQ Home">
+      <span class="logo-wordmark">Demand<span class="iq">IQ</span></span>
+    </a>
     <div class="nav-menu">
       <a href="#">Dashboard</a>
       <a href="#">Forecast</a>
@@ -458,13 +512,20 @@
         <div id="historyTable"></div>
       </article>
       <article class="glass-card">
-        <h3 class="table-title" id="forecastTitle">Forecast Output</h3>
+        <div class="table-head">
+          <h3 class="table-title" id="forecastTitle">Forecast Output</h3>
+          <div class="granularity-switch" id="granularitySwitch" hidden>
+            <button class="mini-btn" type="button" data-granularity="daily">Daily</button>
+            <button class="mini-btn" type="button" data-granularity="weekly">Weekly</button>
+            <button class="mini-btn active" type="button" data-granularity="monthly">Monthly</button>
+          </div>
+        </div>
         <div id="forecastTable"></div>
       </article>
     </section>
   </main>
 
-  <footer class="page-footer">© EXAFLUENCE - AI Demand Forecasting System</footer>
+  <footer class="page-footer">© DemandIQ - AI Demand Forecasting System</footer>
 
   <script>
     const exportState = {
@@ -478,8 +539,12 @@
       historyCols: [],
       forecastRows: [],
       forecastCols: [],
+      pastBaseRows: [],
+      forecastBaseRows: [],
     };
     let currentMode = "forecast";
+    let tableGranularity = "daily";
+    let latestLoadRequestId = 0;
 
     function apiBase() {
       return "http://127.0.0.1:8000";
@@ -504,11 +569,12 @@
       const mapped = items.map((r) => ({
         created_at: r.created_at || "",
         category: r.category || "",
+        period: `${r.start_date || "-"} to ${r.end_date || "-"}`,
         latest_actual: toNum(r.latest_actual).toFixed(1),
         total_forecast: toNum(r.total_forecast).toFixed(1),
       }));
       exportState.historyRows = mapped;
-      exportState.historyCols = ["created_at", "category", "latest_actual", "total_forecast"];
+      exportState.historyCols = ["created_at", "category", "period", "latest_actual", "total_forecast"];
       renderTable(
         document.getElementById("historyTable"),
         mapped,
@@ -516,17 +582,85 @@
       );
     }
 
-    function groupMonthlyActual(historyRows) {
+    function groupMonthly(rows, valueKey) {
       const m = new Map();
-      historyRows.forEach((r) => {
+      rows.forEach((r) => {
         const d = new Date(r.date);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        const v = toNum(r.actual_units_sold);
+        const v = toNum(r[valueKey]);
         m.set(key, (m.get(key) || 0) + v);
       });
       return Array.from(m.entries())
-        .map(([month, actual_units_sold]) => ({ month, actual_units_sold: actual_units_sold.toFixed(1) }))
+        .map(([month, units]) => ({ month, [valueKey]: units.toFixed(1) }))
         .sort((a, b) => a.month.localeCompare(b.month));
+    }
+
+    function groupWeekly(rows, valueKey) {
+      const m = new Map();
+      rows.forEach((r) => {
+        const d = new Date(r.date);
+        const day = d.getDay(); // 0=Sun
+        const shift = (day + 6) % 7; // Monday-start week
+        const weekStart = new Date(d);
+        weekStart.setDate(d.getDate() - shift);
+        const key = weekStart.toISOString().slice(0, 10);
+        const v = toNum(r[valueKey]);
+        m.set(key, (m.get(key) || 0) + v);
+      });
+      return Array.from(m.entries())
+        .map(([week_start, units]) => ({ week_start, [valueKey]: units.toFixed(1) }))
+        .sort((a, b) => a.week_start.localeCompare(b.week_start));
+    }
+
+    function buildGranularityRows() {
+      const isPast = currentMode === "past";
+      const rows = isPast ? (exportState.pastBaseRows || []) : (exportState.forecastBaseRows || []);
+      const valueKey = isPast ? "actual_units_sold" : "forecast_units_sold";
+      const noun = isPast ? "Past Demand" : "Forecast Output";
+
+      if (tableGranularity === "daily") {
+        return {
+          title: `Daily ${noun}`,
+          cols: ["date", valueKey],
+          rows: rows.map((r) => ({
+            date: r.date,
+            [valueKey]: toNum(r[valueKey]).toFixed(1),
+          })),
+        };
+      }
+      if (tableGranularity === "weekly") {
+        return {
+          title: `Weekly ${noun}`,
+          cols: ["week_start", valueKey],
+          rows: groupWeekly(rows, valueKey),
+        };
+      }
+      return {
+        title: `Monthly ${noun}`,
+        cols: ["month", valueKey],
+        rows: groupMonthly(rows, valueKey),
+      };
+    }
+
+    function setGranularityButtons() {
+      const buttons = document.querySelectorAll("[data-granularity]");
+      buttons.forEach((btn) => {
+        const isActive = btn.getAttribute("data-granularity") === tableGranularity;
+        btn.classList.toggle("active", isActive);
+      });
+    }
+
+    function applyGranularityTable() {
+      const built = buildGranularityRows();
+      exportState.forecastCols = built.cols;
+      exportState.forecastRows = built.rows;
+      document.getElementById("forecastTitle").textContent = built.title;
+      renderTable(
+        document.getElementById("forecastTable"),
+        exportState.forecastRows,
+        exportState.forecastCols
+      );
+      setGranularityButtons();
     }
 
     async function loadRecentHistory(category) {
@@ -565,7 +699,7 @@
 
     function buildCsv() {
       const lines = [];
-      lines.push("EXAFLUENCE Smart Supply Chain Demand Forecasting");
+      lines.push("DemandIQ Smart Supply Chain Demand Forecasting");
       lines.push(`Category,${escapeCsv(exportState.category)}`);
       lines.push(`From Date,${escapeCsv(exportState.fromDate)}`);
       lines.push(`To Date,${escapeCsv(exportState.toDate)}`);
@@ -608,7 +742,7 @@
       const doc = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
 
       doc.setFontSize(14);
-      doc.text("EXAFLUENCE - Smart Supply Chain Demand Forecasting", 40, 40);
+      doc.text("DemandIQ - Smart Supply Chain Demand Forecasting", 40, 40);
       doc.setFontSize(10);
       doc.text(`Category: ${exportState.category}`, 40, 62);
       doc.text(`Period: ${exportState.fromDate} to ${exportState.toDate}`, 40, 78);
@@ -661,6 +795,7 @@
     }
 
     async function loadResults() {
+      const requestId = ++latestLoadRequestId;
       const params = new URLSearchParams(window.location.search);
       const category = params.get("category") || "";
       const fromDate = params.get("from") || "";
@@ -672,6 +807,7 @@
       const avgLabel = document.getElementById("kAvgLabel");
       const historyTitle = document.getElementById("historyTitle");
       const forecastTitle = document.getElementById("forecastTitle");
+      const granularitySwitch = document.getElementById("granularitySwitch");
       const forecastViewBtn = document.getElementById("forecastViewBtn");
       const pastViewBtn = document.getElementById("pastViewBtn");
 
@@ -706,6 +842,7 @@
 
         const requestAnchor = currentMode === "forecast" ? forecastAnchorDate : toDate;
         const data = await fetchForecastPayload(requestAnchor, periodDays);
+        if (requestId !== latestLoadRequestId) return;
 
         const history = Array.isArray(data.history) ? data.history : [];
         const forecast = Array.isArray(data.forecast) ? data.forecast : [];
@@ -720,12 +857,13 @@
           const t = new Date(r.date).getTime();
           return t >= fromTs && t <= toTs;
         });
+        const pastHistoryForDisplay = (currentMode === "past" && !filteredHistory.length) ? history : filteredHistory;
 
         const totalForecast = filteredForecast.reduce((s, r) => s + toNum(r.forecast_units_sold), 0);
         const avgForecast = filteredForecast.length ? totalForecast / filteredForecast.length : 0;
-        const totalPast = filteredHistory.reduce((s, r) => s + toNum(r.actual_units_sold), 0);
-        const avgPast = filteredHistory.length ? totalPast / filteredHistory.length : 0;
-        const latestActual = filteredHistory.length ? toNum(filteredHistory[filteredHistory.length - 1].actual_units_sold) : 0;
+        const totalPast = pastHistoryForDisplay.reduce((s, r) => s + toNum(r.actual_units_sold), 0);
+        const avgPast = pastHistoryForDisplay.length ? totalPast / pastHistoryForDisplay.length : 0;
+        const latestActual = history.length ? toNum(history[history.length - 1].actual_units_sold) : 0;
         exportState.total = mode === "past" ? totalPast : totalForecast;
         exportState.avg = mode === "past" ? avgPast : avgForecast;
         exportState.latestActual = latestActual;
@@ -733,10 +871,13 @@
         totalLabel.textContent = mode === "past" ? "Total Past Demand" : "Total Forecast Units";
         avgLabel.textContent = mode === "past" ? "Average Daily Demand" : "Average Daily Forecast";
         historyTitle.textContent = "Recent History";
-        forecastTitle.textContent = mode === "past" ? "Monthly Past Demand" : "Forecast Output";
+        forecastTitle.textContent = mode === "past" ? "Past Demand Output" : "Forecast Output";
+        granularitySwitch.hidden = false;
 
-        if (currentMode === "past" && !filteredHistory.length) {
-          contextEl.textContent = `${contextEl.textContent} | Note: No actuals available in selected period.`;
+        if (currentMode === "past" && !filteredHistory.length && pastHistoryForDisplay.length) {
+          const firstAvailable = pastHistoryForDisplay[0].date;
+          const lastAvailable = pastHistoryForDisplay[pastHistoryForDisplay.length - 1].date;
+          contextEl.textContent = `${contextEl.textContent} | Note: No actuals in selected period. Showing latest available history (${firstAvailable} to ${lastAvailable}).`;
         }
         if (currentMode === "forecast" && !filteredForecast.length) {
           contextEl.textContent = `${contextEl.textContent} | Note: No forecast generated for selected period.`;
@@ -746,30 +887,70 @@
         document.getElementById("mAvg").textContent = exportState.avg.toFixed(2);
         document.getElementById("mActual").textContent = latestActual.toFixed(1);
 
-        const series = [
-          {
-            x: filteredHistory.map(r => r.date),
-            y: filteredHistory.map(r => toNum(r.actual_units_sold)),
+        const selectedFromTs = new Date(fromDate).getTime();
+        const selectedToTs = new Date(toDate).getTime();
+        const contextWindowStart = selectedFromTs - (45 * 86400000);
+        const nearPeriodActuals = history.filter((r) => {
+          const t = new Date(r.date).getTime();
+          return t >= contextWindowStart && t <= selectedToTs;
+        });
+        const actualSeriesRows = currentMode === "past" ? pastHistoryForDisplay : nearPeriodActuals;
+
+        const series = [];
+        if (actualSeriesRows.length) {
+          series.push({
+            x: actualSeriesRows.map(r => r.date),
+            y: actualSeriesRows.map(r => toNum(r.actual_units_sold)),
             mode: "lines+markers",
             name: "Actual",
             line: { color: "#06B6D4", width: 3 },
-            marker: { color: "#06B6D4", size: 6 }
+            marker: { color: "#06B6D4", size: 5 }
+          });
+        }
+        if (mode !== "past" && filteredForecast.length) {
+          const forecastX = filteredForecast.map(r => r.date);
+          const forecastY = filteredForecast.map(r => toNum(r.forecast_units_sold));
+
+          // Bridge only when actual and forecast are temporally close.
+          if (nearPeriodActuals.length) {
+            const lastActual = nearPeriodActuals[nearPeriodActuals.length - 1];
+            const gapDays = Math.floor(
+              (new Date(filteredForecast[0].date).getTime() - new Date(lastActual.date).getTime()) / 86400000
+            );
+            if (gapDays >= 0 && gapDays <= 7) {
+              forecastX.unshift(lastActual.date);
+              forecastY.unshift(toNum(lastActual.actual_units_sold));
+            }
           }
-        ];
-        if (mode !== "past") {
+
           series.push({
-            x: filteredForecast.map(r => r.date),
-            y: filteredForecast.map(r => toNum(r.forecast_units_sold)),
+            x: forecastX,
+            y: forecastY,
             mode: "lines+markers",
             name: "Forecast",
-            line: { color: "#8B5CF6", width: 3 },
-            marker: { color: "#8B5CF6", size: 6 },
-            fill: "tozeroy",
-            fillcolor: "rgba(139, 92, 246, 0.08)"
+            line: { color: "#8B5CF6", width: 3, dash: "solid" },
+            marker: { color: "#8B5CF6", size: 5 }
           });
         }
 
-        const tickVals = buildDateTicks(fromDate, toDate, 3);
+        const chartStartCandidates = [];
+        const chartEndCandidates = [];
+        if (actualSeriesRows.length) {
+          chartStartCandidates.push(actualSeriesRows[0].date);
+          chartEndCandidates.push(actualSeriesRows[actualSeriesRows.length - 1].date);
+        }
+        if (filteredForecast.length) {
+          chartStartCandidates.push(filteredForecast[0].date);
+          chartEndCandidates.push(filteredForecast[filteredForecast.length - 1].date);
+        }
+
+        const chartFrom = currentMode === "past"
+          ? (chartStartCandidates.length ? chartStartCandidates.sort()[0] : fromDate)
+          : fromDate;
+        const chartTo = currentMode === "past"
+          ? (chartEndCandidates.length ? chartEndCandidates.sort().slice(-1)[0] : toDate)
+          : toDate;
+        const forecastStartDate = filteredForecast.length ? filteredForecast[0].date : null;
 
         Plotly.newPlot("chart", series, {
           title: mode === "past" ? `Past Demand Trend: ${category}` : `Demand Trend and Forecast: ${category}`,
@@ -777,16 +958,23 @@
           plot_bgcolor: "rgba(0,0,0,0)",
           font: { color: "#E5E7EB" },
           titlefont: { color: "#E5E7EB" },
+          hovermode: "x unified",
+          hoverlabel: {
+            bgcolor: "#111827",
+            bordercolor: "rgba(148, 163, 184, 0.3)",
+            font: { color: "#E5E7EB" }
+          },
           xaxis: {
             title: "Date",
             tickfont: { color: "#94A3B8" },
             titlefont: { color: "#94A3B8" },
             gridcolor: "rgba(148, 163, 184, 0.18)",
             zerolinecolor: "rgba(148, 163, 184, 0.2)",
-            range: [fromDate, toDate],
-            tickmode: "array",
-            tickvals: tickVals,
+            range: [chartFrom, chartTo],
             tickformat: "%b %-d",
+            nticks: 10,
+            tickangle: 0,
+            automargin: true,
           },
           yaxis: {
             title: "Units Sold",
@@ -794,25 +982,37 @@
             titlefont: { color: "#94A3B8" },
             gridcolor: "rgba(148, 163, 184, 0.18)",
             zerolinecolor: "rgba(148, 163, 184, 0.2)",
+            automargin: true,
           },
+          shapes: forecastStartDate && currentMode !== "past" ? [{
+            type: "line",
+            x0: forecastStartDate,
+            x1: forecastStartDate,
+            yref: "paper",
+            y0: 0,
+            y1: 1,
+            line: { color: "rgba(139, 92, 246, 0.35)", width: 1, dash: "dot" }
+          }] : [],
           legend: { font: { color: "#E5E7EB" } },
           margin: { t: 44, l: 50, r: 20, b: 50 }
         }, {
-          responsive: true
+          responsive: true,
+          displaylogo: false,
+          modeBarButtonsToRemove: [
+            "zoom2d", "pan2d", "select2d", "lasso2d",
+            "zoomIn2d", "zoomOut2d", "autoScale2d",
+            "hoverClosestCartesian", "hoverCompareCartesian", "toggleSpikelines"
+          ]
         });
 
         exportState.historyCols = ["date", "actual_units_sold"];
-        exportState.historyRows = [...filteredHistory].reverse();
-        if (mode === "past") {
-          const monthly = groupMonthlyActual(filteredHistory);
-          exportState.forecastCols = ["month", "actual_units_sold"];
-          exportState.forecastRows = monthly;
-        } else {
-          exportState.forecastCols = ["date", "forecast_units_sold"];
-          exportState.forecastRows = filteredForecast;
-        }
+        exportState.historyRows = [...(currentMode === "past" ? pastHistoryForDisplay : filteredHistory)].reverse();
+        exportState.pastBaseRows = [...pastHistoryForDisplay];
+        exportState.forecastBaseRows = [...filteredForecast];
+        applyGranularityTable();
 
         const loadedRecent = await loadRecentHistory(category);
+        if (requestId !== latestLoadRequestId) return;
         if (!loadedRecent) {
           renderTable(
             document.getElementById("historyTable"),
@@ -827,6 +1027,7 @@
         );
 
       } catch (err) {
+        if (requestId !== latestLoadRequestId) return;
         contextEl.textContent = `Failed to fetch forecast: ${err.message}`;
       }
     }
@@ -859,6 +1060,12 @@
       }
       // Keep dropdown usable for repeated downloads.
       e.target.value = "";
+    });
+    document.querySelectorAll("[data-granularity]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        tableGranularity = btn.getAttribute("data-granularity") || "daily";
+        applyGranularityTable();
+      });
     });
 
     loadResults();

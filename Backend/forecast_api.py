@@ -86,6 +86,8 @@ def _init_history_db() -> None:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
                 category TEXT NOT NULL,
+                start_date TEXT,
+                end_date TEXT,
                 anchor_date TEXT,
                 horizon INTEGER NOT NULL,
                 history_lookback_days INTEGER NOT NULL,
@@ -97,12 +99,21 @@ def _init_history_db() -> None:
             )
             """
         )
+        existing_cols = {
+            row["name"] for row in conn.execute("PRAGMA table_info(forecast_history)").fetchall()
+        }
+        if "start_date" not in existing_cols:
+            conn.execute("ALTER TABLE forecast_history ADD COLUMN start_date TEXT")
+        if "end_date" not in existing_cols:
+            conn.execute("ALTER TABLE forecast_history ADD COLUMN end_date TEXT")
         conn.commit()
 
 
 def _save_forecast_history(
     *,
     category: str,
+    start_date: Optional[str],
+    end_date: Optional[str],
     anchor_date: Optional[str],
     horizon: int,
     history_lookback_days: int,
@@ -131,6 +142,8 @@ def _save_forecast_history(
             """
             INSERT INTO forecast_history (
                 category,
+                start_date,
+                end_date,
                 anchor_date,
                 horizon,
                 history_lookback_days,
@@ -139,10 +152,12 @@ def _save_forecast_history(
                 latest_actual,
                 total_forecast,
                 average_forecast
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 category,
+                start_date,
+                end_date,
                 anchor_date,
                 int(horizon),
                 int(history_lookback_days),
@@ -163,6 +178,8 @@ def _load_recent_history(category: Optional[str] = None, limit: int = 20) -> Lis
             id,
             created_at,
             category,
+            start_date,
+            end_date,
             anchor_date,
             horizon,
             history_lookback_days,
@@ -503,6 +520,8 @@ def get_forecast(
         )
         _save_forecast_history(
             category=category,
+            start_date=rows[0]["date"] if rows else None,
+            end_date=rows[-1]["date"] if rows else anchor_date,
             anchor_date=anchor_date,
             horizon=horizon,
             history_lookback_days=history_lookback_days,

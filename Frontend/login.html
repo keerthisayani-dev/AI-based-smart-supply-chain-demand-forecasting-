@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - EXAFLUENCE</title>
+  <title>Login - DemandIQ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
@@ -57,8 +57,13 @@
       font-weight: 800;
     }
 
-    .brand-exa { color: var(--exa-blue); }
-    .brand-fluence { color: var(--fluence-red); }
+    .login-logo {
+      width: 250px;
+      max-width: 72%;
+      height: auto;
+      display: block;
+      margin-bottom: 8px;
+    }
 
     .subtitle {
       margin: 10px 0 20px;
@@ -164,7 +169,7 @@
 </head>
 <body>
   <main class="login-card">
-    <h1 class="title"><span class="brand-exa">EXA</span><span class="brand-fluence">FLUENCE</span></h1>
+    <img class="login-logo" src="/assets/img/demandiq_logo.svg" alt="DemandIQ" />
     <p class="subtitle">Smart Supply Chain Demand Forecasting</p>
 
     <form id="loginForm">
@@ -185,7 +190,7 @@
     </form>
 
     <p class="note">Authorized users only. Activity is monitored.</p>
-    <p class="footer">© 2026 Exafluence</p>
+    <p class="footer">© 2026 DemandIQ</p>
   </main>
 
   <script>
