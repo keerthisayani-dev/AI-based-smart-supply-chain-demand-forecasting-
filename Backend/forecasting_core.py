@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+import re
 
 import numpy as np
 import pandas as pd
@@ -40,12 +41,50 @@ def parse_date_series(values: pd.Series) -> pd.Series:
 def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     out.columns = out.columns.str.strip().str.lower()
+
+    def _norm_col(value: str) -> str:
+        return re.sub(r"[^a-z0-9]+", "", str(value).strip().lower())
+
+    alias_map = {
+        DATE_COL: {"orderdate", "salesdate", "transactiondate"},
+        "product id": {"productid", "product", "sku", "itemid"},
+        CATEGORY_COL: {"productcategory", "itemcategory", "department", "category1"},
+        TARGET_COL: {"unitssold", "unitsold", "qtysold", "quantitysold", "unitssolds"},
+    }
+
+    rename_map: Dict[str, str] = {}
+    used_targets: set[str] = set()
+    col_key_map = {col: _norm_col(col) for col in out.columns}
+    for col, key in col_key_map.items():
+        for target, aliases in alias_map.items():
+            if target in used_targets:
+                continue
+            if key == _norm_col(target) or key in aliases:
+                rename_map[col] = target
+                used_targets.add(target)
+                break
+
+    if rename_map:
+        out = out.rename(columns=rename_map)
+
     return out
 
 
 def load_sales_data(csv_path: str | Path) -> pd.DataFrame:
     df = pd.read_csv(csv_path)
     df = normalize_columns(df)
+
+    if CATEGORY_COL not in df.columns and "product id" in df.columns:
+        df[CATEGORY_COL] = df["product id"].astype("string").str.strip()
+
+    if "category.1" in df.columns:
+        # Some exports carry human-readable names in `category.1` while `category` has IDs.
+        alt = df["category.1"].astype("string").str.strip()
+        valid_alt = alt.notna() & alt.ne("") & alt.str.lower().ne("nan")
+        if "category" in df.columns:
+            df.loc[valid_alt, "category"] = alt[valid_alt]
+        else:
+            df["category"] = alt
 
     if DATE_COL not in df.columns:
         raise ValueError(f"Missing required column: {DATE_COL}")

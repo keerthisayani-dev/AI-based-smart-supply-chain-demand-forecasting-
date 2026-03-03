@@ -16,7 +16,28 @@
 <body>
   <div class="mesh-bg" aria-hidden="true"></div>
 
-  <main class="page-shell">
+  <nav class="top-nav">
+    <a class="logo-link" href="/dashboard" aria-label="DemandIQ Home">
+      <img class="logo-icon" src="/assets/img/demandiq_icon.svg" alt="" aria-hidden="true" />
+      <span class="logo-wordmark">Demand<span class="iq">IQ</span></span>
+    </a>
+    <div class="top-nav-right">
+      <div class="nav-menu">
+        <a href="#" id="navReports" class="nav-btn">Reports</a>
+      </div>
+      <div class="top-nav-actions">
+        <span id="userNameBadge" class="user-badge" title="Signed-in user">User: ...</span>
+        <span id="userBadge" class="user-badge" title="Signed-in role">Role: ...</span>
+        <button id="adminDashBtn" class="nav-btn" type="button" style="display:none;">Admin Dashboard</button>
+        <button id="pastDemandBtn" class="nav-btn" type="button">Past Demand View</button>
+        <button id="downloadBtn" class="nav-btn" type="button">Download</button>
+        <button id="backBtn" class="nav-btn" type="button">Back</button>
+        <button id="logoutBtn" class="nav-btn" type="button">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="page-shell preload">
     <section class="hero">
       <h1 class="hero-title">
         <img class="title-icon" src="/assets/img/demandiq_icon.svg" alt="" aria-hidden="true" />
@@ -24,6 +45,7 @@
       </h1>
       <p class="hero-sub">Smart Supply Chain Demand Forecasting</p>
       <p class="hero-desc">Configure category and date range to generate AI-powered demand projections.</p>
+      <p id="roleHint" class="helper-text" style="margin-top:10px;">Loading access level...</p>
     </section>
 
     <section id="forecastPanel" class="glass-panel config-panel">
@@ -63,10 +85,14 @@
     const categoryErrorEl = document.getElementById("categoryError");
     const fromDateErrorEl = document.getElementById("fromDateError");
     const toDateErrorEl = document.getElementById("toDateError");
+    const userNameBadgeEl = document.getElementById("userNameBadge");
+    const userBadgeEl = document.getElementById("userBadge");
+    const roleHintEl = document.getElementById("roleHint");
     const ALLOWED_MIN_DATE = "2025-01-01";
     const ALLOWED_MAX_DATE = "2031-12-31";
     const DASHBOARD_STATE_KEY = "dashboard_form_state_v1";
     const DASHBOARD_FORCE_CLEAR_KEY = "dashboard_force_clear_v1";
+    const LOGIN_CLEAR_AFTER_LOGOUT_KEY = "demandiq_clear_login_after_logout_v1";
     let fromPicker = null;
     let toPicker = null;
 
@@ -89,12 +115,54 @@
     }
 
     function apiBase() {
-      return "http://127.0.0.1:8000";
+      return window.location.origin;
     }
 
     function setDefaultDates() {
       fromDateEl.value = "";
       toDateEl.value = "";
+    }
+
+    function formatRole(role) {
+      const mapping = {
+        admin: "Admin",
+        inventory_manager: "Inventory Manager",
+        viewer: "Viewer",
+      };
+      const key = String(role || "").toLowerCase();
+      return mapping[key] || "Unknown";
+    }
+
+    async function applyRoleUi() {
+      try {
+        const resp = await fetch(`${apiBase()}/auth/me`);
+        if (!resp.ok) {
+          window.location.href = "/login";
+          return;
+        }
+        const data = await resp.json();
+        const role = String(data?.user?.role || "");
+        const fullName = String(data?.user?.full_name || "User");
+        const roleTitle = formatRole(role);
+        userNameBadgeEl.textContent = `User: ${fullName}`;
+        userBadgeEl.textContent = `Role: ${roleTitle}`;
+        const adminDashBtn = document.getElementById("adminDashBtn");
+        if (adminDashBtn) {
+          adminDashBtn.style.display = role === "admin" ? "" : "none";
+        }
+        if (role === "admin") roleHintEl.textContent = "Admin access: full system operations enabled.";
+        if (role === "inventory_manager") roleHintEl.textContent = "Inventory Manager access: operational inventory insights enabled.";
+        if (role === "viewer") roleHintEl.textContent = "Viewer access: read-only dashboard and forecasts. Export and inventory insights are restricted.";
+        const downloadBtn = document.getElementById("downloadBtn");
+        if (downloadBtn) {
+          const restrictDownload = role === "viewer";
+          downloadBtn.disabled = restrictDownload;
+          downloadBtn.style.opacity = restrictDownload ? "0.65" : "1";
+          downloadBtn.title = restrictDownload ? "Download restricted for Viewer role" : "";
+        }
+      } catch (_) {
+        window.location.href = "/login";
+      }
     }
 
     function initDatePickers() {
@@ -192,6 +260,7 @@
 
     async function initializeDefaults() {
       clearAllErrors();
+      await applyRoleUi();
       const shouldClearFromReload = getNavigationType() === "reload";
       const shouldClearFromLogout = consumeForceClearFlag();
       const shouldClear = shouldClearFromReload || shouldClearFromLogout;
@@ -211,6 +280,11 @@
       }
       if (savedState?.toDate) {
         toPicker.setDate(savedState.toDate, true, "Y-m-d");
+      }
+      const shell = document.querySelector(".page-shell");
+      if (shell) {
+        shell.classList.remove("preload");
+        shell.classList.add("ready");
       }
     }
 
@@ -278,6 +352,36 @@
     fromDateEl.addEventListener("input", () => clearFieldError(fromDateEl, fromDateErrorEl));
     toDateEl.addEventListener("input", () => clearFieldError(toDateEl, toDateErrorEl));
     document.getElementById("generateBtn").addEventListener("click", () => goToResults("forecast"));
+    document.getElementById("pastDemandBtn").addEventListener("click", () => goToResults("past"));
+    document.getElementById("downloadBtn").addEventListener("click", () => goToResults("forecast"));
+    document.getElementById("adminDashBtn").addEventListener("click", () => {
+      window.location.href = "/admin/dashboard";
+    });
+    async function logoutAndGoLogin() {
+      try {
+        await fetch("/auth/logout", { method: "POST" });
+      } catch (_) {
+        // Continue to login even if logout API fails.
+      }
+      sessionStorage.removeItem(DASHBOARD_STATE_KEY);
+      sessionStorage.setItem(DASHBOARD_FORCE_CLEAR_KEY, "1");
+      sessionStorage.setItem(LOGIN_CLEAR_AFTER_LOGOUT_KEY, "1");
+      window.location.href = "/login?logged_out=1";
+    }
+
+    document.getElementById("backBtn").addEventListener("click", () => {
+      logoutAndGoLogin();
+    });
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      logoutAndGoLogin();
+    });
+    document.getElementById("navReports").addEventListener("click", (e) => {
+      e.preventDefault();
+      const panel = document.getElementById("forecastPanel");
+      if (panel) {
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
   </script>
 </body>
 </html>

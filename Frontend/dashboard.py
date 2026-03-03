@@ -20,9 +20,8 @@ def _get_json(url: str, timeout: int = 15):
 def load_categories(api_base: str):
     data = _get_json(f"{api_base}/categories")
     categories = data.get("categories", [])
-    product_ids = data.get("product_ids", [])
-    merged = sorted(set([str(x).strip() for x in categories + product_ids if str(x).strip()]))
-    return merged
+    cleaned_categories = sorted(set([str(x).strip() for x in categories if str(x).strip()]))
+    return cleaned_categories
 
 
 @st.cache_data(ttl=30)

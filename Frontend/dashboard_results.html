@@ -16,16 +16,16 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
-      --bg-1: #0b1220;
-      --bg-2: #0f172a;
-      --bg-3: #111827;
-      --primary: #3b82f6;
-      --secondary: #06b6d4;
-      --highlight: #8b5cf6;
-      --text: #e5e7eb;
-      --muted: #94a3b8;
-      --glass: rgba(255, 255, 255, 0.06);
-      --glass-border: rgba(255, 255, 255, 0.08);
+      --bg: #0b0f17;
+      --surface: #121a27;
+      --surface-soft: #161f2f;
+      --text: #e6edf7;
+      --muted: #8e9bb0;
+      --line: rgba(236, 243, 255, 0.14);
+      --line-soft: rgba(236, 243, 255, 0.08);
+      --accent: #4f8cff;
+      --glass: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.1);
     }
 
     * { box-sizing: border-box; }
@@ -35,7 +35,7 @@
       min-height: 100vh;
       font-family: "Inter", "Segoe UI", Tahoma, sans-serif;
       color: var(--text);
-      background: linear-gradient(145deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-3) 100%);
+      background: radial-gradient(1200px 500px at 30% -15%, #162133 0%, var(--bg) 55%);
     }
 
     .mesh-bg {
@@ -44,11 +44,10 @@
       pointer-events: none;
       z-index: 0;
       background:
-        radial-gradient(800px 460px at 10% 12%, rgba(59, 130, 246, 0.18), transparent 62%),
-        radial-gradient(760px 440px at 88% 18%, rgba(6, 182, 212, 0.14), transparent 64%),
-        radial-gradient(680px 420px at 50% 92%, rgba(139, 92, 246, 0.12), transparent 66%);
-      filter: blur(10px);
-      animation: floatMesh 16s ease-in-out infinite alternate;
+        radial-gradient(620px 320px at 14% 8%, rgba(79, 140, 255, 0.08), transparent 70%),
+        radial-gradient(540px 300px at 88% 14%, rgba(103, 129, 255, 0.07), transparent 72%);
+      filter: blur(16px);
+      animation: floatMesh 20s ease-in-out infinite alternate;
     }
 
     @keyframes floatMesh {
@@ -70,20 +69,24 @@
 
     .top-nav {
       position: sticky;
-      top: 12px;
-      margin: 14px auto 0;
-      width: min(1240px, calc(100% - 24px));
-      padding: 10px 16px;
-      border-radius: 16px;
-      display: flex;
-      justify-content: space-between;
+      top: 16px;
+      margin: 16px auto 0;
+      width: min(1680px, calc(100% - 40px));
+      padding: 14px 20px;
+      border-radius: 14px;
+      display: grid;
+      grid-template-columns: minmax(200px, 1fr) auto minmax(420px, 1fr);
       align-items: center;
       background: var(--glass);
       border: 1px solid var(--glass-border);
-      backdrop-filter: blur(18px);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 10px 28px rgba(3, 8, 20, 0.45);
       animation: fadeUp 0.45s ease;
       z-index: 50;
+    }
+
+    .top-nav-left {
+      justify-self: start;
     }
 
     .logo-link {
@@ -95,19 +98,19 @@
     }
 
     .logo-icon {
-      width: 46px;
-      height: 46px;
-      flex: 0 0 46px;
+      width: 34px;
+      height: 34px;
+      flex: 0 0 34px;
       display: block;
-      transform: translateY(3px);
+      transform: none;
     }
 
     .logo-wordmark {
-      font-size: 46px;
+      font-size: 33px;
       line-height: 1;
       display: block;
-      font-weight: 800;
-      letter-spacing: -0.5px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
       color: #f3f7ff;
     }
 
@@ -122,70 +125,95 @@
 
     .nav-menu {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       align-items: center;
+      justify-self: center;
     }
 
     .top-nav-right {
       display: flex;
       align-items: center;
-      gap: 12px;
-      flex-wrap: nowrap;
+      gap: 8px;
+      flex-wrap: wrap;
       justify-content: flex-end;
+      justify-self: end;
     }
 
-    .top-nav-actions {
-      display: flex;
-      gap: 8px;
+    .user-badge {
+      height: 30px;
+      display: inline-flex;
       align-items: center;
-      flex-wrap: nowrap;
+      border-radius: 999px;
+      padding: 0 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #d3dff3;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
     }
 
     .nav-menu a {
-      height: 38px;
+      height: 32px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      color: #f8fbff;
+      color: #d8e2f2;
       text-decoration: none;
-      font-size: 13px;
-      font-weight: 700;
+      font-size: 12px;
+      font-weight: 600;
       line-height: 1;
       border-radius: 999px;
       padding: 0 14px;
-      border: 1px solid rgba(80, 140, 246, 0.55);
-      background: linear-gradient(92deg, var(--primary) 0%, var(--secondary) 55%, var(--highlight) 100%);
-      box-shadow: 0 10px 24px rgba(59, 130, 246, 0.24);
-      transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.03);
+      transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
     }
 
     .nav-menu a:hover {
-      transform: translateY(-2px);
-      filter: brightness(1.05);
-      box-shadow: 0 14px 30px rgba(59, 130, 246, 0.31);
+      transform: scale(1.02);
+      border-color: rgba(110, 161, 255, 0.55);
+      background: rgba(79, 140, 255, 0.1);
     }
 
     .page-shell {
-      width: min(1240px, calc(100% - 24px));
-      margin: 20px auto 16px;
+      width: min(1680px, calc(100% - 40px));
+      margin: 32px auto 24px;
       display: grid;
-      gap: 14px;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: 24px;
+      row-gap: 32px;
+    }
+
+    .page-shell > section {
+      grid-column: 1 / -1;
+    }
+
+    .page-shell.preload .glass-card {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .page-shell.ready .glass-card {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.42s ease, transform 0.42s ease;
     }
 
     .glass-card {
       background: var(--glass);
       border: 1px solid var(--glass-border);
-      border-radius: 20px;
+      border-radius: 14px;
       padding: 24px;
-      backdrop-filter: blur(18px);
-      box-shadow: 0 20px 48px rgba(3, 7, 18, 0.44);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 32px rgba(2, 6, 18, 0.35);
       animation: fadeUp 0.45s ease;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
     }
 
     .glass-card:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 24px 52px rgba(3, 7, 18, 0.52);
+      transform: scale(1.02);
+      border-color: rgba(150, 183, 240, 0.24);
+      box-shadow: 0 20px 42px rgba(2, 6, 18, 0.45);
     }
 
     .header-card {
@@ -204,6 +232,7 @@
     }
 
     #contextText,
+    #roleText,
     #reportText,
     #sourceText {
       margin-top: 8px;
@@ -216,34 +245,33 @@
     .download-group { display: flex; gap: 8px; align-items: center; }
 
     .btn {
-      height: 38px;
+      height: 32px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border: none;
+      border: 1px solid var(--line-soft);
       border-radius: 999px;
-      padding: 0 16px;
-      font-size: 13px;
-      font-weight: 700;
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 600;
       line-height: 1;
       cursor: pointer;
-      color: #f8fbff;
-      background: linear-gradient(92deg, var(--primary) 0%, var(--secondary) 55%, var(--highlight) 100%);
-      box-shadow: 0 10px 24px rgba(59, 130, 246, 0.26);
-      transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+      color: #dce7f7;
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow: none;
+      transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
     }
 
     .btn:hover {
-      transform: translateY(-2px);
-      filter: brightness(1.05);
-      box-shadow: 0 14px 30px rgba(59, 130, 246, 0.31);
+      transform: scale(1.02);
+      border-color: rgba(110, 161, 255, 0.55);
+      background: rgba(79, 140, 255, 0.1);
     }
 
     .btn-secondary {
-      color: #f8fbff;
-      border: 1px solid rgba(80, 140, 246, 0.55);
-      background: linear-gradient(92deg, var(--primary) 0%, var(--secondary) 55%, var(--highlight) 100%);
-      box-shadow: 0 10px 24px rgba(59, 130, 246, 0.24);
+      color: #dce7f7;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.04);
     }
 
     .download-dropdown {
@@ -254,27 +282,26 @@
 
     .download-toggle {
       width: 100%;
-      height: 38px;
+      height: 32px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 4px;
-      border: 1px solid rgba(80, 140, 246, 0.55);
+      border: 1px solid var(--line-soft);
       border-radius: 999px;
       padding: 0 10px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #f8fbff;
+      font-size: 12px;
+      font-weight: 600;
+      color: #dce7f7;
       cursor: pointer;
-      background: linear-gradient(92deg, var(--primary) 0%, var(--secondary) 55%, var(--highlight) 100%);
-      box-shadow: 0 10px 24px rgba(59, 130, 246, 0.24);
-      transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+      background: rgba(255, 255, 255, 0.04);
+      transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
     }
 
     .download-toggle:hover {
-      transform: translateY(-2px);
-      filter: brightness(1.05);
-      box-shadow: 0 14px 30px rgba(59, 130, 246, 0.31);
+      transform: scale(1.02);
+      border-color: rgba(110, 161, 255, 0.55);
+      background: rgba(79, 140, 255, 0.1);
     }
 
     .download-caret {
@@ -292,9 +319,9 @@
       min-width: 140px;
       padding: 6px;
       border-radius: 12px;
-      border: 1px solid rgba(80, 140, 246, 0.35);
-      background: rgba(15, 23, 42, 0.98);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--line-soft);
+      background: rgba(11, 17, 28, 0.98);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
       display: none;
       z-index: 80;
     }
@@ -323,24 +350,30 @@
 
     .btn-active {
       color: #ffffff;
-      border: 1px solid rgba(130, 177, 255, 0.9);
-      background: linear-gradient(92deg, #5ea2ff 0%, #43caee 55%, #9f7aff 100%);
-      box-shadow: 0 12px 28px rgba(59, 130, 246, 0.34);
+      border: 1px solid rgba(130, 177, 255, 0.7);
+      background: rgba(79, 140, 255, 0.2);
+      box-shadow: none;
     }
 
     .metrics {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      gap: 24px;
     }
 
     .metric {
       position: relative;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(148, 163, 184, 0.24);
-      border-radius: 16px;
-      padding: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--line-soft);
+      border-radius: 14px;
+      min-height: 168px;
+      padding: 22px;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
     }
 
     .metric::before {
@@ -364,14 +397,14 @@
 
     .metric .k {
       color: var(--muted);
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       margin-bottom: 6px;
     }
 
     .metric .v {
-      font-size: 26px;
-      font-weight: 800;
+      font-size: 32px;
+      font-weight: 700;
       letter-spacing: 0.2px;
     }
 
@@ -384,8 +417,8 @@
 
     .chart-head h3 {
       margin: 0;
-      font-size: 18px;
-      font-weight: 700;
+      font-size: 22px;
+      font-weight: 600;
     }
 
     .chart-head .icon-btn {
@@ -405,21 +438,287 @@
     }
 
     #chart {
-      height: 420px;
+      height: 500px;
       border-radius: 14px;
       overflow: hidden;
     }
 
     .data-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .insight-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .insight-card {
+      border: 1px solid var(--line-soft);
+      border-radius: 14px;
+      min-height: 168px;
+      padding: 22px;
+      background: rgba(255, 255, 255, 0.03);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .insight-k {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .insight-v {
+      font-size: 32px;
+      font-weight: 700;
+      color: #f8fbff;
+    }
+
+    .insight-note {
+      margin: 8px 0 0;
+      color: #9fb5df;
+      font-size: 13px;
+    }
+
+    .control-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      padding: 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .admin-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 10px;
+    }
+    .admin-subcard {
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 16px;
+    }
+    .admin-subtitle {
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #d8e2f2;
+    }
+    .control-row select,
+    .control-row input[type="file"] {
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--line-soft);
+      background: rgba(15, 23, 42, 0.5);
+      color: #e5e7eb;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+    #datasetFileInput {
+      height: 34px;
+      min-width: 280px;
+      padding: 2px 8px;
+      border: 1px solid var(--line-soft);
+      background: rgba(15, 23, 42, 0.5);
+      color: #dbeafe;
+      border-radius: 10px;
+    }
+    #datasetFileInput::file-selector-button {
+      height: 28px;
+      margin-right: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      border-radius: 7px;
+      padding: 0 12px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #f1f5f9;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: filter 0.2s ease, transform 0.2s ease;
+    }
+    #datasetFileInput::file-selector-button:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+    #datasetFileInput::-webkit-file-upload-button {
+      height: 28px;
+      margin-right: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      border-radius: 7px;
+      padding: 0 12px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #f1f5f9;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    #datasetFileInput:focus-visible {
+      outline: none;
+      border-color: rgba(96, 165, 250, 0.6);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+    }
+    .inline-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #9fb5df;
+      font-size: 12px;
+    }
+
+    .control-status {
+      margin-top: 0;
+      color: #c7d7f3;
+      font-size: 13px;
+      min-height: 20px;
+    }
+
+    #adminControlsSection .btn {
+      height: 34px;
+      padding: 0 14px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+    .control-status.upload-summary {
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 14px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .control-status.upload-summary.error {
+      border-color: rgba(248, 113, 113, 0.45);
+      background: linear-gradient(160deg, rgba(68, 24, 27, 0.78), rgba(46, 18, 22, 0.74));
+    }
+    .upload-summary-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .upload-summary-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      color: #f3f8ff;
+    }
+    .upload-summary-badge {
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.25px;
+      text-transform: uppercase;
+      border: 1px solid rgba(80, 140, 246, 0.45);
+      color: #dbeafe;
+      background: rgba(30, 64, 175, 0.3);
+    }
+    .upload-summary-badge.success {
+      border-color: rgba(52, 211, 153, 0.55);
+      color: #d1fae5;
+      background: rgba(5, 150, 105, 0.28);
+      box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.12);
+    }
+    .upload-summary-badge.error {
+      border-color: rgba(248, 113, 113, 0.55);
+      color: #fee2e2;
+      background: rgba(185, 28, 28, 0.3);
+      box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.12);
+    }
+    .upload-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(230px, 1fr));
+      gap: 10px 14px;
+    }
+    .upload-summary-item {
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 10px;
+      padding: 10px;
+      background: rgba(7, 14, 30, 0.45);
+    }
+    .upload-summary-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #8fa8d2;
+      margin-bottom: 4px;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+    }
+    .upload-summary-value {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: #edf4ff;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .upload-summary-note {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(148, 163, 184, 0.28);
+      font-size: 12px;
+      color: #bad0f4;
+    }
+    .staging-panel {
+      margin-top: 12px;
+      border: 1px solid rgba(125, 155, 202, 0.28);
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.48);
+      padding: 12px;
+      display: none;
+    }
+    .staging-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+      color: #c9d8f1;
+      font-size: 12px;
+    }
+    .staging-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .preview-table-wrap {
+      max-height: 220px;
+      overflow: auto;
+      border: 1px solid rgba(125, 155, 202, 0.22);
+      border-radius: 10px;
+      background: rgba(13, 22, 39, 0.64);
+    }
+    .preview-table-wrap table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .preview-table-wrap th,
+    .preview-table-wrap td {
+      text-align: left;
+      padding: 8px;
+      border-bottom: 1px solid rgba(125, 155, 202, 0.16);
+      color: #dce8ff;
     }
 
     .table-title {
       margin: 0 0 10px;
-      font-size: 17px;
-      font-weight: 700;
+      font-size: 22px;
+      font-weight: 600;
     }
 
     .table-head {
@@ -456,17 +755,17 @@
 
     .mini-btn.active {
       color: #f8fbff;
-      border: 1px solid rgba(80, 140, 246, 0.55);
-      background: linear-gradient(92deg, var(--primary) 0%, var(--secondary) 55%, var(--highlight) 100%);
-      box-shadow: 0 8px 18px rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(110, 161, 255, 0.55);
+      background: rgba(79, 140, 255, 0.2);
+      box-shadow: none;
     }
 
     .table-wrap {
-      max-height: 360px;
+      max-height: 460px;
       overflow: auto;
       border-radius: 14px;
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--line-soft);
+      background: rgba(15, 23, 42, 0.42);
     }
 
     table {
@@ -477,8 +776,8 @@
     }
 
     th, td {
-      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-      padding: 10px 9px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      padding: 12px 10px;
       text-align: left;
       white-space: nowrap;
     }
@@ -487,7 +786,7 @@
       position: sticky;
       top: 0;
       z-index: 1;
-      background: rgba(30, 41, 59, 0.96);
+      background: rgba(18, 26, 39, 0.98);
       color: #c8d4f2;
       font-weight: 700;
       letter-spacing: 0.2px;
@@ -503,14 +802,14 @@
     }
 
     tbody tr:hover {
-      background: rgba(59, 130, 246, 0.14);
+      background: rgba(79, 140, 255, 0.12);
     }
 
     .page-footer {
       position: relative;
       z-index: 2;
-      width: min(1240px, calc(100% - 24px));
-      margin: 0 auto 14px;
+      width: min(1680px, calc(100% - 40px));
+      margin: 0 auto 24px;
       border-radius: 14px;
       padding: 12px 14px;
       text-align: center;
@@ -523,13 +822,27 @@
 
     @media (max-width: 980px) {
       .metrics,
-      .data-grid {
+      .data-grid,
+      .insight-grid {
+        grid-template-columns: 1fr;
+      }
+      .top-nav {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .top-nav-left,
+      .nav-menu,
+      .top-nav-right {
+        justify-self: start;
+      }
+      .upload-summary-grid {
         grid-template-columns: 1fr;
       }
     }
 
     @media (max-width: 760px) {
       .top-nav {
+        width: calc(100% - 24px);
         padding: 10px 12px;
         gap: 10px;
       }
@@ -542,17 +855,17 @@
       }
 
       .logo-wordmark {
-        font-size: 32px;
+        font-size: 28px;
       }
 
       .top-nav-right {
         width: 100%;
-        justify-content: space-between;
+        justify-content: flex-start;
         flex-wrap: wrap;
       }
 
       .nav-menu {
-        gap: 10px;
+        gap: 8px;
       }
 
       .nav-menu a {
@@ -560,11 +873,18 @@
         height: 34px;
         padding: 0 11px;
       }
+      #datasetFileInput {
+        min-width: 100%;
+      }
 
-      .top-nav-actions .btn,
       .download-toggle {
         font-size: 12px;
         height: 34px;
+      }
+
+      .user-badge {
+        font-size: 11px;
+        padding: 0 10px;
       }
 
       .glass-card {
@@ -574,6 +894,14 @@
       .header-card h1 {
         font-size: 24px;
       }
+
+      .page-shell {
+        width: calc(100% - 24px);
+      }
+
+      .page-footer {
+        width: calc(100% - 24px);
+      }
     }
   </style>
 </head>
@@ -581,38 +909,42 @@
   <div class="mesh-bg" aria-hidden="true"></div>
 
   <nav class="top-nav">
-    <a class="logo-link" href="/dashboard" aria-label="DemandIQ Home">
-      <img class="logo-icon" src="/assets/img/demandiq_icon.svg" alt="" aria-hidden="true" />
-      <span class="logo-wordmark">Demand<span class="iq">IQ</span></span>
-    </a>
+    <div class="top-nav-left">
+      <a class="logo-link" href="/dashboard" aria-label="DemandIQ Home">
+        <img class="logo-icon" src="/assets/img/demandiq_icon.svg" alt="" aria-hidden="true" />
+        <span class="logo-wordmark">Demand<span class="iq">IQ</span></span>
+      </a>
+    </div>
+    <div class="nav-menu">
+      <a href="/dashboard" id="navDashboard">Dashboard</a>
+      <a href="#" id="navReports">Reports</a>
+    </div>
     <div class="top-nav-right">
-      <div class="nav-menu">
-        <a href="/dashboard" id="navDashboard">Dashboard</a>
-        <a href="#" id="navReports">Reports</a>
-      </div>
-      <div class="top-nav-actions">
-        <button class="btn btn-secondary" id="modeToggleBtn" type="button">Past Demand View</button>
-        <div class="download-dropdown" id="downloadDropdown">
-          <button class="download-toggle" id="downloadToggleBtn" type="button" aria-haspopup="menu" aria-expanded="false">
-            <span>Download</span>
-            <span class="download-caret" aria-hidden="true"></span>
-          </button>
-          <div class="download-menu" id="downloadMenu" role="menu" aria-label="Download menu">
-            <button class="download-item" type="button" data-download-type="csv" role="menuitem">CSV</button>
-            <button class="download-item" type="button" data-download-type="pdf" role="menuitem">PDF</button>
-          </div>
+      <span id="userNameBadge" class="user-badge" title="Signed-in user">User: ...</span>
+      <span id="userBadge" class="user-badge" title="Signed-in role">Role: ...</span>
+      <button class="btn" id="adminDashBtn" type="button" style="display:none;">Admin Dashboard</button>
+      <button class="btn btn-secondary" id="modeToggleBtn" type="button">Past Demand View</button>
+      <div class="download-dropdown" id="downloadDropdown">
+        <button class="download-toggle" id="downloadToggleBtn" type="button" aria-haspopup="menu" aria-expanded="false">
+          <span>Download</span>
+          <span class="download-caret" aria-hidden="true"></span>
+        </button>
+        <div class="download-menu" id="downloadMenu" role="menu" aria-label="Download menu">
+          <button class="download-item" id="downloadCsvItem" type="button" data-download-type="csv" role="menuitem">CSV</button>
+          <button class="download-item" id="downloadPdfItem" type="button" data-download-type="pdf" role="menuitem">PDF</button>
         </div>
-        <button class="btn" id="backBtn" type="button">Back</button>
-        <button class="btn" id="logoutBtn" type="button">Logout</button>
       </div>
+      <button class="btn" id="backBtn" type="button">Back</button>
+      <button class="btn" id="logoutBtn" type="button">Logout</button>
     </div>
   </nav>
 
-  <main class="page-shell">
+  <main class="page-shell preload">
     <section class="glass-card header-card">
       <div>
         <h1 id="resultsPageTitle">Forecast Results</h1>
         <p id="contextText">Loading...</p>
+        <p id="roleText">Loading access level...</p>
         <p id="reportText">Report: Forecast Report</p>
         <p id="sourceText">Source: Walmart</p>
       </div>
@@ -644,6 +976,86 @@
         </button>
       </div>
       <div id="chart"></div>
+    </section>
+
+    <section class="glass-card" id="inventoryInsightsSection">
+      <div class="chart-head">
+        <h3>Inventory Insights</h3>
+      </div>
+      <div class="insight-grid">
+        <article class="insight-card">
+          <div class="insight-k">Suggested Reorder Point</div>
+          <div class="insight-v" id="reorderPointValue">0</div>
+          <p class="insight-note">Based on forecasted weekly demand.</p>
+        </article>
+        <article class="insight-card">
+          <div class="insight-k">Estimated Stock Coverage</div>
+          <div class="insight-v" id="coverageDaysValue">0 days</div>
+          <p class="insight-note">Estimated using latest actual stock proxy.</p>
+        </article>
+        <article class="insight-card">
+          <div class="insight-k">Stock Alert Status</div>
+          <div class="insight-v" id="stockAlertValue">Stable</div>
+          <p class="insight-note" id="stockAlertNote">No immediate shortage signal.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="glass-card" id="profitabilitySection">
+      <div class="chart-head">
+        <h3>Cost and Profit Margin (Sensitive)</h3>
+      </div>
+      <div class="insight-grid">
+        <article class="insight-card">
+          <div class="insight-k">Estimated Revenue</div>
+          <div class="insight-v" id="revenueValue">₹0.00</div>
+        </article>
+        <article class="insight-card">
+          <div class="insight-k">Estimated Cost</div>
+          <div class="insight-v" id="costValue">₹0.00</div>
+        </article>
+        <article class="insight-card">
+          <div class="insight-k">Profit Margin</div>
+          <div class="insight-v" id="marginValue">0.00%</div>
+        </article>
+      </div>
+    </section>
+
+    <section class="glass-card" id="adminControlsSection">
+      <div class="chart-head">
+        <h3>Upload Document (Admin)</h3>
+      </div>
+      <div class="admin-layout">
+        <div class="admin-subcard">
+          <h4 class="admin-subtitle">Upload Controls</h4>
+          <div class="control-row">
+            <select id="uploadTypeSelect" aria-label="Upload file type">
+              <option value="sandbox_training_dataset">Sandbox Training Dataset (No Dataset Change)</option>
+              <option value="inventory_stock_file">Inventory Stock File</option>
+            </select>
+            <input id="datasetFileInput" type="file" accept=".csv,.xlsx" />
+            <button class="btn" id="uploadDatasetBtn" type="button">Upload Document</button>
+            <button class="btn btn-secondary" id="retrainModelBtn" type="button">Retrain Forecast Model</button>
+          </div>
+        </div>
+        <div class="admin-subcard">
+          <h4 class="admin-subtitle">Uploaded Summary</h4>
+          <div class="control-status" id="adminControlStatus">Upload activity details will appear here.</div>
+        </div>
+        <div class="staging-panel" id="stagingPanel">
+          <div class="staging-metrics">
+            <div>Total Rows: <strong id="stgTotalRows">0</strong></div>
+            <div>Missing Values: <strong id="stgMissingValues">0</strong></div>
+            <div>Duplicate Rows: <strong id="stgDuplicateRows">0</strong></div>
+            <div>Date Range: <strong id="stgDateRange">-</strong></div>
+          </div>
+          <div class="preview-table-wrap" id="stagingPreviewWrap"></div>
+          <div class="staging-actions">
+            <button class="btn" id="approveDatasetBtn" type="button">Approve & Replace Main Dataset</button>
+            <button class="btn btn-secondary" id="rejectDatasetBtn" type="button">Reject Upload</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="data-grid">
@@ -685,14 +1097,126 @@
     let currentMode = "forecast";
     let tableGranularity = "daily";
     let latestLoadRequestId = 0;
+    let currentUserRole = "viewer";
+    let currentUserName = "";
 
     function apiBase() {
-      return "http://127.0.0.1:8000";
+      return window.location.origin;
     }
 
     function toNum(v) {
       const n = Number(v);
       return Number.isFinite(n) ? n : 0;
+    }
+
+    function arrayBufferToBase64(buffer) {
+      const bytes = new Uint8Array(buffer);
+      const chunkSize = 0x8000;
+      let binary = "";
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.subarray(i, i + chunkSize);
+        binary += String.fromCharCode(...chunk);
+      }
+      return btoa(binary);
+    }
+
+    const INR_FORMATTER = new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    function fmtMoney(v) {
+      return INR_FORMATTER.format(toNum(v));
+    }
+
+    function formatRole(role) {
+      const mapping = {
+        admin: "Admin",
+        inventory_manager: "Inventory Manager",
+        viewer: "Viewer",
+      };
+      const key = String(role || "").toLowerCase();
+      return mapping[key] || "Unknown";
+    }
+
+    function applyRoleFeatureGates() {
+      const isAdmin = currentUserRole === "admin";
+      const isInventoryManager = currentUserRole === "inventory_manager";
+      const isViewer = currentUserRole === "viewer";
+
+      const inventoryInsightsSection = document.getElementById("inventoryInsightsSection");
+      const profitabilitySection = document.getElementById("profitabilitySection");
+      const adminControlsSection = document.getElementById("adminControlsSection");
+      const downloadDropdownEl = document.getElementById("downloadDropdown");
+      const downloadPdfItem = document.getElementById("downloadPdfItem");
+      const modeToggleBtn = document.getElementById("modeToggleBtn");
+      const adminDashBtn = document.getElementById("adminDashBtn");
+
+      if (inventoryInsightsSection) inventoryInsightsSection.style.display = (isAdmin || isInventoryManager) ? "" : "none";
+      if (profitabilitySection) profitabilitySection.style.display = isAdmin ? "" : "none";
+      if (adminControlsSection) adminControlsSection.style.display = isAdmin ? "" : "none";
+      if (downloadDropdownEl) downloadDropdownEl.style.display = isViewer ? "none" : "";
+      if (downloadPdfItem) downloadPdfItem.style.display = isInventoryManager ? "none" : "";
+      if (modeToggleBtn) modeToggleBtn.disabled = false;
+      if (adminDashBtn) adminDashBtn.style.display = isAdmin ? "" : "none";
+    }
+
+    function updateInsightsAndFinancials(filteredForecast, history) {
+      const avgForecast = filteredForecast.length
+        ? filteredForecast.reduce((sum, row) => sum + toNum(row.forecast_units_sold), 0) / filteredForecast.length
+        : 0;
+      const latestActual = history.length ? toNum(history[history.length - 1].actual_units_sold) : 0;
+      const reorderPoint = Math.ceil(avgForecast * 7);
+      const stockProxy = latestActual * 10;
+      const coverageDays = avgForecast > 0 ? (stockProxy / avgForecast) : 0;
+      const stockAlert = coverageDays < 5 ? "High Risk" : (coverageDays < 10 ? "Moderate" : "Stable");
+      const stockNote = coverageDays < 5
+        ? "Reorder immediately to avoid stock-out."
+        : (coverageDays < 10 ? "Plan replenishment this week." : "Inventory coverage is healthy.");
+
+      const totalForecast = filteredForecast.reduce((sum, row) => sum + toNum(row.forecast_units_sold), 0);
+      const unitCost = 42.0;
+      const unitSell = 67.5;
+      const estRevenue = totalForecast * unitSell;
+      const estCost = totalForecast * unitCost;
+      const marginPct = estRevenue > 0 ? ((estRevenue - estCost) / estRevenue) * 100 : 0;
+
+      document.getElementById("reorderPointValue").textContent = String(reorderPoint);
+      document.getElementById("coverageDaysValue").textContent = `${coverageDays.toFixed(1)} days`;
+      document.getElementById("stockAlertValue").textContent = stockAlert;
+      document.getElementById("stockAlertNote").textContent = stockNote;
+      document.getElementById("revenueValue").textContent = fmtMoney(estRevenue);
+      document.getElementById("costValue").textContent = fmtMoney(estCost);
+      document.getElementById("marginValue").textContent = `${marginPct.toFixed(2)}%`;
+    }
+
+    async function applyRoleUi() {
+      const userNameBadgeEl = document.getElementById("userNameBadge");
+      const userBadgeEl = document.getElementById("userBadge");
+      const roleTextEl = document.getElementById("roleText");
+      try {
+        const resp = await fetch(`${apiBase()}/auth/me`);
+        if (!resp.ok) {
+          window.location.href = "/login";
+          return;
+        }
+        const data = await resp.json();
+        const role = String(data?.user?.role || "");
+        const fullName = String(data?.user?.full_name || "User");
+        currentUserRole = role;
+        currentUserName = fullName;
+        const roleTitle = formatRole(role);
+        userNameBadgeEl.textContent = `User: ${fullName}`;
+        userBadgeEl.textContent = `Role: ${roleTitle}`;
+        if (role === "admin") roleTextEl.textContent = "Admin access: full system operations enabled.";
+        if (role === "inventory_manager") roleTextEl.textContent = "Inventory Manager access: operational inventory insights enabled.";
+        if (role === "viewer") roleTextEl.textContent = "Viewer access: read-only forecast dashboard. Export and inventory insights are restricted.";
+        applyRoleFeatureGates();
+      } catch (_) {
+        window.location.href = "/login";
+      }
     }
 
     function renderTable(target, rows, cols) {
@@ -864,9 +1388,31 @@
       return lines.join("\n");
     }
 
+    function buildInventoryCsv() {
+      const lines = [];
+      const reorderPoint = document.getElementById("reorderPointValue").textContent || "";
+      const coverageDays = document.getElementById("coverageDaysValue").textContent || "";
+      const stockAlert = document.getElementById("stockAlertValue").textContent || "";
+      const stockNote = document.getElementById("stockAlertNote").textContent || "";
+      lines.push("Inventory Report");
+      lines.push(`Category,${escapeCsv(exportState.category)}`);
+      lines.push(`From Date,${escapeCsv(exportState.fromDate)}`);
+      lines.push(`To Date,${escapeCsv(exportState.toDate)}`);
+      lines.push(`Suggested Reorder Point,${escapeCsv(reorderPoint)}`);
+      lines.push(`Estimated Stock Coverage,${escapeCsv(coverageDays)}`);
+      lines.push(`Stock Alert,${escapeCsv(stockAlert)}`);
+      lines.push(`Alert Note,${escapeCsv(stockNote)}`);
+      return lines.join("\n");
+    }
+
     function downloadCsv() {
       if (!exportState.category) {
         alert("No forecast data available to download.");
+        return;
+      }
+      if (currentUserRole === "inventory_manager") {
+        const filename = `inventory_report_${exportState.category.replaceAll(" ", "_")}_${exportState.toDate}.csv`;
+        downloadTextFile(filename, buildInventoryCsv(), "text/csv;charset=utf-8;");
         return;
       }
       const filename = `forecast_${exportState.category.replaceAll(" ", "_")}_${exportState.toDate}.csv`;
@@ -907,6 +1453,10 @@
     }
 
     async function downloadPdf() {
+      if (currentUserRole !== "admin") {
+        alert("PDF export is available only for Admin.");
+        return;
+      }
       if (!exportState.category) {
         alert("No forecast data available to download.");
         return;
@@ -1102,7 +1652,18 @@
         async function fetchForecastPayload(anchorDate, horizonDays) {
           const url = `${apiBase()}/forecast/${encodeURIComponent(category)}?horizon=${horizonDays}&history_lookback_days=${lookback}&anchor_date=${anchorDate}`;
           const resp = await fetch(url);
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          if (!resp.ok) {
+            let detail = `HTTP ${resp.status}`;
+            try {
+              const err = await resp.json();
+              if (err && typeof err.detail === "string" && err.detail.trim()) {
+                detail = err.detail;
+              }
+            } catch (_) {
+              // Keep fallback status message.
+            }
+            throw new Error(detail);
+          }
           return resp.json();
         }
 
@@ -1124,6 +1685,7 @@
           return t >= fromTs && t <= toTs;
         });
         const pastHistoryForDisplay = (currentMode === "past" && !filteredHistory.length) ? history : filteredHistory;
+        updateInsightsAndFinancials(filteredForecast, history);
 
         const totalForecast = filteredForecast.reduce((s, r) => s + toNum(r.forecast_units_sold), 0);
         const avgForecast = filteredForecast.length ? totalForecast / filteredForecast.length : 0;
@@ -1218,6 +1780,9 @@
           : toDate;
         const forecastStartDate = filteredForecast.length ? filteredForecast[0].date : null;
 
+        if (!window.Plotly || typeof window.Plotly.newPlot !== "function") {
+          throw new Error("Chart library failed to load (Plotly unavailable).");
+        }
         Plotly.newPlot("chart", series, {
           title: mode === "past" ? `Past Demand Trend: ${category}` : `Demand Trend and Forecast: ${category}`,
           paper_bgcolor: "rgba(0,0,0,0)",
@@ -1301,10 +1866,16 @@
     document.getElementById("backBtn").addEventListener("click", () => {
       window.location.href = "/dashboard";
     });
-    document.getElementById("logoutBtn").addEventListener("click", () => {
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      try {
+        await fetch("/auth/logout", { method: "POST" });
+      } catch (_) {
+        // Continue to login even if logout API fails.
+      }
       sessionStorage.removeItem("dashboard_form_state_v1");
       sessionStorage.setItem("dashboard_force_clear_v1", "1");
-      window.location.href = "/login";
+      sessionStorage.setItem("demandiq_clear_login_after_logout_v1", "1");
+      window.location.href = "/login?logged_out=1";
     });
     document.getElementById("modeToggleBtn").addEventListener("click", () => {
       const params = new URLSearchParams(window.location.search);
@@ -1312,6 +1883,9 @@
       const newUrl = `${window.location.pathname}?${params.toString()}`;
       window.history.replaceState({}, "", newUrl);
       loadResults();
+    });
+    document.getElementById("adminDashBtn").addEventListener("click", () => {
+      window.location.href = "/admin/dashboard";
     });
     const downloadDropdown = document.getElementById("downloadDropdown");
     const downloadToggleBtn = document.getElementById("downloadToggleBtn");
@@ -1360,6 +1934,466 @@
         applyGranularityTable();
       });
     });
+    const datasetFileInput = document.getElementById("datasetFileInput");
+    const uploadTypeSelect = document.getElementById("uploadTypeSelect");
+    const uploadDatasetBtn = document.getElementById("uploadDatasetBtn");
+    const retrainModelBtn = document.getElementById("retrainModelBtn");
+    const adminControlStatus = document.getElementById("adminControlStatus");
+    const stagingPanel = document.getElementById("stagingPanel");
+    const approveDatasetBtn = document.getElementById("approveDatasetBtn");
+    const rejectDatasetBtn = document.getElementById("rejectDatasetBtn");
+    let currentStagingId = null;
+
+    function hideStagingPanel() {
+      currentStagingId = null;
+      stagingPanel.style.display = "none";
+      document.getElementById("stgTotalRows").textContent = "0";
+      document.getElementById("stgMissingValues").textContent = "0";
+      document.getElementById("stgDuplicateRows").textContent = "0";
+      document.getElementById("stgDateRange").textContent = "-";
+      document.getElementById("stagingPreviewWrap").innerHTML = "";
+    }
+
+    function renderStagingPreview(summary) {
+      const rows = Array.isArray(summary?.preview_rows) ? summary.preview_rows : [];
+      document.getElementById("stgTotalRows").textContent = String(summary?.total_rows ?? 0);
+      document.getElementById("stgMissingValues").textContent = String(summary?.missing_values_count ?? 0);
+      document.getElementById("stgDuplicateRows").textContent = String(summary?.duplicate_rows_count ?? 0);
+      const dateMin = summary?.date_min || "-";
+      const dateMax = summary?.date_max || "-";
+      document.getElementById("stgDateRange").textContent = `${dateMin} to ${dateMax}`;
+
+      if (!rows.length) {
+        document.getElementById("stagingPreviewWrap").innerHTML = "<p style='padding:8px;color:#9fb5df;'>No preview rows available.</p>";
+      } else {
+        const cols = Object.keys(rows[0] || {});
+        const head = cols.map((c) => `<th>${c}</th>`).join("");
+        const body = rows.map((r) => `<tr>${cols.map((c) => `<td>${r[c] ?? ""}</td>`).join("")}</tr>`).join("");
+        document.getElementById("stagingPreviewWrap").innerHTML = `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+      }
+      stagingPanel.style.display = "block";
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function setAdminStatusText(message) {
+      adminControlStatus.classList.remove("upload-summary", "error");
+      adminControlStatus.textContent = String(message || "");
+    }
+
+    function renderAdminUploadSummary(details) {
+      const {
+        title = "Upload Summary",
+        status = "completed",
+        uploadedAt = "",
+        fileName = "",
+        uploadType = "",
+        storedAs = "",
+        recordsProcessed = 0,
+        duplicatesInfo = "No duplicate rows removed",
+        trainingStatus = "Skipped",
+        trainedCategories = 0,
+        failedCategoriesText = "0",
+        datasetImpact = "",
+        extraItems = [],
+      } = details || {};
+
+      const extraBlocks = Array.isArray(extraItems)
+        ? extraItems
+            .filter((item) => item && item.label)
+            .map((item) => `
+              <div class="upload-summary-item">
+                <span class="upload-summary-label">${escapeHtml(item.label)}</span>
+                <p class="upload-summary-value">${escapeHtml(item.value ?? "")}</p>
+              </div>
+            `)
+            .join("")
+        : "";
+
+      adminControlStatus.classList.add("upload-summary");
+      adminControlStatus.innerHTML = `
+        <div class="upload-summary-head">
+          <h4 class="upload-summary-title">${escapeHtml(title)}</h4>
+          <span class="upload-summary-badge ${String(status || "").toLowerCase() === "success" ? "success" : ""}">${escapeHtml(status)}</span>
+        </div>
+        <div class="upload-summary-grid">
+          <div class="upload-summary-item"><span class="upload-summary-label">Uploaded At</span><p class="upload-summary-value">${escapeHtml(uploadedAt)}</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">Upload Type</span><p class="upload-summary-value">${escapeHtml(uploadType)}</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">File Name</span><p class="upload-summary-value">${escapeHtml(fileName)}</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">Stored File</span><p class="upload-summary-value">${escapeHtml(storedAs)}</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">Records Processed</span><p class="upload-summary-value">${escapeHtml(recordsProcessed)}</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">Duplicates</span><p class="upload-summary-value">${escapeHtml(duplicatesInfo)}</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">Training Status</span><p class="upload-summary-value">${escapeHtml(trainingStatus)}</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">Trained Categories</span><p class="upload-summary-value">${escapeHtml(trainedCategories)}</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">Failed Categories</span><p class="upload-summary-value">${escapeHtml(failedCategoriesText)}</p></div>
+          ${extraBlocks}
+        </div>
+        <div class="upload-summary-note"><strong>Dataset Impact:</strong> ${escapeHtml(datasetImpact)}</div>
+      `;
+    }
+
+    function renderAdminRetrainSummary(details) {
+      const {
+        uploadedAt = "",
+        trainedCategories = 0,
+        failedCategoriesText = "0",
+        notes = "",
+      } = details || {};
+
+      adminControlStatus.classList.add("upload-summary");
+      adminControlStatus.innerHTML = `
+        <div class="upload-summary-head">
+          <h4 class="upload-summary-title">Model Retraining Summary</h4>
+          <span class="upload-summary-badge success">Success</span>
+        </div>
+        <div class="upload-summary-grid">
+          <div class="upload-summary-item"><span class="upload-summary-label">Completed At</span><p class="upload-summary-value">${escapeHtml(uploadedAt)}</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">Action</span><p class="upload-summary-value">Manual model retraining</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">Training Status</span><p class="upload-summary-value">Completed</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">Trained Categories</span><p class="upload-summary-value">${escapeHtml(trainedCategories)}</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">Failed Categories</span><p class="upload-summary-value">${escapeHtml(failedCategoriesText)}</p></div>
+        </div>
+        <div class="upload-summary-note"><strong>Notes:</strong> ${escapeHtml(notes)}</div>
+      `;
+    }
+
+    function renderAdminErrorSummary(details) {
+      const {
+        action = "Upload",
+        errorMessage = "Operation failed.",
+        uploadType = "N/A",
+        fileName = "N/A",
+        recommendation = "Please verify file format and try again.",
+      } = details || {};
+
+      adminControlStatus.classList.add("upload-summary", "error");
+      adminControlStatus.innerHTML = `
+        <div class="upload-summary-head">
+          <h4 class="upload-summary-title">${escapeHtml(action)} Failed</h4>
+          <span class="upload-summary-badge error">Error</span>
+        </div>
+        <div class="upload-summary-grid">
+          <div class="upload-summary-item"><span class="upload-summary-label">Time</span><p class="upload-summary-value">${escapeHtml(new Date().toLocaleString())}</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">Action</span><p class="upload-summary-value">${escapeHtml(action)}</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">Upload Type</span><p class="upload-summary-value">${escapeHtml(uploadType)}</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">File Name</span><p class="upload-summary-value">${escapeHtml(fileName)}</p></div>
+          <div class="upload-summary-item"><span class="upload-summary-label">Error Details</span><p class="upload-summary-value">${escapeHtml(errorMessage)}</p></div>
+        </div>
+        <div class="upload-summary-note"><strong>Recommended Fix:</strong> ${escapeHtml(recommendation)}</div>
+      `;
+    }
+
+    function updateRetrainButtonState(uploadType) {
+      if (!retrainModelBtn) return;
+      const isInventory = uploadType === "inventory_stock_file";
+      retrainModelBtn.disabled = isInventory;
+      if (isInventory) {
+        retrainModelBtn.textContent = "Retrain (Sales Data Only)";
+        retrainModelBtn.title = "Forecast retraining uses sales dataset, not inventory stock uploads.";
+      } else {
+        retrainModelBtn.textContent = "Retrain Forecast Model";
+        retrainModelBtn.title = "";
+      }
+    }
+
+    function getUploadTypeLabel(uploadType) {
+      const map = {
+        sandbox_training_dataset: "Sandbox Training Dataset",
+        inventory_stock_file: "Inventory Stock File",
+        monthly_update: "Monthly Update",
+        main_sales_dataset: "Main Sales Dataset",
+      };
+      return map[uploadType] || uploadType || "N/A";
+    }
+
+    uploadTypeSelect.addEventListener("change", () => {
+      const uploadType = String(uploadTypeSelect.value || "");
+      updateRetrainButtonState(uploadType);
+      if (uploadType !== "main_sales_dataset") {
+        hideStagingPanel();
+      }
+    });
+    updateRetrainButtonState(String(uploadTypeSelect.value || ""));
+
+    uploadDatasetBtn.addEventListener("click", async () => {
+      if (currentUserRole !== "admin") return;
+      const file = datasetFileInput.files && datasetFileInput.files[0];
+      if (!file) {
+        setAdminStatusText("Select a CSV or XLSX file before uploading.");
+        return;
+      }
+      const fileName = String(file.name || "").toLowerCase();
+      const maxBytes = 5 * 1024 * 1024;
+      if (!(fileName.endsWith(".csv") || fileName.endsWith(".xlsx"))) {
+        setAdminStatusText("Only .csv and .xlsx files are allowed.");
+        return;
+      }
+      if (file.size <= 0) {
+        setAdminStatusText("Uploaded file is empty.");
+        return;
+      }
+      if (file.size > maxBytes) {
+        setAdminStatusText("File too large. Maximum allowed is 5 MB.");
+        return;
+      }
+
+      const uploadType = String(uploadTypeSelect.value || "sandbox_training_dataset");
+      const retrainModel = uploadType !== "inventory_stock_file";
+      setAdminStatusText("Uploading and validating document...");
+      uploadDatasetBtn.disabled = true;
+      try {
+        const fileBuffer = await file.arrayBuffer();
+        const fileBase64 = arrayBufferToBase64(fileBuffer);
+        const isMainDataset = uploadType === "main_sales_dataset";
+        const endpoint = isMainDataset ? "/admin/dataset/stage" : "/admin/upload-document";
+        const payload = isMainDataset
+          ? {
+              filename: file.name,
+              file_base64: fileBase64,
+            }
+          : {
+              filename: file.name,
+              upload_type: uploadType,
+              retrain_model: retrainModel,
+              file_base64: fileBase64,
+            };
+        const resp = await fetch(`${apiBase()}${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          renderAdminErrorSummary({
+            action: "Upload",
+            errorMessage: data?.detail || "Dataset upload failed.",
+            uploadType: getUploadTypeLabel(uploadType),
+            fileName: file.name,
+            recommendation: uploadType === "inventory_stock_file"
+              ? "Include product_id, store_id, and current_stock (or accepted aliases), then upload again."
+              : "Check required sales columns (date, product_id, store_id, units_sold) and retry.",
+          });
+          return;
+        }
+        if (isMainDataset) {
+          currentStagingId = Number(data?.staging_id || 0);
+          renderStagingPreview(data?.summary || {});
+          setAdminStatusText(data?.message || "Dataset staged. Review preview and approve/reject.");
+        } else {
+          const uploadTypeLabel = getUploadTypeLabel(uploadType);
+          const processed = Number(data?.records_processed || 0);
+          const trainedCategories = Number(data?.trained_categories || 0);
+          const failedCategories = Array.isArray(data?.failed_categories) ? data.failed_categories : [];
+          const failedCount = failedCategories.length;
+          const duplicates = Number(data?.duplicates_removed || 0);
+          const duplicateLine = duplicates > 0 ? `${duplicates} duplicate rows removed` : "No duplicate rows removed";
+          const storedAs = String(data?.stored_file || "N/A");
+          const timestamp = new Date().toLocaleString();
+          const failedCategoriesText = failedCount > 0 ? `${failedCount} (${failedCategories.join(", ")})` : "0";
+
+          if (uploadType === "sandbox_training_dataset") {
+            renderAdminUploadSummary({
+              title: "Upload Completed",
+              status: "Success",
+              uploadedAt: timestamp,
+              fileName: file.name,
+              uploadType: uploadTypeLabel,
+              storedAs,
+              recordsProcessed: processed,
+              duplicatesInfo: duplicateLine,
+              trainingStatus: data?.retrained ? "Completed" : "Skipped",
+              trainedCategories,
+              failedCategoriesText,
+              datasetImpact: "Original sales dataset not modified. Training used uploaded file only.",
+            });
+          } else if (uploadType === "inventory_stock_file") {
+            const lowStock = Number(data?.inventory_alerts?.low_stock || 0);
+            const overstock = Number(data?.inventory_alerts?.overstock || 0);
+            renderAdminUploadSummary({
+              title: "Upload Completed",
+              status: "Success",
+              uploadedAt: timestamp,
+              fileName: file.name,
+              uploadType: uploadTypeLabel,
+              storedAs,
+              recordsProcessed: processed,
+              duplicatesInfo: duplicateLine,
+              trainingStatus: "Not Applicable",
+              trainedCategories: "Not Applicable",
+              failedCategoriesText: "Not Applicable",
+              extraItems: [
+                { label: "Low-Stock Alerts", value: String(lowStock) },
+                { label: "Overstock Alerts", value: String(overstock) },
+                { label: "Inventory Update Status", value: "Inventory table updated" },
+              ],
+              datasetImpact: "Sales dataset not modified. Inventory table updated only.",
+            });
+          } else {
+            renderAdminUploadSummary({
+              title: "Upload Completed",
+              status: "Success",
+              uploadedAt: timestamp,
+              fileName: file.name,
+              uploadType: uploadTypeLabel,
+              storedAs,
+              recordsProcessed: processed,
+              duplicatesInfo: duplicateLine,
+              trainingStatus: data?.retrained ? "Completed" : "Skipped",
+              trainedCategories,
+              failedCategoriesText,
+              datasetImpact: "Upload handled successfully.",
+            });
+          }
+          await loadResults();
+        }
+      } catch (_) {
+        renderAdminErrorSummary({
+          action: "Upload",
+          errorMessage: "Unable to upload dataset. Please try again.",
+          uploadType: getUploadTypeLabel(uploadType),
+          fileName: file.name,
+          recommendation: "Check backend service/network and verify the file is a valid CSV/XLSX.",
+        });
+      } finally {
+        uploadDatasetBtn.disabled = false;
+      }
+    });
+
+    approveDatasetBtn.addEventListener("click", async () => {
+      if (currentUserRole !== "admin") return;
+      if (!currentStagingId) {
+        setAdminStatusText("No staged dataset available.");
+        return;
+      }
+      const ok = window.confirm("Are you sure you want to replace the current production dataset?");
+      if (!ok) return;
+      approveDatasetBtn.disabled = true;
+      rejectDatasetBtn.disabled = true;
+      setAdminStatusText("Applying staged dataset to production...");
+      try {
+        const resp = await fetch(`${apiBase()}/admin/dataset/approve`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ staging_id: currentStagingId }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          renderAdminErrorSummary({
+            action: "Approve Staged Dataset",
+            errorMessage: data?.detail || "Failed to approve staged dataset.",
+            uploadType: "Main Sales Dataset",
+            fileName: "Staged dataset",
+            recommendation: "Ensure the staging record is still valid and retry approval.",
+          });
+          return;
+        }
+        setAdminStatusText(`${data?.message || "Dataset approved."} Trained categories: ${data?.trained_categories ?? 0}.`);
+        hideStagingPanel();
+        await loadResults();
+      } catch (_) {
+        renderAdminErrorSummary({
+          action: "Approve Staged Dataset",
+          errorMessage: "Unable to approve staged dataset.",
+          uploadType: "Main Sales Dataset",
+          fileName: "Staged dataset",
+          recommendation: "Check backend service connectivity and try again.",
+        });
+      } finally {
+        approveDatasetBtn.disabled = false;
+        rejectDatasetBtn.disabled = false;
+      }
+    });
+
+    rejectDatasetBtn.addEventListener("click", async () => {
+      if (currentUserRole !== "admin") return;
+      if (!currentStagingId) {
+        setAdminStatusText("No staged dataset available.");
+        return;
+      }
+      rejectDatasetBtn.disabled = true;
+      approveDatasetBtn.disabled = true;
+      setAdminStatusText("Rejecting staged dataset...");
+      try {
+        const resp = await fetch(`${apiBase()}/admin/dataset/reject`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ staging_id: currentStagingId }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          renderAdminErrorSummary({
+            action: "Reject Staged Dataset",
+            errorMessage: data?.detail || "Failed to reject staged dataset.",
+            uploadType: "Main Sales Dataset",
+            fileName: "Staged dataset",
+            recommendation: "Ensure the staging record is present and retry.",
+          });
+          return;
+        }
+        setAdminStatusText(data?.message || "Staged dataset rejected.");
+        hideStagingPanel();
+      } catch (_) {
+        renderAdminErrorSummary({
+          action: "Reject Staged Dataset",
+          errorMessage: "Unable to reject staged dataset.",
+          uploadType: "Main Sales Dataset",
+          fileName: "Staged dataset",
+          recommendation: "Check backend service connectivity and try again.",
+        });
+      } finally {
+        rejectDatasetBtn.disabled = false;
+        approveDatasetBtn.disabled = false;
+      }
+    });
+
+    retrainModelBtn.addEventListener("click", async () => {
+      if (currentUserRole !== "admin") return;
+      setAdminStatusText("Model retraining initiated. Please wait...");
+      retrainModelBtn.disabled = true;
+      try {
+        const resp = await fetch(`${apiBase()}/admin/retrain-model`, {
+          method: "POST",
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          renderAdminErrorSummary({
+            action: "Retrain Forecast Model",
+            errorMessage: data?.detail || "Retraining failed.",
+            uploadType: "N/A",
+            fileName: "N/A",
+            recommendation: "Verify dataset quality and model prerequisites, then run retraining again.",
+          });
+          return;
+        }
+        const failed = Array.isArray(data?.failed_categories) ? data.failed_categories : [];
+        const failedText = failed.length ? `${failed.length} (${failed.join(", ")})` : "0";
+        renderAdminRetrainSummary({
+          uploadedAt: new Date().toLocaleString(),
+          trainedCategories: Number(data?.trained_categories || 0),
+          failedCategoriesText: failedText,
+          notes: "Models were refreshed from the current production dataset.",
+        });
+        await loadResults();
+      } catch (_) {
+        renderAdminErrorSummary({
+          action: "Retrain Forecast Model",
+          errorMessage: "Unable to retrain model. Please try again.",
+          uploadType: "N/A",
+          fileName: "N/A",
+          recommendation: "Check backend service connectivity and retry retraining.",
+        });
+      } finally {
+        retrainModelBtn.disabled = false;
+      }
+    });
+
     document.getElementById("navReports").addEventListener("click", (e) => {
       e.preventDefault();
       const reportsSection = document.querySelector(".data-grid");
@@ -1368,7 +2402,57 @@
       }
     });
 
-    loadResults();
+    function loadScript(url) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = url;
+        s.async = true;
+        s.onload = () => resolve(true);
+        s.onerror = () => reject(new Error(`Failed to load ${url}`));
+        document.head.appendChild(s);
+      });
+    }
+
+    async function ensurePlotlyLoaded() {
+      if (window.Plotly && typeof window.Plotly.newPlot === "function") {
+        return true;
+      }
+      const fallbacks = [
+        "https://cdn.plot.ly/plotly-2.35.2.min.js",
+        "https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js",
+        "https://unpkg.com/plotly.js-dist-min@2.35.2/plotly.min.js",
+      ];
+      for (const src of fallbacks) {
+        try {
+          await loadScript(src);
+          if (window.Plotly && typeof window.Plotly.newPlot === "function") {
+            return true;
+          }
+        } catch (_) {
+          // Try next source.
+        }
+      }
+      return false;
+    }
+
+    async function initializePage() {
+      const plotlyReady = await ensurePlotlyLoaded();
+      if (!plotlyReady) {
+        const contextEl = document.getElementById("contextText");
+        if (contextEl) {
+          contextEl.textContent = "Chart library could not be loaded. Check internet/firewall and reload.";
+        }
+      }
+      await applyRoleUi();
+      await loadResults();
+      const shell = document.querySelector(".page-shell");
+      if (shell) {
+        shell.classList.remove("preload");
+        shell.classList.add("ready");
+      }
+    }
+
+    initializePage();
     window.addEventListener("load", () => {
       if (window.lucide && typeof window.lucide.createIcons === "function") {
         window.lucide.createIcons();

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>DemandIQ - Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/css/dashboard_glass.css" />
+  <style>
+    .admin-shell {
+      width: min(1680px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 32px 0 34px;
+      display: grid;
+      gap: 24px;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .summary-card {
+      min-height: 152px;
+      padding: 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(124, 154, 201, 0.26);
+      background: rgba(20, 31, 54, 0.72);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .summary-k {
+      color: #9fb2cc;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .summary-v {
+      color: #e7edf8;
+      font-size: 34px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1.35fr;
+      gap: 24px;
+      min-height: 500px;
+    }
+    .table-wrap {
+      max-height: 620px;
+      overflow: auto;
+      border: 1px solid rgba(125, 155, 202, 0.2);
+      border-radius: 12px;
+      background: rgba(15, 24, 43, 0.64);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(125, 155, 202, 0.14);
+      vertical-align: top;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: rgba(29, 45, 78, 0.95);
+      color: #d6e4ff;
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .muted {
+      color: #8ea3c1;
+      font-size: 12px;
+    }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #d9e8ff;
+      border: 1px solid rgba(120, 160, 220, 0.38);
+      background: rgba(33, 58, 96, 0.6);
+    }
+    .event-login_success { border-color: rgba(86, 210, 145, 0.44); color: #b9f0cd; }
+    .event-login_failed { border-color: rgba(235, 122, 122, 0.5); color: #ffd3d3; }
+    .event-account_created { border-color: rgba(80, 186, 255, 0.5); color: #bde7ff; }
+    .event-role_changed { border-color: rgba(248, 205, 120, 0.5); color: #ffe8b9; }
+    .event-logout { border-color: rgba(160, 171, 196, 0.5); color: #e8edf8; }
+    .role-edit {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      min-width: 230px;
+      flex-wrap: wrap;
+    }
+    .role-select {
+      min-width: 140px;
+      border-radius: 8px;
+      border: 1px solid rgba(125, 155, 202, 0.45);
+      background: rgba(18, 30, 53, 0.95);
+      color: #e7edf8;
+      padding: 6px 8px;
+      font-size: 12px;
+      font-family: inherit;
+    }
+    .promote-btn {
+      border: 1px solid rgba(125, 155, 202, 0.45);
+      background: linear-gradient(92deg, #3182f6 0%, #28b8df 55%, #7e5df6 100%);
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .promote-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .danger-btn {
+      border: 1px solid rgba(235, 122, 122, 0.5);
+      background: rgba(130, 36, 52, 0.72);
+      color: #ffd3d3;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .add-user-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 170px auto;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .add-input, .add-select {
+      border-radius: 8px;
+      border: 1px solid rgba(125, 155, 202, 0.45);
+      background: rgba(18, 30, 53, 0.95);
+      color: #e7edf8;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    @media (max-width: 1100px) {
+      .summary-grid { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
+      .two-col { grid-template-columns: 1fr; }
+      .add-user-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mesh-bg" aria-hidden="true"></div>
+  <nav class="top-nav">
+    <a class="logo-link" href="/dashboard" aria-label="DemandIQ Home">
+      <img class="logo-icon" src="/assets/img/demandiq_icon.svg" alt="" aria-hidden="true" />
+      <span class="logo-wordmark">Demand<span class="iq">IQ</span></span>
+    </a>
+    <div class="top-nav-right">
+      <div class="top-nav-actions">
+        <span id="userNameBadge" class="user-badge">User: ...</span>
+        <span id="userBadge" class="user-badge">Role: ...</span>
+        <button id="refreshBtn" class="nav-btn" type="button">Refresh</button>
+        <button id="toDashboardBtn" class="nav-btn" type="button">Dashboard</button>
+        <button id="logoutBtn" class="nav-btn" type="button">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="admin-shell preload">
+    <section class="glass-card">
+      <h2 style="margin:0 0 6px;">Admin Dashboard</h2>
+      <p id="statusText" class="muted" style="margin:0;">Loading admin activity...</p>
+    </section>
+
+    <section class="summary-grid">
+      <article class="summary-card">
+        <div class="summary-k">Total Users</div>
+        <div id="totalUsers" class="summary-v">0</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-k">Login Success (Recent)</div>
+        <div id="loginSuccessCount" class="summary-v">0</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-k">Accounts Created (Recent)</div>
+        <div id="createdCount" class="summary-v">0</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-k">Role Promotions/Changes</div>
+        <div id="roleChangedCount" class="summary-v">0</div>
+      </article>
+    </section>
+
+    <section class="two-col">
+      <article class="glass-card">
+        <div class="toolbar">
+          <h3 style="margin:0;">User Accounts</h3>
+          <span class="muted">Latest registered users and roles</span>
+        </div>
+        <div class="add-user-grid">
+          <input id="addFullName" class="add-input" type="text" placeholder="Full name" />
+          <input id="addEmail" class="add-input" type="email" placeholder="name@gmail.com" />
+          <input id="addPassword" class="add-input" type="password" placeholder="Password (min 8 chars)" />
+          <select id="addRole" class="add-select">
+            <option value="" selected disabled>Select Role</option>
+            <option value="viewer">Viewer</option>
+            <option value="inventory_manager">Inventory Manager</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button id="addUserBtn" class="promote-btn" type="button">Add User</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Created</th>
+                <th>Promote / Role</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="glass-card">
+        <div class="toolbar">
+          <h3 style="margin:0;">Audit Activity</h3>
+          <span class="muted">Logins, account creation, role changes</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Event</th>
+                <th>Actor</th>
+                <th>Target</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    let currentAdminEmail = "";
+
+    function formatRole(role) {
+      const map = {
+        admin: "Admin",
+        inventory_manager: "Inventory Manager",
+        viewer: "Viewer",
+      };
+      const k = String(role || "").toLowerCase();
+      return map[k] || (role || "Unknown");
+    }
+
+    function escapeHtml(v) {
+      return String(v || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    async function fetchJson(url, options = {}) {
+      const r = await fetch(url, {
+        credentials: "same-origin",
+        ...options,
+      });
+      if (!r.ok) {
+        let detail = "Request failed";
+        try {
+          const d = await r.json();
+          if (d && d.detail) detail = d.detail;
+        } catch (_) {}
+        throw new Error(detail);
+      }
+      return r.json();
+    }
+
+    function eventBadge(eventType) {
+      const t = String(eventType || "");
+      const cls = `badge-pill event-${t}`;
+      return `<span class="${cls}">${escapeHtml(t)}</span>`;
+    }
+
+    async function ensureAdmin() {
+      const me = await fetchJson("/auth/me");
+      const role = String(me?.user?.role || "").toLowerCase();
+      if (role !== "admin") {
+        window.location.href = "/dashboard";
+        return null;
+      }
+      currentAdminEmail = String(me?.user?.email || "").toLowerCase();
+      document.getElementById("userNameBadge").textContent = `User: ${me.user.full_name || me.user.email}`;
+      document.getElementById("userBadge").textContent = `Role: ${formatRole(me.user.role)}`;
+      return me.user;
+    }
+
+    async function loadAdminData() {
+      const statusEl = document.getElementById("statusText");
+      statusEl.textContent = "Loading audit and user details...";
+
+      const [users, logs] = await Promise.all([
+        fetchJson("/admin/users?limit=500"),
+        fetchJson("/admin/audit-logs?limit=500"),
+      ]);
+
+      const userRows = Array.isArray(users?.items) ? users.items : [];
+      const logRows = Array.isArray(logs?.items) ? logs.items : [];
+
+      document.getElementById("totalUsers").textContent = String(userRows.length);
+      document.getElementById("loginSuccessCount").textContent = String(logRows.filter((x) => x.event_type === "login_success").length);
+      document.getElementById("createdCount").textContent = String(logRows.filter((x) => x.event_type === "account_created").length);
+      document.getElementById("roleChangedCount").textContent = String(logRows.filter((x) => x.event_type === "role_changed").length);
+
+      const usersBody = document.getElementById("usersTableBody");
+      usersBody.innerHTML = userRows.map((u) => `
+        <tr>
+          <td>${escapeHtml(u.full_name)}</td>
+          <td>${escapeHtml(u.email)}</td>
+          <td>${escapeHtml(formatRole(u.role))}</td>
+          <td>${escapeHtml(u.created_at || "-")}</td>
+          <td>
+            <div class="role-edit">
+              <select class="role-select" data-role-email="${escapeHtml(u.email)}">
+                <option value="viewer" ${u.role === "viewer" ? "selected" : ""}>Viewer</option>
+                <option value="inventory_manager" ${u.role === "inventory_manager" ? "selected" : ""}>Inventory Manager</option>
+                <option value="admin" ${u.role === "admin" ? "selected" : ""}>Admin</option>
+              </select>
+              <button
+                class="promote-btn"
+                type="button"
+                data-promote-email="${escapeHtml(u.email)}"
+                ${String(u.email || "").toLowerCase() === currentAdminEmail ? "title=\"Your own account role is protected\"" : ""}
+              >Promote</button>
+              <button
+                class="danger-btn"
+                type="button"
+                data-delete-email="${escapeHtml(u.email)}"
+                ${String(u.email || "").toLowerCase() === currentAdminEmail ? "disabled title=\"You cannot delete your own active admin account\"" : ""}
+              >Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+
+      const auditBody = document.getElementById("auditTableBody");
+      auditBody.innerHTML = logRows.map((e) => {
+        const actor = e.actor_email || "-";
+        const target = e.target_email || "-";
+        const details = e.details && Object.keys(e.details).length
+          ? JSON.stringify(e.details)
+          : "-";
+        return `
+          <tr>
+            <td>${escapeHtml(e.created_at || "-")}</td>
+            <td>${eventBadge(e.event_type)}</td>
+            <td>${escapeHtml(actor)}</td>
+            <td>${escapeHtml(target)}</td>
+            <td><span class="muted">${escapeHtml(details)}</span></td>
+          </tr>
+        `;
+      }).join("");
+
+      statusEl.textContent = `Loaded ${logRows.length} audit events and ${userRows.length} users.`;
+      requestAnimationFrame(() => {
+        const shell = document.querySelector(".admin-shell");
+        shell.classList.remove("preload");
+        shell.classList.add("ready");
+      });
+    }
+
+    document.getElementById("refreshBtn").addEventListener("click", () => {
+      loadAdminData().catch((err) => {
+        document.getElementById("statusText").textContent = err.message || "Failed to refresh admin dashboard.";
+      });
+    });
+    document.getElementById("usersTableBody").addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-promote-email]");
+      if (!btn) return;
+      const email = String(btn.getAttribute("data-promote-email") || "").trim().toLowerCase();
+      if (!email) return;
+      const row = btn.closest("tr");
+      const select = row ? row.querySelector("select[data-role-email]") : null;
+      if (!select) return;
+      const role = String(select.value || "").trim();
+      const statusEl = document.getElementById("statusText");
+      const prevText = statusEl.textContent;
+
+      btn.disabled = true;
+      statusEl.textContent = `Updating role for ${email}...`;
+      try {
+        await fetchJson("/admin/users/set-role", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, role }),
+        });
+        statusEl.textContent = `Role updated: ${email} -> ${formatRole(role)}.`;
+        await loadAdminData();
+      } catch (err) {
+        statusEl.textContent = err.message || "Failed to update role.";
+      } finally {
+        btn.disabled = false;
+        if (!statusEl.textContent) {
+          statusEl.textContent = prevText;
+        }
+      }
+    });
+    document.getElementById("usersTableBody").addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-delete-email]");
+      if (!btn) return;
+      const email = String(btn.getAttribute("data-delete-email") || "").trim().toLowerCase();
+      if (!email) return;
+      const statusEl = document.getElementById("statusText");
+      const ok = confirm(`Delete user ${email}? This cannot be undone.`);
+      if (!ok) return;
+
+      btn.disabled = true;
+      statusEl.textContent = `Deleting ${email}...`;
+      try {
+        await fetchJson("/admin/users/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        statusEl.textContent = `User deleted: ${email}.`;
+        await loadAdminData();
+      } catch (err) {
+        statusEl.textContent = err.message || "Failed to delete user.";
+      } finally {
+        btn.disabled = false;
+      }
+    });
+    document.getElementById("addUserBtn").addEventListener("click", async () => {
+      const fullName = String(document.getElementById("addFullName").value || "").trim();
+      const email = String(document.getElementById("addEmail").value || "").trim().toLowerCase();
+      const password = String(document.getElementById("addPassword").value || "");
+      const role = String(document.getElementById("addRole").value || "").trim();
+      const statusEl = document.getElementById("statusText");
+
+      if (!fullName || !email || !password || !role) {
+        statusEl.textContent = "Fill all Add User fields.";
+        return;
+      }
+      if (password.length < 8) {
+        statusEl.textContent = "Password must be at least 8 characters.";
+        return;
+      }
+
+      const btn = document.getElementById("addUserBtn");
+      btn.disabled = true;
+      statusEl.textContent = `Creating user ${email}...`;
+      try {
+        await fetchJson("/admin/users/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ full_name: fullName, email, password, role }),
+        });
+        document.getElementById("addFullName").value = "";
+        document.getElementById("addEmail").value = "";
+        document.getElementById("addPassword").value = "";
+        document.getElementById("addRole").value = "";
+        statusEl.textContent = `User created: ${email}.`;
+        await loadAdminData();
+      } catch (err) {
+        statusEl.textContent = err.message || "Failed to create user.";
+      } finally {
+        btn.disabled = false;
+      }
+    });
+    document.getElementById("toDashboardBtn").addEventListener("click", () => {
+      window.location.href = "/dashboard";
+    });
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      try {
+        await fetch("/auth/logout", { method: "POST", credentials: "same-origin" });
+      } catch (_) {}
+      sessionStorage.removeItem("dashboard_form_state_v1");
+      sessionStorage.setItem("dashboard_force_clear_v1", "1");
+      sessionStorage.setItem("demandiq_clear_login_after_logout_v1", "1");
+      window.location.href = "/login?logged_out=1";
+    });
+
+    (async () => {
+      try {
+        const user = await ensureAdmin();
+        if (!user) return;
+        await loadAdminData();
+      } catch (err) {
+        document.getElementById("statusText").textContent = err.message || "Unable to load admin dashboard.";
+      }
+    })();
+  </script>
+</body>
+</html>
