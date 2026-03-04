@@ -231,6 +231,19 @@ def _is_strong_password(password: str) -> bool:
     return bool(PASSWORD_POLICY_REGEX.match(password or ""))
 
 
+def _is_valid_signup_email(email: str) -> bool:
+    candidate = (email or "").strip().lower()
+    if "@" not in candidate:
+        return False
+    local_part, _, domain_part = candidate.partition("@")
+    if not local_part or "." not in domain_part:
+        return False
+    # Prevent numeric-only usernames like 1234@gmail.com.
+    if not any(ch.isalpha() for ch in local_part):
+        return False
+    return True
+
+
 def _verify_password(password: str, stored_hash: str) -> bool:
     try:
         salt_hex, _ = stored_hash.split("$", 1)
@@ -1484,8 +1497,11 @@ def auth_register(payload: RegisterRequest, request: Request) -> JSONResponse:
     role = _canonical_role(payload.role)
     if len(full_name) < 2:
         raise HTTPException(status_code=400, detail="Full name must be at least 2 characters")
-    if "@" not in email or "." not in email.split("@")[-1]:
-        raise HTTPException(status_code=400, detail="Enter a valid work email")
+    if not _is_valid_signup_email(email):
+        raise HTTPException(
+            status_code=400,
+            detail="Enter a valid email with at least one letter before @",
+        )
     if not _is_strong_password(password):
         raise HTTPException(status_code=400, detail=PASSWORD_POLICY_MESSAGE)
     if email in _bootstrap_admin_email_set():
@@ -2372,8 +2388,11 @@ def admin_create_user(payload: AdminCreateUserRequest, request: Request) -> Dict
 
     if len(full_name) < 2:
         raise HTTPException(status_code=400, detail="Full name must be at least 2 characters")
-    if "@" not in email or "." not in email.split("@")[-1]:
-        raise HTTPException(status_code=400, detail="Enter a valid email")
+    if not _is_valid_signup_email(email):
+        raise HTTPException(
+            status_code=400,
+            detail="Enter a valid email with at least one letter before @",
+        )
     if not _is_strong_password(password):
         raise HTTPException(status_code=400, detail=PASSWORD_POLICY_MESSAGE)
     if role not in ALLOWED_LOGIN_ROLES:

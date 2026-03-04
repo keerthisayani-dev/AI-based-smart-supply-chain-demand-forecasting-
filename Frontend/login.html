@@ -492,6 +492,22 @@
       border-color: rgba(59, 130, 246, 0.82);
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
     }
+    .input-error {
+      border-color: rgba(248, 113, 113, 0.92) !important;
+      box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2) !important;
+      background: rgba(127, 29, 29, 0.16);
+    }
+    .field-error {
+      display: none;
+      margin-top: -2px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fca5a5;
+      line-height: 1.3;
+    }
+    .field-error.is-visible {
+      display: block;
+    }
 
     input::placeholder {
       color: var(--muted);
@@ -523,6 +539,45 @@
 
     .email-suggest-wrap {
       position: relative;
+    }
+    .password-wrap {
+      position: relative;
+    }
+    .password-wrap input {
+      padding-right: 50px;
+    }
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: #9fb2cc;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      padding: 0;
+    }
+    .password-toggle:hover {
+      color: #d7e4f7;
+      background: rgba(79, 140, 255, 0.12);
+    }
+    .password-toggle:focus-visible {
+      outline: 2px solid rgba(79, 140, 255, 0.6);
+      outline-offset: 1px;
+    }
+    .password-toggle svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .email-suggestions {
@@ -628,13 +683,17 @@
       text-align: center;
     }
     .role-help {
-      margin-top: 8px;
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(248, 113, 113, 0.55);
+      background: rgba(127, 29, 29, 0.28);
+      color: #fecaca;
       font-size: 13px;
-      color: #9fb2cc;
       line-height: 1.35;
     }
     .role-help strong {
-      color: #f0c58a;
+      color: #fca5a5;
     }
     .auth-error {
       margin-top: 14px;
@@ -643,6 +702,10 @@
       font-weight: 600;
       min-height: 20px;
       text-align: center;
+    }
+    .password-mask {
+      -webkit-text-security: disc;
+      text-security: disc;
     }
 
     .mode-switch {
@@ -762,7 +825,7 @@
       <button id="modeCreate" class="mode-btn" type="button">Create Account</button>
     </div>
 
-    <form id="loginForm" autocomplete="off">
+    <form id="loginForm" autocomplete="off" novalidate>
       <input
         type="text"
         name="browser_fake_username"
@@ -779,12 +842,18 @@
         aria-hidden="true"
         style="position:absolute;left:-9999px;opacity:0;pointer-events:none;width:1px;height:1px;"
       />
-      <div class="field is-hidden" id="fullNameField">
-        <label for="fullName">Full Name</label>
-        <input id="fullName" type="text" placeholder="Your full name" autocomplete="off" />
+      <div class="field is-hidden" id="firstNameField">
+        <label for="firstName">First Name</label>
+        <input id="firstName" type="text" placeholder="Your first name" autocomplete="off" />
+        <p id="firstNameError" class="field-error" aria-live="polite"></p>
+      </div>
+      <div class="field is-hidden" id="lastNameField">
+        <label for="lastName">Last Name</label>
+        <input id="lastName" type="text" placeholder="Your last name" autocomplete="off" />
+        <p id="lastNameError" class="field-error" aria-live="polite"></p>
       </div>
       <div class="field">
-        <label for="email">Work Email</label>
+        <label for="email">Email</label>
         <div class="email-suggest-wrap">
           <input
             id="email"
@@ -800,6 +869,7 @@
           />
           <div id="savedEmailList" class="email-suggestions" role="listbox" aria-label="Saved emails"></div>
         </div>
+        <p id="emailError" class="field-error" aria-live="polite"></p>
       </div>
       <div class="field">
         <label for="role">Role</label>
@@ -809,15 +879,46 @@
           <option value="inventory_manager">Inventory Manager</option>
           <option value="viewer">Viewer</option>
         </select>
+        <p id="roleError" class="field-error" aria-live="polite"></p>
         <p id="roleHelp" class="role-help is-hidden"><strong>Note:</strong> Admin accounts cannot be created here. Use Sign In with admin credentials.</p>
       </div>
       <div class="field">
         <label for="password">Password</label>
-        <input id="password" type="password" required placeholder="Enter password" autocomplete="new-password" />
+        <div class="password-wrap">
+          <input
+            id="password"
+            name="login_password_id"
+            type="text"
+            class="password-mask"
+            required
+            placeholder="Enter password"
+            autocomplete="off"
+            readonly
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-form-type="other"
+          />
+          <button id="togglePassword" class="password-toggle" type="button" aria-label="Show password" title="Show password">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+        <p id="passwordError" class="field-error" aria-live="polite"></p>
       </div>
       <div class="field is-hidden" id="confirmPasswordField">
         <label for="confirmPassword">Confirm Password</label>
-        <input id="confirmPassword" type="password" placeholder="Re-enter password" autocomplete="new-password" />
+        <div class="password-wrap">
+          <input id="confirmPassword" type="password" placeholder="Re-enter password" autocomplete="new-password" />
+          <button id="toggleConfirmPassword" class="password-toggle" type="button" aria-label="Show confirm password" title="Show confirm password">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+        <p id="confirmPasswordError" class="field-error" aria-live="polite"></p>
       </div>
       <div class="row">
         <label><input type="checkbox" id="rememberMe" style="height:auto;width:auto;" /> Remember me</label>
@@ -839,17 +940,27 @@
     const emailEl = document.getElementById("email");
     const roleEl = document.getElementById("role");
     const passwordEl = document.getElementById("password");
-    const fullNameEl = document.getElementById("fullName");
+    const firstNameEl = document.getElementById("firstName");
+    const lastNameEl = document.getElementById("lastName");
     const confirmPasswordEl = document.getElementById("confirmPassword");
     const rememberMeEl = document.getElementById("rememberMe");
     const authErrorEl = document.getElementById("authError");
     const modeSignInBtn = document.getElementById("modeSignIn");
     const modeCreateBtn = document.getElementById("modeCreate");
-    const fullNameField = document.getElementById("fullNameField");
+    const firstNameField = document.getElementById("firstNameField");
+    const lastNameField = document.getElementById("lastNameField");
     const confirmPasswordField = document.getElementById("confirmPasswordField");
     const forgotPasswordLink = document.getElementById("forgotPasswordLink");
     const submitBtn = document.getElementById("submitBtn");
     const savedEmailListEl = document.getElementById("savedEmailList");
+    const togglePasswordBtn = document.getElementById("togglePassword");
+    const toggleConfirmPasswordBtn = document.getElementById("toggleConfirmPassword");
+    const firstNameErrorEl = document.getElementById("firstNameError");
+    const lastNameErrorEl = document.getElementById("lastNameError");
+    const emailErrorEl = document.getElementById("emailError");
+    const roleErrorEl = document.getElementById("roleError");
+    const passwordErrorEl = document.getElementById("passwordError");
+    const confirmPasswordErrorEl = document.getElementById("confirmPasswordError");
     const SAVED_LOGIN_PROFILES_KEY = "demandiq_saved_login_profiles_v1";
     const LOGIN_CLEAR_AFTER_LOGOUT_KEY = "demandiq_clear_login_after_logout_v1";
     const MAX_SAVED_LOGIN_PROFILES = 12;
@@ -869,6 +980,7 @@
             role: String(p?.role || "").trim(),
             remember_me: Boolean(p?.remember_me),
             full_name: String(p?.full_name || "").trim(),
+            password: String(p?.password || ""),
             updated_at: Number(p?.updated_at || 0),
           }))
           .filter((p) => p.email);
@@ -895,6 +1007,7 @@
         role: String(profile?.role || "").trim(),
         remember_me: Boolean(profile?.remember_me),
         full_name: String(profile?.full_name || "").trim(),
+        password: String(profile?.password || ""),
         updated_at: Date.now(),
       });
       saveLoginProfiles(filtered.slice(0, MAX_SAVED_LOGIN_PROFILES));
@@ -933,8 +1046,14 @@
         roleEl.value = match.role;
       }
       rememberMeEl.checked = Boolean(match.remember_me);
-      if (authMode === "create" && match.full_name && !fullNameEl.value.trim()) {
-        fullNameEl.value = match.full_name;
+      if (passwordEl.hasAttribute("readonly")) {
+        passwordEl.removeAttribute("readonly");
+      }
+      passwordEl.value = String(match.password || "");
+      if (authMode === "create" && match.full_name && !`${firstNameEl.value} ${lastNameEl.value}`.trim()) {
+        const [first = "", ...rest] = String(match.full_name).trim().split(/\s+/);
+        firstNameEl.value = first;
+        lastNameEl.value = rest.join(" ");
       }
     }
 
@@ -957,11 +1076,59 @@
       modeCreateBtn.disabled = disabled;
     }
 
+    function clearFieldErrors() {
+      firstNameErrorEl.textContent = "";
+      lastNameErrorEl.textContent = "";
+      emailErrorEl.textContent = "";
+      roleErrorEl.textContent = "";
+      passwordErrorEl.textContent = "";
+      confirmPasswordErrorEl.textContent = "";
+      firstNameErrorEl.classList.remove("is-visible");
+      lastNameErrorEl.classList.remove("is-visible");
+      emailErrorEl.classList.remove("is-visible");
+      roleErrorEl.classList.remove("is-visible");
+      passwordErrorEl.classList.remove("is-visible");
+      confirmPasswordErrorEl.classList.remove("is-visible");
+      [emailEl, roleEl, passwordEl, firstNameEl, lastNameEl, confirmPasswordEl].forEach((el) => {
+        if (!el) return;
+        el.classList.remove("input-error");
+      });
+    }
+
+    function fieldErrorElFor(fieldId) {
+      if (fieldId === "firstName") return firstNameErrorEl;
+      if (fieldId === "lastName") return lastNameErrorEl;
+      if (fieldId === "email") return emailErrorEl;
+      if (fieldId === "role") return roleErrorEl;
+      if (fieldId === "password") return passwordErrorEl;
+      if (fieldId === "confirmPassword") return confirmPasswordErrorEl;
+      return null;
+    }
+
+    function markFieldError(el, message) {
+      if (!el) return;
+      el.classList.add("input-error");
+      const targetErrorEl = fieldErrorElFor(el.id);
+      if (!targetErrorEl) return;
+      targetErrorEl.textContent = message || "Invalid value.";
+      targetErrorEl.classList.add("is-visible");
+    }
+
+    function clearSingleFieldError(el) {
+      if (!el) return;
+      el.classList.remove("input-error");
+      const targetErrorEl = fieldErrorElFor(el.id);
+      if (!targetErrorEl) return;
+      targetErrorEl.textContent = "";
+      targetErrorEl.classList.remove("is-visible");
+    }
+
     function clearCredentialFields() {
       emailEl.value = "";
       passwordEl.value = "";
       confirmPasswordEl.value = "";
-      fullNameEl.value = "";
+      firstNameEl.value = "";
+      lastNameEl.value = "";
       rememberMeEl.checked = false;
       roleEl.selectedIndex = 0;
       authErrorEl.textContent = "";
@@ -991,22 +1158,46 @@
     function setMode(mode) {
       authMode = mode === "create" ? "create" : "signin";
       const createMode = authMode === "create";
-      const adminOption = roleEl.querySelector('option[value="admin"]');
       const roleHelp = document.getElementById("roleHelp");
       modeSignInBtn.classList.toggle("active", !createMode);
       modeCreateBtn.classList.toggle("active", createMode);
-      fullNameField.classList.toggle("is-hidden", !createMode);
+      firstNameField.classList.toggle("is-hidden", !createMode);
+      lastNameField.classList.toggle("is-hidden", !createMode);
       confirmPasswordField.classList.toggle("is-hidden", !createMode);
       forgotPasswordLink.classList.toggle("is-hidden", createMode);
-      roleHelp.classList.toggle("is-hidden", !createMode);
+      roleHelp.classList.toggle("is-hidden", !(createMode && roleEl.value === "admin"));
       submitBtn.textContent = createMode ? "Create Account" : "Sign In";
-      if (adminOption) {
-        adminOption.disabled = createMode;
-        if (createMode && roleEl.value === "admin") {
-          roleEl.value = "viewer";
-        }
-      }
       authErrorEl.textContent = "";
+      clearFieldErrors();
+    }
+
+    function setPasswordToggleIcon(buttonEl, isVisible) {
+      if (!buttonEl) return;
+      buttonEl.innerHTML = isVisible
+        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 10.6a3 3 0 0 0 4.24 4.24"></path><path d="M9.88 5.08A10.8 10.8 0 0 1 12 4.8c6.5 0 10 6 10 6a18.3 18.3 0 0 1-3.32 3.92"></path><path d="M6.7 6.7C3.94 8.36 2 10.8 2 10.8s3.5 6 10 6c1.84 0 3.42-.48 4.78-1.18"></path></svg>`
+        : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+    }
+
+    function wirePasswordToggle(buttonEl, inputEl, usesMaskClass = false) {
+      if (!buttonEl || !inputEl) return;
+      setPasswordToggleIcon(buttonEl, false);
+      buttonEl.addEventListener("click", () => {
+        if (inputEl.hasAttribute("readonly")) {
+          inputEl.removeAttribute("readonly");
+        }
+        const visible = usesMaskClass
+          ? inputEl.classList.contains("password-mask")
+          : inputEl.type === "password";
+        if (usesMaskClass) {
+          inputEl.classList.toggle("password-mask");
+        } else {
+          inputEl.type = visible ? "text" : "password";
+        }
+        buttonEl.setAttribute("aria-label", visible ? "Hide password" : "Show password");
+        buttonEl.setAttribute("title", visible ? "Hide password" : "Show password");
+        setPasswordToggleIcon(buttonEl, visible);
+        inputEl.focus();
+      });
     }
 
     loginForm.addEventListener("submit", async (e) => {
@@ -1015,24 +1206,53 @@
       const role = String(roleEl.value || "").trim();
       const password = passwordEl.value;
       const rememberMe = Boolean(rememberMeEl.checked);
-      const fullName = fullNameEl.value.trim();
+      const firstName = firstNameEl.value.trim();
+      const lastName = lastNameEl.value.trim();
+      const fullName = `${firstName} ${lastName}`.trim();
       const confirmPassword = confirmPasswordEl.value;
 
       authErrorEl.textContent = "";
-      if (!email || !password || !role || (authMode === "create" && !fullName)) {
-        authErrorEl.textContent = "Please fill all required fields.";
+      clearFieldErrors();
+      const hasMissingFirstName = authMode === "create" && !firstName;
+      const hasMissingLastName = authMode === "create" && !lastName;
+      const hasMissingConfirmPassword = authMode === "create" && !confirmPassword;
+      if (!email) markFieldError(emailEl, "Email is required.");
+      if (!role) markFieldError(roleEl, "Role is required.");
+      if (!password) markFieldError(passwordEl, "Password is required.");
+      if (hasMissingFirstName) markFieldError(firstNameEl, "First name is required.");
+      if (hasMissingLastName) markFieldError(lastNameEl, "Last name is required.");
+      if (hasMissingConfirmPassword) markFieldError(confirmPasswordEl, "Confirm password is required.");
+      if (!email || !password || !role || hasMissingFirstName || hasMissingLastName || hasMissingConfirmPassword) {
+        authErrorEl.textContent = "";
         return;
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        authErrorEl.textContent = "Please enter a valid email address.";
+        markFieldError(emailEl, "Please enter a valid email address.");
+        authErrorEl.textContent = "";
+        return;
+      }
+      if (authMode === "create") {
+        const localPart = String(email.split("@")[0] || "");
+        if (!/[A-Za-z]/.test(localPart)) {
+          markFieldError(emailEl, "Email must include at least one letter before @.");
+          authErrorEl.textContent = "";
+          return;
+        }
+      }
+      if (authMode === "create" && role === "admin") {
+        markFieldError(roleEl, "Selected role cannot self-register.");
+        authErrorEl.textContent = "";
         return;
       }
       if (authMode === "create" && !STRONG_PASSWORD_REGEX.test(password)) {
-        authErrorEl.textContent = STRONG_PASSWORD_MESSAGE;
+        markFieldError(passwordEl, STRONG_PASSWORD_MESSAGE);
+        authErrorEl.textContent = "";
         return;
       }
       if (authMode === "create" && password !== confirmPassword) {
-        authErrorEl.textContent = "Passwords do not match.";
+        markFieldError(passwordEl, "Passwords do not match.");
+        markFieldError(confirmPasswordEl, "Passwords do not match.");
+        authErrorEl.textContent = "";
         return;
       }
 
@@ -1062,6 +1282,12 @@
           } catch (_) {
             // keep fallback message
           }
+          const lowered = String(msg || "").toLowerCase();
+          if (authMode === "create" && lowered.includes("role") && lowered.includes("self-register")) {
+            markFieldError(roleEl, msg);
+            authErrorEl.textContent = "";
+            return;
+          }
           authErrorEl.textContent = msg;
           return;
         }
@@ -1071,6 +1297,7 @@
           role,
           remember_me: rememberMe,
           full_name: fullName,
+          password,
         });
         window.location.href = "/dashboard";
       } catch (_) {
@@ -1082,6 +1309,28 @@
 
     modeSignInBtn.addEventListener("click", () => setMode("signin"));
     modeCreateBtn.addEventListener("click", () => setMode("create"));
+    emailEl.addEventListener("input", () => clearSingleFieldError(emailEl));
+    roleEl.addEventListener("change", () => clearSingleFieldError(roleEl));
+    passwordEl.addEventListener("input", () => clearSingleFieldError(passwordEl));
+    firstNameEl.addEventListener("input", () => clearSingleFieldError(firstNameEl));
+    lastNameEl.addEventListener("input", () => clearSingleFieldError(lastNameEl));
+    confirmPasswordEl.addEventListener("input", () => clearSingleFieldError(confirmPasswordEl));
+    wirePasswordToggle(togglePasswordBtn, passwordEl, true);
+    wirePasswordToggle(toggleConfirmPasswordBtn, confirmPasswordEl, false);
+    passwordEl.addEventListener("focus", () => {
+      if (passwordEl.hasAttribute("readonly")) {
+        passwordEl.removeAttribute("readonly");
+      }
+    });
+    passwordEl.addEventListener("pointerdown", () => {
+      if (passwordEl.hasAttribute("readonly")) {
+        passwordEl.removeAttribute("readonly");
+      }
+    });
+    roleEl.addEventListener("change", () => {
+      const roleHelp = document.getElementById("roleHelp");
+      roleHelp.classList.toggle("is-hidden", !(authMode === "create" && roleEl.value === "admin"));
+    });
     emailEl.addEventListener("change", () => applySavedProfile(emailEl.value));
     emailEl.addEventListener("blur", () => {
       applySavedProfile(emailEl.value);
