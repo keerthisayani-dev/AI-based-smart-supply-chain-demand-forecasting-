@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-  <link rel="stylesheet" href="/assets/css/dashboard_glass.css?v=20260304-13" />
+  <link rel="stylesheet" href="/assets/css/dashboard_glass.css?v=20260304-19" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
@@ -142,11 +142,16 @@
         </div>
       </article>
 
-      <article class="surface-card analytics-card">
+      <article class="surface-card analytics-card inventory-alerts-card">
         <h3>Inventory Alerts</h3>
         <ul id="inventoryAlertsList" class="alerts-list">
           <li class="alert-item safe">Inventory alerts will appear after forecast generation.</li>
         </ul>
+        <div class="severity-points" aria-label="Alert severity counts">
+          <span class="severity-point critical"><span class="point-dot"></span>Critical <strong id="criticalCount">0</strong></span>
+          <span class="severity-point warning"><span class="point-dot"></span>Warning <strong id="warningCount">0</strong></span>
+          <span class="severity-point info"><span class="point-dot"></span>Info <strong id="infoCount">0</strong></span>
+        </div>
       </article>
 
     </section>
@@ -155,7 +160,7 @@
   <footer class="page-footer">&copy; DemandIQ - AI Demand Forecasting System</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="/assets/js/dashboard_redesign.js?v=20260304-10"></script>
+  <script src="/assets/js/dashboard_redesign.js?v=20260305-2"></script>
 </body>
 </html>
 

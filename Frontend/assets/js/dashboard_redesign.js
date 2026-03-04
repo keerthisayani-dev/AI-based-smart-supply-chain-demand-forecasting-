@@ -15,6 +15,9 @@ const safetyStockValueEl = document.getElementById("safetyStockValue");
 const reorderPointValueEl = document.getElementById("reorderPointValue");
 const recommendedOrderValueEl = document.getElementById("recommendedOrderValue");
 const inventoryAlertsListEl = document.getElementById("inventoryAlertsList");
+const criticalCountEl = document.getElementById("criticalCount");
+const warningCountEl = document.getElementById("warningCount");
+const infoCountEl = document.getElementById("infoCount");
 const maeValueEl = document.getElementById("maeValue");
 const rmseValueEl = document.getElementById("rmseValue");
 const r2ValueEl = document.getElementById("r2Value");
@@ -100,7 +103,11 @@ function formatDecimal(value, fractionDigits = 2) {
 }
 
 function toIsoDate(dateObj) {
-  return dateObj.toISOString().slice(0, 10);
+  const d = new Date(dateObj);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function clampDateToAllowedRange(dateObj) {
@@ -126,6 +133,31 @@ function getCurrentToNextMonthRange(baseDate = new Date()) {
   };
 }
 
+function getCurrentAndNextMonthBounds(baseDate = new Date()) {
+  const base = clampDateToAllowedRange(baseDate);
+  const startOfCurrentMonth = clampDateToAllowedRange(new Date(base.getFullYear(), base.getMonth(), 1));
+  const endOfNextMonth = clampDateToAllowedRange(new Date(base.getFullYear(), base.getMonth() + 2, 0));
+  return {
+    min: toIsoDate(startOfCurrentMonth),
+    max: toIsoDate(endOfNextMonth),
+  };
+}
+
+function setAlertSeverityCounts(alerts = []) {
+  let critical = 0;
+  let warning = 0;
+  let info = 0;
+  (Array.isArray(alerts) ? alerts : []).forEach((alert) => {
+    const level = String(alert?.level || "").toLowerCase();
+    if (level === "critical") critical += 1;
+    else if (level === "warning") warning += 1;
+    else info += 1;
+  });
+  if (criticalCountEl) criticalCountEl.textContent = String(critical);
+  if (warningCountEl) warningCountEl.textContent = String(warning);
+  if (infoCountEl) infoCountEl.textContent = String(info);
+}
+
 function resetAdvancedSections(message) {
   if (aiInsightTextEl) {
     aiInsightTextEl.innerHTML = `
@@ -144,6 +176,7 @@ function resetAdvancedSections(message) {
   if (reorderPointValueEl) reorderPointValueEl.textContent = "-";
   if (recommendedOrderValueEl) recommendedOrderValueEl.textContent = "-";
   if (inventoryAlertsListEl) inventoryAlertsListEl.innerHTML = '<li class="alert-item safe">Inventory alerts will appear after forecast generation.</li>';
+  setAlertSeverityCounts([]);
   if (maeValueEl) maeValueEl.textContent = "-";
   if (rmseValueEl) rmseValueEl.textContent = "-";
   if (r2ValueEl) r2ValueEl.textContent = "-";
@@ -199,6 +232,7 @@ function updateAdvancedSections(data) {
       inventoryAlertsListEl.innerHTML = '<li class="alert-item safe">Inventory levels are stable for the selected forecast.</li>';
     }
   }
+  setAlertSeverityCounts(alerts);
   if (maeValueEl) maeValueEl.textContent = formatDecimal(metrics.mae, 2);
   if (rmseValueEl) rmseValueEl.textContent = formatDecimal(metrics.rmse, 2);
   if (r2ValueEl) r2ValueEl.textContent = formatDecimal(metrics.r2, 2);
@@ -576,12 +610,14 @@ async function applyRoleUi() {
 function initDatePickers() {
   if (fromPicker) fromPicker.destroy();
   if (toPicker) toPicker.destroy();
+  const rollingRange = getCurrentToNextMonthRange();
   fromPicker = flatpickr(fromDateEl, {
     dateFormat: "Y-m-d",
     allowInput: false,
     monthSelectorType: "static",
     minDate: ALLOWED_MIN_DATE,
     maxDate: ALLOWED_MAX_DATE,
+    defaultDate: rollingRange.from,
   });
   toPicker = flatpickr(toDateEl, {
     dateFormat: "Y-m-d",
@@ -589,6 +625,7 @@ function initDatePickers() {
     monthSelectorType: "static",
     minDate: ALLOWED_MIN_DATE,
     maxDate: ALLOWED_MAX_DATE,
+    defaultDate: rollingRange.to,
   });
 }
 
@@ -671,7 +708,15 @@ async function initializeDefaults() {
   if (savedState?.toDate) {
     toPicker.setDate(savedState.toDate, true, "Y-m-d");
   }
-  if (!savedState?.fromDate || !savedState?.toDate) {
+  const minAllowedStr = ALLOWED_MIN_DATE;
+  const maxAllowedStr = ALLOWED_MAX_DATE;
+  const savedFrom = String(savedState?.fromDate || "");
+  const savedTo = String(savedState?.toDate || "");
+  const hasValidSavedRange = savedFrom && savedTo
+    && savedFrom >= minAllowedStr
+    && savedTo <= maxAllowedStr
+    && savedFrom <= savedTo;
+  if (!hasValidSavedRange) {
     const rollingRange = getCurrentToNextMonthRange();
     fromPicker.setDate(rollingRange.from, true, "Y-m-d");
     toPicker.setDate(rollingRange.to, true, "Y-m-d");
@@ -713,11 +758,11 @@ function validateInputs() {
   const minAllowed = new Date(ALLOWED_MIN_DATE);
   const maxAllowed = new Date(ALLOWED_MAX_DATE);
   if (from < minAllowed || from > maxAllowed) {
-    setFieldError(fromDateEl, fromDateErrorEl, "Use a date between 2025 and 2031.");
+    setFieldError(fromDateEl, fromDateErrorEl, `Use a date between ${ALLOWED_MIN_DATE} and ${ALLOWED_MAX_DATE}.`);
     hasError = true;
   }
   if (to < minAllowed || to > maxAllowed) {
-    setFieldError(toDateEl, toDateErrorEl, "Use a date between 2025 and 2031.");
+    setFieldError(toDateEl, toDateErrorEl, `Use a date between ${ALLOWED_MIN_DATE} and ${ALLOWED_MAX_DATE}.`);
     hasError = true;
   }
   return !hasError;
