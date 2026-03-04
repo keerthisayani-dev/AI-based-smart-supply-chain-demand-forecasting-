@@ -30,12 +30,20 @@
 
     * { box-sizing: border-box; }
 
+    html,
+    body {
+      background-color: #0b0f17;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
       font-family: "Inter", "Segoe UI", Tahoma, sans-serif;
       color: var(--text);
       background: radial-gradient(1200px 500px at 30% -15%, #162133 0%, var(--bg) 55%);
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
     }
 
     .mesh-bg {
@@ -68,15 +76,17 @@
     }
 
     .top-nav {
-      position: sticky;
+      position: fixed;
       top: 16px;
-      margin: 16px auto 0;
-      width: min(1680px, calc(100% - 40px));
-      padding: 14px 20px;
+      left: 16px;
+      bottom: 16px;
+      width: 250px;
+      padding: 14px 12px;
       border-radius: 14px;
-      display: grid;
-      grid-template-columns: minmax(200px, 1fr) auto minmax(420px, 1fr);
-      align-items: center;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
       background: var(--glass);
       border: 1px solid var(--glass-border);
       backdrop-filter: blur(14px);
@@ -85,9 +95,59 @@
       z-index: 50;
     }
 
-    .top-nav-left {
-      justify-self: start;
+    .logo-section {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      padding: 8px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
     }
+
+    .sidebar-toggle-row {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      margin-top: -2px;
+    }
+
+    .hamburger-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.03);
+      color: #d8e2f2;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex: 0 0 auto;
+    }
+    .hamburger-btn .bars {
+      display: inline-block;
+      width: 16px;
+      height: 12px;
+      position: relative;
+    }
+    .hamburger-btn .bars::before,
+    .hamburger-btn .bars::after,
+    .hamburger-btn .bars span {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 16px;
+      height: 2px;
+      border-radius: 2px;
+      background: currentColor;
+    }
+    .hamburger-btn .bars::before { top: 0; }
+    .hamburger-btn .bars span { top: 5px; }
+    .hamburger-btn .bars::after { top: 10px; }
 
     .logo-link {
       display: inline-flex;
@@ -123,20 +183,25 @@
       color: transparent;
     }
 
-    .nav-menu {
+    .top-nav .sidebar-meta {
       display: flex;
-      gap: 10px;
-      align-items: center;
-      justify-self: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      width: 100%;
+      position: static;
+      z-index: auto;
     }
 
-    .top-nav-right {
+    .sidebar-content {
       display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      justify-self: end;
+      flex-direction: column;
+      gap: 14px;
+      align-items: stretch;
+      width: 100%;
+      flex: 1 1 auto;
+      min-height: 0;
+      margin-top: 6px;
     }
 
     .user-badge {
@@ -149,159 +214,95 @@
       font-weight: 600;
       color: #d3dff3;
       border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.04);
+      width: auto;
+      min-width: max-content;
     }
 
-    .nav-menu a {
-      height: 32px;
+    .menu-group {
+      margin-top: 8px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .group-title {
+      margin: 0 2px 2px;
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.45);
+      font-weight: 700;
+    }
+
+    .menu-item {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      color: #dfe8fb;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1;
+      border-radius: 12px;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
+      transition: 0.3s ease;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .menu-item:hover {
+      background: rgba(0, 140, 255, 0.15);
+      border-color: rgba(116, 174, 255, 0.45);
+    }
+
+    .menu-item.active {
+      color: #f3f8ff;
+      background: linear-gradient(135deg, #4f7cff, #7c4dff);
+      box-shadow: 0 0 15px rgba(124,77,255,0.4);
+      border-left: 4px solid #7c4dff;
+      padding-left: 10px;
+    }
+
+    .menu-icon {
+      width: 16px;
+      height: 16px;
+      opacity: 0.95;
+      flex: 0 0 auto;
+    }
+
+    .menu-text {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      color: #d8e2f2;
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 1;
-      border-radius: 999px;
-      padding: 0 14px;
-      border: 1px solid var(--line-soft);
-      background: rgba(255, 255, 255, 0.03);
-      transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
-    }
-
-    .nav-menu a:hover {
-      transform: scale(1.02);
-      border-color: rgba(110, 161, 255, 0.55);
-      background: rgba(79, 140, 255, 0.1);
+      gap: 6px;
     }
 
     .page-shell {
-      width: min(1680px, calc(100% - 40px));
-      margin: 32px auto 24px;
+      width: auto;
+      margin: 16px 16px 24px 282px;
       display: grid;
       grid-template-columns: repeat(12, minmax(0, 1fr));
       column-gap: 24px;
-      row-gap: 32px;
-    }
-
-    .page-shell > section {
-      grid-column: 1 / -1;
-    }
-
-    .page-shell.preload .glass-card {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-
-    .page-shell.ready .glass-card {
-      opacity: 1;
-      transform: translateY(0);
-      transition: opacity 0.42s ease, transform 0.42s ease;
-    }
-
-    .glass-card {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: 14px;
-      padding: 24px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 12px 32px rgba(2, 6, 18, 0.35);
-      animation: fadeUp 0.45s ease;
-      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-    }
-
-    .glass-card:hover {
-      transform: scale(1.02);
-      border-color: rgba(150, 183, 240, 0.24);
-      box-shadow: 0 20px 42px rgba(2, 6, 18, 0.45);
-    }
-
-    .header-card {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: flex-start;
-      flex-wrap: wrap;
-    }
-
-    .header-card h1 {
-      margin: 0;
-      font-size: 30px;
-      font-weight: 800;
-      letter-spacing: 0.2px;
-    }
-
-    #contextText,
-    #roleText,
-    #reportText,
-    #sourceText {
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .download-group { display: flex; gap: 8px; align-items: center; }
-
-    .btn {
-      height: 32px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid var(--line-soft);
-      border-radius: 999px;
-      padding: 0 12px;
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 1;
-      cursor: pointer;
-      color: #dce7f7;
-      background: rgba(255, 255, 255, 0.04);
-      box-shadow: none;
-      transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
-    }
-
-    .btn:hover {
-      transform: scale(1.02);
-      border-color: rgba(110, 161, 255, 0.55);
-      background: rgba(79, 140, 255, 0.1);
-    }
-
-    .btn-secondary {
-      color: #dce7f7;
-      border: 1px solid var(--line-soft);
-      background: rgba(255, 255, 255, 0.04);
+      row-gap: 24px;
+      flex: 1 0 auto;
     }
 
     .download-dropdown {
+      width: 100%;
       position: relative;
-      min-width: 118px;
       z-index: 60;
     }
 
-    .download-toggle {
+    .download-toggle.menu-item {
       width: 100%;
-      height: 32px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      border: 1px solid var(--line-soft);
-      border-radius: 999px;
-      padding: 0 10px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #dce7f7;
+      justify-content: space-between;
       cursor: pointer;
-      background: rgba(255, 255, 255, 0.04);
-      transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
-    }
-
-    .download-toggle:hover {
-      transform: scale(1.02);
-      border-color: rgba(110, 161, 255, 0.55);
-      background: rgba(79, 140, 255, 0.1);
+      color: #dfe8fb;
+      font-size: 14px;
+      font-weight: 500;
     }
 
     .download-caret {
@@ -314,6 +315,7 @@
 
     .download-menu {
       position: absolute;
+      left: 0;
       right: 0;
       top: calc(100% + 8px);
       min-width: 140px;
@@ -348,6 +350,181 @@
       border-color: rgba(96, 165, 250, 0.45);
     }
 
+    .sidebar-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.08);
+      margin-top: 2px;
+    }
+
+    .logout-section {
+      margin-top: auto;
+      padding-top: 14px;
+    }
+
+    #logoutBtn {
+      width: 100%;
+      justify-content: center;
+      min-height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(248, 113, 113, 0.5);
+      color: #fecaca;
+      background: linear-gradient(135deg, rgba(153, 27, 27, 0.85), rgba(107, 33, 33, 0.9));
+      box-shadow: 0 0 0 1px rgba(252, 165, 165, 0.15) inset, 0 8px 18px rgba(153, 27, 27, 0.3);
+    }
+    #logoutBtn:hover {
+      border-color: rgba(248, 113, 113, 0.8);
+      background: linear-gradient(135deg, rgba(185, 28, 28, 0.92), rgba(127, 29, 29, 0.95));
+    }
+
+    .top-nav { transition: none; }
+
+    .btn {
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      color: #dce7f7;
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow: none;
+      transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+      font-family: inherit;
+    }
+
+    .btn:hover {
+      transform: scale(1.02);
+      border-color: rgba(110, 161, 255, 0.55);
+      background: rgba(79, 140, 255, 0.1);
+    }
+
+    .btn-secondary {
+      color: #dce7f7;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    /* Collapse sidebar while keeping toggle accessible */
+    body.sidebar-collapsed .top-nav {
+      width: 58px;
+      padding: 10px 8px;
+      gap: 8px;
+    }
+    body.sidebar-collapsed .sidebar-meta,
+    body.sidebar-collapsed .sidebar-content {
+      display: none;
+    }
+    body.sidebar-collapsed .logo-link {
+      display: none;
+    }
+    body.sidebar-collapsed .sidebar-toggle-row {
+      justify-content: center;
+      margin-top: 0;
+    }
+    body.sidebar-collapsed .logo-section {
+      justify-content: center;
+      padding: 0;
+      border: none;
+      background: transparent;
+      box-shadow: none;
+    }
+    body.sidebar-collapsed .page-shell,
+    body.sidebar-collapsed .page-footer {
+      width: calc(100% - 32px);
+      margin-left: 90px;
+    }
+
+    .page-shell > section {
+      grid-column: 1 / -1;
+    }
+
+    .page-shell.preload .glass-card {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .page-shell.ready .glass-card {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.42s ease, transform 0.42s ease;
+    }
+
+    .glass-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 24px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+      animation: fadeUp 0.45s ease;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    .glass-card:hover {
+      transform: scale(1.02);
+      border-color: rgba(150, 183, 240, 0.24);
+      box-shadow: 0 20px 42px rgba(2, 6, 18, 0.45);
+    }
+
+    .header-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .header-card h1 {
+      margin: 0;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .header-meta-row {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .meta-item {
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .meta-sep {
+      color: rgba(236, 243, 255, 0.32);
+      margin: 0 8px;
+      font-size: 12px;
+    }
+
+    #roleText {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .header-divider {
+      width: 100%;
+      height: 1px;
+      margin-top: 4px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
+    }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .download-group { display: flex; gap: 8px; align-items: center; }
+
     .btn-active {
       color: #ffffff;
       border: 1px solid rgba(130, 177, 255, 0.7);
@@ -374,6 +551,7 @@
       justify-content: center;
       align-items: center;
       text-align: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
     }
 
     .metric::before {
@@ -389,9 +567,9 @@
       position: absolute;
       top: 10px;
       right: 10px;
-      width: 15px;
-      height: 15px;
-      color: #8fa8de;
+      width: 16px;
+      height: 16px;
+      color: #7db6ff;
       opacity: 0.9;
     }
 
@@ -418,7 +596,17 @@
     .chart-head h3 {
       margin: 0;
       font-size: 22px;
-      font-weight: 600;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chart-title-icon {
+      width: 17px;
+      height: 17px;
+      color: #7db6ff;
+      opacity: 0.95;
     }
 
     .chart-head .icon-btn {
@@ -430,6 +618,30 @@
       place-items: center;
       color: var(--muted);
       background: rgba(15, 23, 42, 0.55);
+    }
+    .chart-download-btn {
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 12px;
+      height: 36px;
+      padding: 0 12px;
+      color: #dbe8ff;
+      background: rgba(15, 23, 42, 0.55);
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .chart-download-btn:hover {
+      border-color: rgba(110, 161, 255, 0.55);
+      background: rgba(79, 140, 255, 0.14);
+    }
+    .chart-download-btn .glyph {
+      font-size: 14px;
+      line-height: 1;
+      opacity: 0.9;
     }
 
     .chart-head .icon-btn svg {
@@ -456,6 +668,7 @@
     }
 
     .insight-card {
+      position: relative;
       border: 1px solid var(--line-soft);
       border-radius: 14px;
       min-height: 168px;
@@ -466,6 +679,31 @@
       justify-content: center;
       align-items: center;
       text-align: center;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .insight-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+
+    .metric {
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .metric:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+
+    .insight-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 16px;
+      height: 16px;
+      color: #7db6ff;
+      opacity: 0.9;
     }
 
     .insight-k {
@@ -479,6 +717,57 @@
       font-size: 32px;
       font-weight: 700;
       color: #f8fbff;
+    }
+
+    .stock-alert-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 24px;
+      line-height: 1;
+      border: 1px solid transparent;
+    }
+
+    .stock-alert-badge::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      background: currentColor;
+      box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04);
+    }
+
+    .stock-alert-badge.alert-high {
+      color: #fecaca;
+      background: rgba(127, 29, 29, 0.32);
+      border-color: rgba(248, 113, 113, 0.55);
+    }
+
+    .stock-alert-badge.alert-high::before {
+      color: #ef4444;
+    }
+
+    .stock-alert-badge.alert-moderate {
+      color: #fde68a;
+      background: rgba(120, 53, 15, 0.32);
+      border-color: rgba(251, 191, 36, 0.5);
+    }
+
+    .stock-alert-badge.alert-moderate::before {
+      color: #f59e0b;
+    }
+
+    .stock-alert-badge.alert-stable {
+      color: #bbf7d0;
+      background: rgba(20, 83, 45, 0.28);
+      border-color: rgba(74, 222, 128, 0.45);
+    }
+
+    .stock-alert-badge.alert-stable::before {
+      color: #22c55e;
     }
 
     .insight-note {
@@ -718,7 +1007,7 @@
     .table-title {
       margin: 0 0 10px;
       font-size: 22px;
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .table-head {
@@ -764,8 +1053,31 @@
       max-height: 460px;
       overflow: auto;
       border-radius: 14px;
-      border: 1px solid var(--line-soft);
+      border: 1px solid rgba(148, 163, 184, 0.05);
       background: rgba(15, 23, 42, 0.42);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(125, 155, 210, 0.7) rgba(11, 18, 31, 0.85);
+    }
+
+    .table-wrap::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .table-wrap::-webkit-scrollbar-track {
+      background: rgba(11, 18, 31, 0.85);
+      border-radius: 10px;
+    }
+
+    .table-wrap::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(118, 150, 214, 0.85), rgba(88, 124, 193, 0.85));
+      border-radius: 10px;
+      border: 2px solid rgba(11, 18, 31, 0.85);
+    }
+
+    .table-wrap::-webkit-scrollbar-corner {
+      background: rgba(11, 18, 31, 0.85);
     }
 
     table {
@@ -808,8 +1120,8 @@
     .page-footer {
       position: relative;
       z-index: 2;
-      width: min(1680px, calc(100% - 40px));
-      margin: 0 auto 24px;
+      width: calc(100% - 356px - 32px);
+      margin: auto 16px 24px 356px;
       border-radius: 14px;
       padding: 12px 14px;
       text-align: center;
@@ -827,13 +1139,18 @@
         grid-template-columns: 1fr;
       }
       .top-nav {
-        grid-template-columns: 1fr;
+        position: static;
+        width: calc(100% - 24px);
+        margin: 12px auto 0;
         gap: 10px;
       }
-      .top-nav-left,
-      .nav-menu,
-      .top-nav-right {
-        justify-self: start;
+      .page-shell {
+        width: calc(100% - 24px);
+        margin: 16px auto 20px;
+      }
+      .page-footer {
+        width: calc(100% - 24px);
+        margin: 0 auto 12px;
       }
       .upload-summary-grid {
         grid-template-columns: 1fr;
@@ -858,28 +1175,13 @@
         font-size: 28px;
       }
 
-      .top-nav-right {
-        width: 100%;
-        justify-content: flex-start;
-        flex-wrap: wrap;
-      }
-
       .nav-menu {
         gap: 8px;
       }
 
-      .nav-menu a {
-        font-size: 12px;
-        height: 34px;
-        padding: 0 11px;
-      }
+      .menu-item { font-size: 13px; min-height: 38px; }
       #datasetFileInput {
         min-width: 100%;
-      }
-
-      .download-toggle {
-        font-size: 12px;
-        height: 34px;
       }
 
       .user-badge {
@@ -895,13 +1197,6 @@
         font-size: 24px;
       }
 
-      .page-shell {
-        width: calc(100% - 24px);
-      }
-
-      .page-footer {
-        width: calc(100% - 24px);
-      }
     }
   </style>
 </head>
@@ -909,33 +1204,77 @@
   <div class="mesh-bg" aria-hidden="true"></div>
 
   <nav class="top-nav">
-    <div class="top-nav-left">
+    <div class="logo-section">
       <a class="logo-link" href="/dashboard" aria-label="DemandIQ Home">
         <img class="logo-icon" src="/assets/img/demandiq_icon.svg" alt="" aria-hidden="true" />
         <span class="logo-wordmark">Demand<span class="iq">IQ</span></span>
       </a>
     </div>
-    <div class="nav-menu">
-      <a href="/dashboard" id="navDashboard">Dashboard</a>
-      <a href="#" id="navReports">Reports</a>
+    <div class="sidebar-toggle-row">
+      <button id="sidebarToggleBtn" class="hamburger-btn" type="button" aria-label="Toggle sidebar" title="Toggle sidebar">
+        <span class="bars"><span></span></span>
+      </button>
     </div>
-    <div class="top-nav-right">
+
+    <div class="sidebar-meta">
       <span id="userNameBadge" class="user-badge" title="Signed-in user">User: ...</span>
       <span id="userBadge" class="user-badge" title="Signed-in role">Role: ...</span>
-      <button class="btn" id="adminDashBtn" type="button" style="display:none;">Admin Dashboard</button>
-      <button class="btn btn-secondary" id="modeToggleBtn" type="button">Past Demand View</button>
-      <div class="download-dropdown" id="downloadDropdown">
-        <button class="download-toggle" id="downloadToggleBtn" type="button" aria-haspopup="menu" aria-expanded="false">
-          <span>Download</span>
-          <span class="download-caret" aria-hidden="true"></span>
+    </div>
+
+    <div class="sidebar-content">
+      <div class="menu-group">
+        <p class="group-title">MAIN</p>
+        <a href="/dashboard" id="navDashboard" class="menu-item">
+          <i data-lucide="layout-dashboard" class="menu-icon"></i>
+          <span class="menu-text">Dashboard</span>
+        </a>
+        <a href="#" id="navReports" class="menu-item active">
+          <i data-lucide="file-text" class="menu-icon"></i>
+          <span class="menu-text">Reports</span>
+        </a>
+      </div>
+
+      <div class="menu-group">
+        <p class="group-title">ANALYTICS</p>
+        <button class="menu-item" id="modeToggleBtn" type="button">
+          <i data-lucide="line-chart" class="menu-icon"></i>
+          <span class="menu-text">Past Demand View</span>
         </button>
-        <div class="download-menu" id="downloadMenu" role="menu" aria-label="Download menu">
-          <button class="download-item" id="downloadCsvItem" type="button" data-download-type="csv" role="menuitem">CSV</button>
-          <button class="download-item" id="downloadPdfItem" type="button" data-download-type="pdf" role="menuitem">PDF</button>
+        <div class="download-dropdown" id="downloadDropdown">
+          <button class="download-toggle menu-item" id="downloadToggleBtn" type="button" aria-haspopup="menu" aria-expanded="false">
+            <span class="menu-text"><i data-lucide="download" class="menu-icon"></i>Download</span>
+            <span class="download-caret" aria-hidden="true"></span>
+          </button>
+          <div class="download-menu" id="downloadMenu" role="menu" aria-label="Download menu">
+            <button class="download-item" id="downloadCsvItem" type="button" data-download-type="csv" role="menuitem">CSV</button>
+            <button class="download-item" id="downloadPdfItem" type="button" data-download-type="pdf" role="menuitem">PDF</button>
+          </div>
         </div>
       </div>
-      <button class="btn" id="backBtn" type="button">Back</button>
-      <button class="btn" id="logoutBtn" type="button">Logout</button>
+
+      <div class="menu-group">
+        <p class="group-title">PROJECT</p>
+        <a href="/about-project" id="navAbout" class="menu-item">
+          <i data-lucide="info" class="menu-icon"></i>
+          <span class="menu-text">About Project</span>
+        </a>
+        <button class="menu-item" id="backBtn" type="button">
+          <i data-lucide="arrow-left" class="menu-icon"></i>
+          <span class="menu-text">Back</span>
+        </button>
+        <button class="menu-item" id="adminDashBtn" type="button" style="display:none;">
+          <i data-lucide="shield-check" class="menu-icon"></i>
+          <span class="menu-text">Admin Dashboard</span>
+        </button>
+      </div>
+
+      <div class="sidebar-divider"></div>
+      <div class="logout-section">
+        <button class="menu-item" id="logoutBtn" type="button">
+          <i data-lucide="log-out" class="menu-icon"></i>
+          <span class="menu-text">Logout</span>
+        </button>
+      </div>
     </div>
   </nav>
 
@@ -943,26 +1282,33 @@
     <section class="glass-card header-card">
       <div>
         <h1 id="resultsPageTitle">Forecast Results</h1>
-        <p id="contextText">Loading...</p>
+        <div class="header-meta-row">
+          <span id="contextText" class="meta-item">Category: Loading...</span>
+          <span class="meta-sep" aria-hidden="true">|</span>
+          <span id="periodText" class="meta-item">Period: Loading...</span>
+          <span class="meta-sep" aria-hidden="true">|</span>
+          <span id="sourceText" class="meta-item">Source: Walmart</span>
+          <span class="meta-sep" aria-hidden="true">|</span>
+          <span id="reportText" class="meta-item">Report Type: Forecast Report</span>
+        </div>
         <p id="roleText">Loading access level...</p>
-        <p id="reportText">Report: Forecast Report</p>
-        <p id="sourceText">Source: Walmart</p>
       </div>
+      <div class="header-divider" aria-hidden="true"></div>
     </section>
 
     <section class="metrics">
       <article class="glass-card metric">
-        <i data-lucide="boxes" class="metric-icon"></i>
+        <i data-lucide="box" class="metric-icon"></i>
         <div class="k" id="kTotalLabel">Total Forecast Units</div>
         <div class="v" id="mTotal">0</div>
       </article>
       <article class="glass-card metric">
-        <i data-lucide="activity" class="metric-icon"></i>
+        <i data-lucide="trending-up" class="metric-icon"></i>
         <div class="k" id="kAvgLabel">Average Daily Forecast</div>
         <div class="v" id="mAvg">0</div>
       </article>
       <article class="glass-card metric">
-        <i data-lucide="alert-triangle" class="metric-icon"></i>
+        <i data-lucide="activity" class="metric-icon"></i>
         <div class="k">Latest Actual Units</div>
         <div class="v" id="mActual">0</div>
       </article>
@@ -970,9 +1316,10 @@
 
     <section class="glass-card">
       <div class="chart-head">
-        <h3>Demand Trend and Forecast</h3>
-        <button class="icon-btn" type="button" title="Export chart">
-          <i data-lucide="download"></i>
+        <h3 id="chartSectionTitle"><i data-lucide="line-chart" class="chart-title-icon"></i>Demand Trend vs Forecast</h3>
+        <button class="chart-download-btn" id="chartDownloadBtn" type="button" title="Download graph as PNG">
+          <span class="glyph" aria-hidden="true">⬇</span>
+          <span>Download Graph</span>
         </button>
       </div>
       <div id="chart"></div>
@@ -984,18 +1331,21 @@
       </div>
       <div class="insight-grid">
         <article class="insight-card">
+          <i data-lucide="package" class="insight-icon" aria-hidden="true"></i>
           <div class="insight-k">Suggested Reorder Point</div>
           <div class="insight-v" id="reorderPointValue">0</div>
           <p class="insight-note">Based on forecasted weekly demand.</p>
         </article>
         <article class="insight-card">
+          <i data-lucide="bar-chart-3" class="insight-icon" aria-hidden="true"></i>
           <div class="insight-k">Estimated Stock Coverage</div>
           <div class="insight-v" id="coverageDaysValue">0 days</div>
           <p class="insight-note">Estimated using latest actual stock proxy.</p>
         </article>
         <article class="insight-card">
+          <i data-lucide="triangle-alert" class="insight-icon" aria-hidden="true"></i>
           <div class="insight-k">Stock Alert Status</div>
-          <div class="insight-v" id="stockAlertValue">Stable</div>
+          <div class="insight-v stock-alert-badge alert-stable" id="stockAlertValue">Stable</div>
           <p class="insight-note" id="stockAlertNote">No immediate shortage signal.</p>
         </article>
       </div>
@@ -1019,6 +1369,24 @@
           <div class="insight-v" id="marginValue">0.00%</div>
         </article>
       </div>
+    </section>
+
+    <section class="data-grid">
+      <article class="glass-card">
+        <h3 class="table-title" id="historyTitle">Recent History</h3>
+        <div id="historyTable"></div>
+      </article>
+      <article class="glass-card">
+        <div class="table-head">
+          <h3 class="table-title" id="forecastTitle">Forecast Output</h3>
+          <div class="granularity-switch" id="granularitySwitch" hidden>
+            <button class="mini-btn" type="button" data-granularity="daily">Daily</button>
+            <button class="mini-btn" type="button" data-granularity="weekly">Weekly</button>
+            <button class="mini-btn active" type="button" data-granularity="monthly">Monthly</button>
+          </div>
+        </div>
+        <div id="forecastTable"></div>
+      </article>
     </section>
 
     <section class="glass-card" id="adminControlsSection">
@@ -1057,24 +1425,6 @@
         </div>
       </div>
     </section>
-
-    <section class="data-grid">
-      <article class="glass-card">
-        <h3 class="table-title" id="historyTitle">Recent History</h3>
-        <div id="historyTable"></div>
-      </article>
-      <article class="glass-card">
-        <div class="table-head">
-          <h3 class="table-title" id="forecastTitle">Forecast Output</h3>
-          <div class="granularity-switch" id="granularitySwitch" hidden>
-            <button class="mini-btn" type="button" data-granularity="daily">Daily</button>
-            <button class="mini-btn" type="button" data-granularity="weekly">Weekly</button>
-            <button class="mini-btn active" type="button" data-granularity="monthly">Monthly</button>
-          </div>
-        </div>
-        <div id="forecastTable"></div>
-      </article>
-    </section>
   </main>
 
   <footer class="page-footer">© DemandIQ - AI Demand Forecasting System</footer>
@@ -1099,6 +1449,8 @@
     let latestLoadRequestId = 0;
     let currentUserRole = "viewer";
     let currentUserName = "";
+    let roleAccessNote = "Viewer access: read-only forecast dashboard. Export and inventory insights are restricted.";
+    const SIDEBAR_COLLAPSED_KEY = "results_sidebar_collapsed_v1";
 
     function apiBase() {
       return window.location.origin;
@@ -1151,6 +1503,7 @@
       const adminControlsSection = document.getElementById("adminControlsSection");
       const downloadDropdownEl = document.getElementById("downloadDropdown");
       const downloadPdfItem = document.getElementById("downloadPdfItem");
+      const chartDownloadBtn = document.getElementById("chartDownloadBtn");
       const modeToggleBtn = document.getElementById("modeToggleBtn");
       const adminDashBtn = document.getElementById("adminDashBtn");
 
@@ -1159,6 +1512,7 @@
       if (adminControlsSection) adminControlsSection.style.display = isAdmin ? "" : "none";
       if (downloadDropdownEl) downloadDropdownEl.style.display = isViewer ? "none" : "";
       if (downloadPdfItem) downloadPdfItem.style.display = isInventoryManager ? "none" : "";
+      if (chartDownloadBtn) chartDownloadBtn.style.display = isViewer ? "none" : "";
       if (modeToggleBtn) modeToggleBtn.disabled = false;
       if (adminDashBtn) adminDashBtn.style.display = isAdmin ? "" : "none";
     }
@@ -1185,7 +1539,16 @@
 
       document.getElementById("reorderPointValue").textContent = String(reorderPoint);
       document.getElementById("coverageDaysValue").textContent = `${coverageDays.toFixed(1)} days`;
-      document.getElementById("stockAlertValue").textContent = stockAlert;
+      const stockAlertEl = document.getElementById("stockAlertValue");
+      stockAlertEl.textContent = stockAlert;
+      stockAlertEl.classList.remove("alert-high", "alert-moderate", "alert-stable");
+      if (stockAlert === "High Risk") {
+        stockAlertEl.classList.add("alert-high");
+      } else if (stockAlert === "Moderate") {
+        stockAlertEl.classList.add("alert-moderate");
+      } else {
+        stockAlertEl.classList.add("alert-stable");
+      }
       document.getElementById("stockAlertNote").textContent = stockNote;
       document.getElementById("revenueValue").textContent = fmtMoney(estRevenue);
       document.getElementById("costValue").textContent = fmtMoney(estCost);
@@ -1197,7 +1560,11 @@
       const userBadgeEl = document.getElementById("userBadge");
       const roleTextEl = document.getElementById("roleText");
       try {
-        const resp = await fetch(`${apiBase()}/auth/me`);
+        const resp = await fetch(`${apiBase()}/auth/me`, {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+        });
         if (!resp.ok) {
           window.location.href = "/login";
           return;
@@ -1210,9 +1577,10 @@
         const roleTitle = formatRole(role);
         userNameBadgeEl.textContent = `User: ${fullName}`;
         userBadgeEl.textContent = `Role: ${roleTitle}`;
-        if (role === "admin") roleTextEl.textContent = "Admin access: full system operations enabled.";
-        if (role === "inventory_manager") roleTextEl.textContent = "Inventory Manager access: operational inventory insights enabled.";
-        if (role === "viewer") roleTextEl.textContent = "Viewer access: read-only forecast dashboard. Export and inventory insights are restricted.";
+        if (role === "admin") roleAccessNote = "Admin access: full system operations enabled.";
+        if (role === "inventory_manager") roleAccessNote = "Inventory Manager access: operational inventory insights enabled.";
+        if (role === "viewer") roleAccessNote = "Viewer access: read-only forecast dashboard. Export and inventory insights are restricted.";
+        roleTextEl.textContent = roleAccessNote;
         applyRoleFeatureGates();
       } catch (_) {
         window.location.href = "/login";
@@ -1359,6 +1727,31 @@
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+    }
+
+    async function downloadChartImage() {
+      const chartEl = document.getElementById("chart");
+      if (!chartEl || !window.Plotly || typeof window.Plotly.toImage !== "function") {
+        alert("Chart is not ready for download.");
+        return;
+      }
+      try {
+        const dataUrl = await window.Plotly.toImage(chartEl, {
+          format: "png",
+          width: 1400,
+          height: 700,
+          scale: 2,
+        });
+        const a = document.createElement("a");
+        const stamp = new Date().toISOString().slice(0, 10);
+        a.href = dataUrl;
+        a.download = `demand_trend_chart_${stamp}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (_) {
+        alert("Failed to download graph. Please try again.");
+      }
     }
 
     function buildCsv() {
@@ -1609,6 +2002,12 @@
       return ticks;
     }
 
+    function formatDisplayDate(isoDate) {
+      const d = new Date(isoDate);
+      if (Number.isNaN(d.getTime())) return isoDate;
+      return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    }
+
     async function loadResults() {
       const requestId = ++latestLoadRequestId;
       const params = new URLSearchParams(window.location.search);
@@ -1618,7 +2017,10 @@
       const mode = (params.get("mode") || "forecast").toLowerCase();
       currentMode = mode === "past" ? "past" : "forecast";
       const contextEl = document.getElementById("contextText");
+      const periodTextEl = document.getElementById("periodText");
       const reportTextEl = document.getElementById("reportText");
+      const roleTextEl = document.getElementById("roleText");
+      const chartSectionTitleEl = document.getElementById("chartSectionTitle");
       const pageTitle = document.getElementById("resultsPageTitle");
       const modeToggleBtn = document.getElementById("modeToggleBtn");
       const totalLabel = document.getElementById("kTotalLabel");
@@ -1627,15 +2029,27 @@
       const forecastTitle = document.getElementById("forecastTitle");
       const granularitySwitch = document.getElementById("granularitySwitch");
       pageTitle.textContent = currentMode === "past" ? "Past Demand Results" : "Forecast Results";
-      reportTextEl.textContent = currentMode === "past" ? "Report: Past Demand Report" : "Report: Forecast Report";
+      reportTextEl.textContent = currentMode === "past" ? "Report Type: Past Demand Report" : "Report Type: Forecast Report";
+      if (chartSectionTitleEl) {
+        chartSectionTitleEl.innerHTML = currentMode === "past"
+          ? '<i data-lucide="line-chart" class="chart-title-icon"></i>Past Demand Trend'
+          : '<i data-lucide="line-chart" class="chart-title-icon"></i>Demand Trend vs Forecast';
+      }
+      if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+      }
       modeToggleBtn.textContent = currentMode === "past" ? "Forecast View" : "Past Demand View";
 
       if (!category || !fromDate || !toDate) {
-        contextEl.textContent = "Missing input values. Please go back and select category and dates.";
+        contextEl.textContent = "Category: Missing";
+        periodTextEl.textContent = "Period: Missing";
+        roleTextEl.textContent = roleAccessNote;
         return;
       }
 
-      contextEl.textContent = `Category: ${category} | Period: ${fromDate} to ${toDate} | View: ${mode === "past" ? "Past Demand" : "Forecast"}`;
+      contextEl.textContent = `Category: ${category}`;
+      periodTextEl.textContent = `Period: ${formatDisplayDate(fromDate)} - ${formatDisplayDate(toDate)}`;
+      roleTextEl.textContent = roleAccessNote;
       exportState.category = category;
       exportState.fromDate = fromDate;
       exportState.toDate = toDate;
@@ -1705,10 +2119,10 @@
         if (currentMode === "past" && !filteredHistory.length && pastHistoryForDisplay.length) {
           const firstAvailable = pastHistoryForDisplay[0].date;
           const lastAvailable = pastHistoryForDisplay[pastHistoryForDisplay.length - 1].date;
-          contextEl.textContent = `${contextEl.textContent} | Note: No actuals in selected period. Showing latest available history (${firstAvailable} to ${lastAvailable}).`;
+          roleTextEl.textContent = `${roleAccessNote} Note: No actuals in selected period. Showing latest available history (${firstAvailable} to ${lastAvailable}).`;
         }
         if (currentMode === "forecast" && !filteredForecast.length) {
-          contextEl.textContent = `${contextEl.textContent} | Note: No forecast generated for selected period.`;
+          roleTextEl.textContent = `${roleAccessNote} Note: No forecast generated for selected period.`;
         }
 
         document.getElementById("mTotal").textContent = exportState.total.toFixed(1);
@@ -1784,7 +2198,7 @@
           throw new Error("Chart library failed to load (Plotly unavailable).");
         }
         Plotly.newPlot("chart", series, {
-          title: mode === "past" ? `Past Demand Trend: ${category}` : `Demand Trend and Forecast: ${category}`,
+          title: mode === "past" ? `Past Demand Trend: ${category}` : `Demand Trend vs Forecast: ${category}`,
           paper_bgcolor: "rgba(0,0,0,0)",
           plot_bgcolor: "rgba(0,0,0,0)",
           font: { color: "#E5E7EB" },
@@ -1887,6 +2301,38 @@
     document.getElementById("adminDashBtn").addEventListener("click", () => {
       window.location.href = "/admin/dashboard";
     });
+    const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
+    function applySidebarState(collapsed) {
+      document.body.classList.toggle("sidebar-collapsed", Boolean(collapsed));
+      if (sidebarToggleBtn) {
+        sidebarToggleBtn.setAttribute("aria-pressed", collapsed ? "true" : "false");
+        sidebarToggleBtn.setAttribute("title", collapsed ? "Expand sidebar" : "Collapse sidebar");
+      }
+    }
+    try {
+      const collapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
+      applySidebarState(collapsed);
+    } catch (_) {
+      applySidebarState(false);
+    }
+    if (sidebarToggleBtn) {
+      sidebarToggleBtn.addEventListener("click", () => {
+        const next = !document.body.classList.contains("sidebar-collapsed");
+        applySidebarState(next);
+        try {
+          localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
+        } catch (_) {
+          // Ignore storage failures.
+        }
+      });
+    }
+    const chartDownloadBtn = document.getElementById("chartDownloadBtn");
+    if (chartDownloadBtn) {
+      chartDownloadBtn.addEventListener("click", async () => {
+        if (currentUserRole === "viewer") return;
+        await downloadChartImage();
+      });
+    }
     const downloadDropdown = document.getElementById("downloadDropdown");
     const downloadToggleBtn = document.getElementById("downloadToggleBtn");
     const downloadMenu = document.getElementById("downloadMenu");

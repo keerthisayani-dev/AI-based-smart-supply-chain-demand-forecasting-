@@ -58,6 +58,7 @@ FRONTEND_LOGIN_HTML_PATH = PROJECT_DIR / "Frontend" / "login.html"
 FRONTEND_HTML_PATH = PROJECT_DIR / "Frontend" / "dashboard.html"
 FRONTEND_RESULTS_HTML_PATH = PROJECT_DIR / "Frontend" / "dashboard_results.html"
 FRONTEND_ADMIN_HTML_PATH = PROJECT_DIR / "Frontend" / "admin_dashboard.html"
+FRONTEND_ABOUT_HTML_PATH = PROJECT_DIR / "Frontend" / "about_project.html"
 HISTORY_DB_PATH = PROJECT_DIR / "Backend" / "forecast_history.db"
 AUTH_DB_PATH = PROJECT_DIR / "Backend" / "auth.db"
 UPLOADS_ROOT = PROJECT_DIR / "uploads"
@@ -1416,6 +1417,18 @@ def admin_dashboard(request: Request) -> Response:
             detail=f"Admin dashboard file not found at {FRONTEND_ADMIN_HTML_PATH}",
         )
     return FileResponse(FRONTEND_ADMIN_HTML_PATH, headers=NO_CACHE_HEADERS)
+
+
+@app.get("/about-project", include_in_schema=False)
+def about_project(request: Request) -> Response:
+    if not _current_user_from_request(request):
+        return RedirectResponse(url="/login", status_code=307)
+    if not FRONTEND_ABOUT_HTML_PATH.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"About project file not found at {FRONTEND_ABOUT_HTML_PATH}",
+        )
+    return FileResponse(FRONTEND_ABOUT_HTML_PATH, headers=NO_CACHE_HEADERS)
 
 
 @app.post("/auth/login")

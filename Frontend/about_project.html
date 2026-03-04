@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>About Project - DemandIQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --text: #e6edf7;
+      --muted: #8e9bb0;
+      --line: rgba(236, 243, 255, 0.14);
+      --line-soft: rgba(236, 243, 255, 0.08);
+      --glass: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.1);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 500px at 30% -15%, #162133 0%, var(--bg) 55%);
+    }
+    .mesh-bg {
+      position: fixed;
+      inset: -20%;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(620px 320px at 14% 8%, rgba(79, 140, 255, 0.08), transparent 70%),
+        radial-gradient(540px 300px at 88% 14%, rgba(103, 129, 255, 0.07), transparent 72%);
+      filter: blur(16px);
+    }
+    .top-nav,
+    .page-shell,
+    .page-footer { position: relative; z-index: 2; }
+    .top-nav {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      bottom: 16px;
+      width: 300px;
+      padding: 14px 12px;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 10px 28px rgba(3, 8, 20, 0.45);
+    }
+    .logo-section {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      padding: 8px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .sidebar-toggle-row {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      margin-top: -2px;
+    }
+    .hamburger-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.03);
+      color: #d8e2f2;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex: 0 0 auto;
+    }
+    .hamburger-btn .bars {
+      display: inline-block;
+      width: 16px;
+      height: 12px;
+      position: relative;
+    }
+    .hamburger-btn .bars::before,
+    .hamburger-btn .bars::after,
+    .hamburger-btn .bars span {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 16px;
+      height: 2px;
+      border-radius: 2px;
+      background: currentColor;
+    }
+    .hamburger-btn .bars::before { top: 0; }
+    .hamburger-btn .bars span { top: 5px; }
+    .hamburger-btn .bars::after { top: 10px; }
+    .logo-link {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+    }
+    .logo-icon { width: 34px; height: 34px; }
+    .logo-wordmark {
+      font-size: 33px;
+      font-weight: 700;
+      color: #f3f7ff;
+      letter-spacing: -0.3px;
+      line-height: 1;
+    }
+    .logo-wordmark .iq {
+      background: linear-gradient(90deg, #37d6ff 0%, #7c4dff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+    .sidebar-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      width: 100%;
+    }
+    .sidebar-content {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: stretch;
+      width: 100%;
+      flex: 1 1 auto;
+      min-height: 0;
+      margin-top: 6px;
+    }
+    .menu-group {
+      margin-top: 8px;
+      display: grid;
+      gap: 8px;
+    }
+    .group-title {
+      margin: 0 2px 2px;
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.45);
+      font-weight: 700;
+    }
+    .menu-item {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      color: #dfe8fb;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1;
+      border-radius: 12px;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
+      transition: 0.3s ease;
+      width: 100%;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .menu-item:hover {
+      background: rgba(0, 140, 255, 0.15);
+      border-color: rgba(116, 174, 255, 0.45);
+    }
+    .menu-item.active {
+      color: #f3f8ff;
+      background: linear-gradient(135deg, #4f7cff, #7c4dff);
+      box-shadow: 0 0 15px rgba(124,77,255,0.4);
+      border-left: 4px solid #7c4dff;
+      padding-left: 10px;
+    }
+    .menu-icon { width: 16px; height: 16px; opacity: 0.95; flex: 0 0 auto; }
+    .menu-text { display: inline-flex; align-items: center; gap: 6px; }
+    .user-badge {
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 0 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #d3dff3;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      width: auto;
+      min-width: max-content;
+    }
+    .download-dropdown {
+      width: 100%;
+      position: relative;
+      z-index: 60;
+    }
+    .download-toggle.menu-item {
+      width: 100%;
+      justify-content: space-between;
+      cursor: pointer;
+      color: #dfe8fb;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .download-caret {
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid #f8fbff;
+    }
+    .download-menu {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 8px);
+      min-width: 140px;
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid var(--line-soft);
+      background: rgba(11, 17, 28, 0.98);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+      display: none;
+      z-index: 80;
+    }
+    .download-menu.open { display: grid; gap: 4px; }
+    .download-item {
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: rgba(30, 41, 59, 0.68);
+      color: #e5e7eb;
+      border-radius: 8px;
+      padding: 8px 10px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .download-item:hover {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: rgba(96, 165, 250, 0.45);
+    }
+    .sidebar-divider { height: 1px; background: rgba(255, 255, 255, 0.08); margin-top: 2px; }
+    .logout-section { margin-top: auto; padding-top: 14px; }
+    #logoutBtn {
+      justify-content: center;
+      border-color: rgba(248, 113, 113, 0.52);
+      color: #fecaca;
+      background: linear-gradient(135deg, rgba(153, 27, 27, 0.85), rgba(107, 33, 33, 0.9));
+      box-shadow: 0 0 0 1px rgba(252, 165, 165, 0.15) inset, 0 8px 18px rgba(153, 27, 27, 0.3);
+    }
+    #logoutBtn:hover {
+      border-color: rgba(248, 113, 113, 0.8);
+      background: linear-gradient(135deg, rgba(185, 28, 28, 0.92), rgba(127, 29, 29, 0.95));
+    }
+    body.sidebar-collapsed .top-nav {
+      width: 58px;
+      padding: 10px 8px;
+      gap: 8px;
+    }
+    body.sidebar-collapsed .sidebar-meta,
+    body.sidebar-collapsed .sidebar-content {
+      display: none;
+    }
+    body.sidebar-collapsed .logo-link { display: none; }
+    body.sidebar-collapsed .sidebar-toggle-row { justify-content: center; margin-top: 0; }
+    body.sidebar-collapsed .logo-section {
+      justify-content: center;
+      padding: 0;
+      border: none;
+      background: transparent;
+      box-shadow: none;
+    }
+    body.sidebar-collapsed .page-shell,
+    body.sidebar-collapsed .page-footer {
+      width: calc(100% - 32px);
+      margin-left: 90px;
+    }
+
+    .page-shell {
+      width: calc(100% - 356px - 32px);
+      margin: 16px 16px 24px 356px;
+      display: grid;
+      gap: 18px;
+    }
+    .glass-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 24px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 32px rgba(2, 6, 18, 0.35);
+    }
+    h1, h2 { margin: 0 0 10px; }
+    p, li { color: #c9d8ef; line-height: 1.55; }
+    ul { margin: 0; padding-left: 20px; }
+    .meta-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .meta-tile {
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      padding: 14px;
+      background: rgba(15, 23, 42, 0.45);
+    }
+    .meta-k { color: var(--muted); font-size: 12px; font-weight: 600; }
+    .meta-v { font-size: 22px; font-weight: 700; margin-top: 4px; }
+    .table-like {
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      border-top: 1px solid var(--line-soft);
+    }
+    .row:first-child { border-top: none; }
+    .cell {
+      padding: 11px 12px;
+      font-size: 14px;
+    }
+    .cell.key { color: #98abd0; background: rgba(255, 255, 255, 0.03); }
+
+    .page-footer {
+      width: calc(100% - 356px - 32px);
+      margin: 0 16px 24px 356px;
+      border-radius: 14px;
+      padding: 12px 14px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+    }
+
+    @media (max-width: 980px) {
+      .top-nav {
+        position: static;
+        width: calc(100% - 24px);
+        margin: 12px auto 0;
+      }
+      .page-shell,
+      .page-footer {
+        width: calc(100% - 24px);
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .meta-grid { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mesh-bg" aria-hidden="true"></div>
+
+  <nav class="top-nav">
+    <div class="logo-section">
+      <a class="logo-link" href="/dashboard" aria-label="DemandIQ Home">
+        <img class="logo-icon" src="/assets/img/demandiq_icon.svg" alt="" aria-hidden="true" />
+        <span class="logo-wordmark">Demand<span class="iq">IQ</span></span>
+      </a>
+    </div>
+    <div class="sidebar-toggle-row">
+      <button id="sidebarToggleBtn" class="hamburger-btn" type="button" aria-label="Toggle sidebar" title="Toggle sidebar">
+        <span class="bars"><span></span></span>
+      </button>
+    </div>
+
+    <div class="sidebar-meta">
+      <span id="userNameBadge" class="user-badge">User: ...</span>
+      <span id="userRoleBadge" class="user-badge">Role: ...</span>
+    </div>
+
+    <div class="sidebar-content">
+      <div class="menu-group">
+        <p class="group-title">MAIN</p>
+        <a href="/dashboard" class="menu-item">
+          <i data-lucide="layout-dashboard" class="menu-icon"></i>
+          <span class="menu-text">Dashboard</span>
+        </a>
+        <a href="/dashboard/results" class="menu-item">
+          <i data-lucide="file-text" class="menu-icon"></i>
+          <span class="menu-text">Reports</span>
+        </a>
+      </div>
+
+      <div class="menu-group">
+        <p class="group-title">ANALYTICS</p>
+        <a href="/dashboard/results?mode=past" class="menu-item">
+          <i data-lucide="line-chart" class="menu-icon"></i>
+          <span class="menu-text">Forecast View</span>
+        </a>
+        <div class="download-dropdown" id="downloadDropdown">
+          <button class="download-toggle menu-item" id="downloadToggleBtn" type="button" aria-haspopup="menu" aria-expanded="false">
+            <span class="menu-text"><i data-lucide="download" class="menu-icon"></i>Download</span>
+            <span class="download-caret" aria-hidden="true"></span>
+          </button>
+          <div class="download-menu" id="downloadMenu" role="menu" aria-label="Download menu">
+            <button class="download-item" id="downloadCsvItem" type="button" role="menuitem">CSV</button>
+            <button class="download-item" id="downloadPdfItem" type="button" role="menuitem">PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-group">
+        <p class="group-title">PROJECT</p>
+        <a href="/about-project" class="menu-item active">
+          <i data-lucide="info" class="menu-icon"></i>
+          <span class="menu-text">About Project</span>
+        </a>
+        <button class="menu-item" id="backBtn" type="button">
+          <i data-lucide="arrow-left" class="menu-icon"></i>
+          <span class="menu-text">Back</span>
+        </button>
+        <button class="menu-item" id="adminDashBtn" type="button" style="display:none;">
+          <i data-lucide="shield-check" class="menu-icon"></i>
+          <span class="menu-text">Admin Dashboard</span>
+        </button>
+      </div>
+
+      <div class="sidebar-divider"></div>
+      <div class="logout-section">
+        <button class="menu-item" id="logoutBtn" type="button">
+          <i data-lucide="log-out" class="menu-icon"></i>
+          <span class="menu-text">Logout</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="page-shell">
+    <section class="glass-card">
+      <h1>About This Project</h1>
+      <p>
+        DemandIQ is an AI-assisted demand forecasting system for retail inventory planning. It predicts upcoming demand using historical sales trends and provides operational insights for stocking, reorder planning, and performance tracking.
+      </p>
+      <div class="meta-grid">
+        <div class="meta-tile">
+          <div class="meta-k">Primary Goal</div>
+          <div class="meta-v">Demand Forecast</div>
+        </div>
+        <div class="meta-tile">
+          <div class="meta-k">Scope</div>
+          <div class="meta-v">Category-Level</div>
+        </div>
+        <div class="meta-tile">
+          <div class="meta-k">Output Horizon</div>
+          <div class="meta-v">Daily/Weekly/Monthly</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="glass-card">
+      <h2>How The Project Works</h2>
+      <ul>
+        <li>Loads historical retail records and aggregates time-series demand by category.</li>
+        <li>Trains forecast models on cleaned demand signals.</li>
+        <li>Generates future demand predictions for a chosen date range.</li>
+        <li>Compares forecast and recent actuals through charts and tabular outputs.</li>
+        <li>Supports admin-controlled retraining and dataset upload workflows.</li>
+      </ul>
+    </section>
+
+    <section class="glass-card">
+      <h2>Data Used By The Model</h2>
+      <p>Current dataset: <code>Dataset/retail_store_inventory.csv</code></p>
+      <div class="table-like">
+        <div class="row"><div class="cell key">Date & Identity</div><div class="cell">date, store id, product id, category, location</div></div>
+        <div class="row"><div class="cell key">Inventory & Demand</div><div class="cell">inventory level, units sold, units ordered, demand forecast</div></div>
+        <div class="row"><div class="cell key">Pricing Signals</div><div class="cell">price, discount, competitor pricing</div></div>
+        <div class="row"><div class="cell key">External Factors</div><div class="cell">weather condition, holiday/promotion, seasonality</div></div>
+      </div>
+    </section>
+
+    <section class="glass-card">
+      <h2>How To Measure "How Much Better"</h2>
+      <p>
+        Improvement should be measured against a baseline method (for example, previous-month average or simple moving average), using the same period.
+      </p>
+      <ul>
+        <li>Track forecast error metrics: MAPE, MAE, and RMSE.</li>
+        <li>Compare stock-out and overstock incidents before vs after using forecasts.</li>
+        <li>Track planning impact: reorder timing quality and service-level stability.</li>
+      </ul>
+      <p>
+        In this project, the "better" value is determined by lower forecast error and improved inventory decisions over historical operation.
+      </p>
+    </section>
+  </main>
+
+  <footer class="page-footer">� DemandIQ - AI Demand Forecasting System</footer>
+
+  <script>
+    const SIDEBAR_COLLAPSED_KEY = "about_sidebar_collapsed_v1";
+
+    function formatRole(role) {
+      const mapping = {
+        admin: "Admin",
+        inventory_manager: "Inventory Manager",
+        viewer: "Viewer",
+      };
+      const key = String(role || "").toLowerCase();
+      return mapping[key] || "Unknown";
+    }
+
+    async function bindUserMeta() {
+      try {
+        const resp = await fetch("/auth/me", {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+        if (!resp.ok) {
+          window.location.href = "/login";
+          return;
+        }
+        const data = await resp.json();
+        const name = String(data?.user?.full_name || "User");
+        const role = String(data?.user?.role || "viewer");
+        const roleTitle = formatRole(role);
+        document.getElementById("userNameBadge").textContent = `User: ${name}`;
+        document.getElementById("userRoleBadge").textContent = `Role: ${roleTitle}`;
+        const adminDashBtn = document.getElementById("adminDashBtn");
+        if (adminDashBtn) adminDashBtn.style.display = role === "admin" ? "" : "none";
+        const downloadPdfItem = document.getElementById("downloadPdfItem");
+        if (downloadPdfItem) downloadPdfItem.style.display = role === "inventory_manager" ? "none" : "";
+      } catch (_) {
+        window.location.href = "/login";
+      }
+    }
+
+    document.getElementById("backBtn").addEventListener("click", () => {
+      window.location.href = "/dashboard";
+    });
+    document.getElementById("adminDashBtn").addEventListener("click", () => {
+      window.location.href = "/admin/dashboard";
+    });
+
+    const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
+    function applySidebarState(collapsed) {
+      document.body.classList.toggle("sidebar-collapsed", Boolean(collapsed));
+      if (sidebarToggleBtn) {
+        sidebarToggleBtn.setAttribute("aria-pressed", collapsed ? "true" : "false");
+        sidebarToggleBtn.setAttribute("title", collapsed ? "Expand sidebar" : "Collapse sidebar");
+      }
+    }
+    try {
+      const collapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
+      applySidebarState(collapsed);
+    } catch (_) {
+      applySidebarState(false);
+    }
+    if (sidebarToggleBtn) {
+      sidebarToggleBtn.addEventListener("click", () => {
+        const next = !document.body.classList.contains("sidebar-collapsed");
+        applySidebarState(next);
+        try {
+          localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
+        } catch (_) {
+          // Ignore storage failures.
+        }
+      });
+    }
+
+    const downloadDropdown = document.getElementById("downloadDropdown");
+    const downloadToggleBtn = document.getElementById("downloadToggleBtn");
+    const downloadMenu = document.getElementById("downloadMenu");
+    function closeDownloadMenu() {
+      downloadMenu.classList.remove("open");
+      downloadToggleBtn.setAttribute("aria-expanded", "false");
+    }
+    downloadToggleBtn.addEventListener("click", () => {
+      const willOpen = !downloadMenu.classList.contains("open");
+      if (willOpen) {
+        downloadMenu.classList.add("open");
+        downloadToggleBtn.setAttribute("aria-expanded", "true");
+      } else {
+        closeDownloadMenu();
+      }
+    });
+    document.getElementById("downloadCsvItem").addEventListener("click", () => {
+      window.location.href = "/dashboard/results";
+    });
+    document.getElementById("downloadPdfItem").addEventListener("click", () => {
+      window.location.href = "/dashboard/results";
+    });
+    document.addEventListener("click", (e) => {
+      if (!downloadDropdown.contains(e.target)) closeDownloadMenu();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeDownloadMenu();
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      try {
+        await fetch("/auth/logout", { method: "POST" });
+      } catch (_) {
+        // Continue to login.
+      }
+      sessionStorage.setItem("demandiq_clear_login_after_logout_v1", "1");
+      window.location.href = "/login?logged_out=1";
+    });
+
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+      window.lucide.createIcons();
+    }
+    bindUserMeta();
+  </script>
+</body>
+</html>

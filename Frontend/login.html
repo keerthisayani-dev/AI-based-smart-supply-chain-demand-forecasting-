@@ -47,7 +47,12 @@
     }
 
     .scene {
-      display: none;
+      display: block;
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
     }
 
     @keyframes gridDrift {
@@ -61,8 +66,9 @@
     }
 
     @keyframes chartDraw {
-      0% { stroke-dashoffset: 1200; }
-      100% { stroke-dashoffset: 0; }
+      0% { stroke-dashoffset: 1200; opacity: 0.45; }
+      70% { stroke-dashoffset: 0; opacity: 0.92; }
+      100% { stroke-dashoffset: 0; opacity: 0.92; }
     }
 
     @keyframes pulseDot {
@@ -118,7 +124,7 @@
       stroke-linejoin: round;
       stroke-dasharray: 1200;
       stroke-dashoffset: 1200;
-      animation: chartDraw 10s ease-in-out infinite alternate;
+      animation: chartDraw 6.8s ease-out infinite;
     }
 
     .chart-area {
@@ -639,20 +645,22 @@
     .btn {
       width: 100%;
       height: 52px;
-      border: 1px solid var(--line-soft);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.04);
-      color: #dce7f7;
+      border: 1px solid rgba(122, 188, 255, 0.8);
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(61, 130, 246, 0.95), rgba(121, 72, 255, 0.9));
+      color: #eef4ff;
       font-size: 18px;
-      font-weight: 600;
+      font-weight: 700;
+      box-shadow: 0 0 0 1px rgba(144, 205, 255, 0.2) inset, 0 8px 18px rgba(67, 124, 255, 0.35);
       cursor: pointer;
       transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
     }
 
     .btn:hover {
       transform: scale(1.02);
-      border-color: rgba(110, 161, 255, 0.55);
-      background: rgba(79, 140, 255, 0.1);
+      border-color: rgba(170, 226, 255, 0.95);
+      background: linear-gradient(135deg, rgba(84, 157, 255, 0.98), rgba(146, 104, 255, 0.95));
+      box-shadow: 0 0 0 1px rgba(177, 226, 255, 0.35) inset, 0 10px 22px rgba(88, 149, 255, 0.44);
     }
 
     .sso-btn {
@@ -1059,7 +1067,11 @@
 
     async function ensureAuthState() {
       try {
-        const resp = await fetch("/auth/me");
+        const resp = await fetch("/auth/me", {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+        });
         if (resp.ok) {
           window.location.href = "/dashboard";
         }
@@ -1292,11 +1304,29 @@
           return;
         }
         await resp.json();
+        let latestEmail = email;
+        let latestRole = role;
+        let latestFullName = fullName;
+        try {
+          const meResp = await fetch("/auth/me", {
+            method: "GET",
+            credentials: "same-origin",
+            cache: "no-store",
+          });
+          if (meResp.ok) {
+            const me = await meResp.json();
+            latestEmail = String(me?.user?.email || latestEmail).trim().toLowerCase() || latestEmail;
+            latestRole = String(me?.user?.role || latestRole).trim() || latestRole;
+            latestFullName = String(me?.user?.full_name || latestFullName).trim() || latestFullName;
+          }
+        } catch (_) {
+          // Fallback to submitted values if profile refresh fails.
+        }
         upsertSavedLoginProfile({
-          email,
-          role,
+          email: latestEmail,
+          role: latestRole,
           remember_me: rememberMe,
-          full_name: fullName,
+          full_name: latestFullName,
           password,
         });
         window.location.href = "/dashboard";
