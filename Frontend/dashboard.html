@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   <link rel="stylesheet" href="/assets/css/dashboard_glass.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 <body>
   <div class="mesh-bg" aria-hidden="true"></div>
@@ -123,6 +124,58 @@
           </div>
         </article>
       </div>
+    </section>
+
+    <section id="advancedAnalytics" class="analytics-stack">
+      <article class="surface-card analytics-card">
+        <h3>AI Forecast Insight</h3>
+        <p id="aiInsightText" class="analytics-text">Generate a forecast to view AI insight.</p>
+      </article>
+
+      <article class="surface-card analytics-card">
+        <h3>Reorder Recommendation</h3>
+        <div class="metric-grid">
+          <div class="metric-row"><span>Average Forecast Demand</span><strong id="avgDemandValue">-</strong></div>
+          <div class="metric-row"><span>Lead Time</span><strong id="leadTimeValue">5 days</strong></div>
+          <div class="metric-row"><span>Safety Stock</span><strong id="safetyStockValue">150 units</strong></div>
+          <div class="metric-row"><span>Suggested Reorder Point</span><strong id="reorderPointValue">-</strong></div>
+          <div class="metric-row emphasize"><span>Recommended Order Quantity</span><strong id="recommendedOrderValue">-</strong></div>
+        </div>
+      </article>
+
+      <article class="surface-card analytics-card">
+        <h3>Inventory Alerts</h3>
+        <ul id="inventoryAlertsList" class="alerts-list">
+          <li class="alert-item safe">Inventory alerts will appear after forecast generation.</li>
+        </ul>
+      </article>
+
+      <article class="surface-card analytics-card">
+        <h3>Model Performance</h3>
+        <div class="metric-grid compact">
+          <div class="metric-row">
+            <span>MAE <span class="info-tip" title="Mean Absolute Error: average absolute prediction error.">?</span></span>
+            <strong id="maeValue">-</strong>
+          </div>
+          <div class="metric-row">
+            <span>RMSE <span class="info-tip" title="Root Mean Squared Error: penalizes large errors more.">?</span></span>
+            <strong id="rmseValue">-</strong>
+          </div>
+          <div class="metric-row">
+            <span>R² Score <span class="info-tip" title="Coefficient of determination: closer to 1 means better fit.">?</span></span>
+            <strong id="r2Value">-</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="surface-card analytics-card">
+        <h3>Export Report</h3>
+        <div class="export-actions">
+          <button id="exportCsvBtn" class="nav-btn export-btn" type="button">Download Forecast CSV</button>
+          <button id="exportPngBtn" class="nav-btn export-btn" type="button">Download Chart PNG</button>
+          <button id="exportPdfBtn" class="nav-btn export-btn" type="button">Generate PDF Report</button>
+        </div>
+      </article>
     </section>
   </main>
 

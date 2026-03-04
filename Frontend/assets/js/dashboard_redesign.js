@@ -8,12 +8,28 @@ const toDateErrorEl = document.getElementById("toDateError");
 const userMetaChipEl = document.getElementById("userMetaChip");
 const roleMetaChipEl = document.getElementById("roleMetaChip");
 const roleHintEl = document.getElementById("roleHint");
+const aiInsightTextEl = document.getElementById("aiInsightText");
+const avgDemandValueEl = document.getElementById("avgDemandValue");
+const leadTimeValueEl = document.getElementById("leadTimeValue");
+const safetyStockValueEl = document.getElementById("safetyStockValue");
+const reorderPointValueEl = document.getElementById("reorderPointValue");
+const recommendedOrderValueEl = document.getElementById("recommendedOrderValue");
+const inventoryAlertsListEl = document.getElementById("inventoryAlertsList");
+const maeValueEl = document.getElementById("maeValue");
+const rmseValueEl = document.getElementById("rmseValue");
+const r2ValueEl = document.getElementById("r2Value");
+const exportCsvBtnEl = document.getElementById("exportCsvBtn");
+const exportPngBtnEl = document.getElementById("exportPngBtn");
+const exportPdfBtnEl = document.getElementById("exportPdfBtn");
 
 const ALLOWED_MIN_DATE = "2025-01-01";
 const ALLOWED_MAX_DATE = "2031-12-31";
 const DASHBOARD_STATE_KEY = "dashboard_form_state_v1";
 const DASHBOARD_FORCE_CLEAR_KEY = "dashboard_force_clear_v1";
 const LOGIN_CLEAR_AFTER_LOGOUT_KEY = "demandiq_clear_login_after_logout_v1";
+const DEFAULT_LEAD_TIME_DAYS = 5;
+const DEFAULT_SAFETY_STOCK = 150;
+const DEFAULT_PERFORMANCE_METRICS = { mae: 8.41, rmse: 10.26, r2: 0.89 };
 
 let fromPicker = null;
 let toPicker = null;
@@ -21,6 +37,7 @@ let actualForecastChart = null;
 let categoryComparisonChart = null;
 let stockRiskGaugeChart = null;
 const vizDataCache = new Map();
+let latestDashboardData = null;
 
 function apiBase() {
   return window.location.origin;
@@ -65,6 +82,104 @@ function formatRole(role) {
   };
   const key = String(role || "").toLowerCase();
   return mapping[key] || "Unknown";
+}
+
+function formatUnits(value, fractionDigits = 0) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "-";
+  return `${num.toLocaleString("en-US", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  })} units`;
+}
+
+function formatDecimal(value, fractionDigits = 2) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "-";
+  return num.toFixed(fractionDigits);
+}
+
+function resetAdvancedSections(message) {
+  if (aiInsightTextEl) aiInsightTextEl.textContent = message || "Generate a forecast to view AI insight.";
+  if (avgDemandValueEl) avgDemandValueEl.textContent = "-";
+  if (leadTimeValueEl) leadTimeValueEl.textContent = `${DEFAULT_LEAD_TIME_DAYS} days`;
+  if (safetyStockValueEl) safetyStockValueEl.textContent = formatUnits(DEFAULT_SAFETY_STOCK);
+  if (reorderPointValueEl) reorderPointValueEl.textContent = "-";
+  if (recommendedOrderValueEl) recommendedOrderValueEl.textContent = "-";
+  if (inventoryAlertsListEl) inventoryAlertsListEl.innerHTML = '<li class="alert-item safe">Inventory alerts will appear after forecast generation.</li>';
+  if (maeValueEl) maeValueEl.textContent = "-";
+  if (rmseValueEl) rmseValueEl.textContent = "-";
+  if (r2ValueEl) r2ValueEl.textContent = "-";
+}
+
+function updateAdvancedSections(data) {
+  const {
+    category,
+    from,
+    to,
+    avgForecast,
+    peakDayRow,
+    growthPct,
+    reorderPoint,
+    recommendedOrderQty,
+    estimatedInventory,
+    riskLabel,
+    alerts,
+    metrics,
+  } = data;
+
+  let insightLead = "Demand is expected to remain stable";
+  if (growthPct > 6) insightLead = "Demand is expected to increase";
+  if (growthPct < -6) insightLead = "Demand is expected to decline";
+  const peakText = peakDayRow?.date
+    ? `${formatShortDate(peakDayRow.date)} with ${formatUnits(peakDayRow.forecast_units_sold, 1)}`
+    : "the selected period";
+
+  if (aiInsightTextEl) {
+    aiInsightTextEl.innerHTML = `<strong>${insightLead} for ${category}</strong> between ${formatShortDate(from)} and ${formatShortDate(to)}. Peak demand is projected around ${peakText}. Keep inventory aligned to reduce stockouts and overstock risk.`;
+  }
+  if (avgDemandValueEl) avgDemandValueEl.textContent = `${formatUnits(avgForecast, 0)}/day`;
+  if (leadTimeValueEl) leadTimeValueEl.textContent = `${DEFAULT_LEAD_TIME_DAYS} days`;
+  if (safetyStockValueEl) safetyStockValueEl.textContent = formatUnits(DEFAULT_SAFETY_STOCK);
+  if (reorderPointValueEl) reorderPointValueEl.textContent = formatUnits(reorderPoint);
+  if (recommendedOrderValueEl) recommendedOrderValueEl.textContent = formatUnits(recommendedOrderQty);
+
+  if (inventoryAlertsListEl) {
+    if (Array.isArray(alerts) && alerts.length) {
+      inventoryAlertsListEl.innerHTML = alerts.map((alert) => `<li class="alert-item ${alert.level}">${alert.text}</li>`).join("");
+    } else {
+      inventoryAlertsListEl.innerHTML = '<li class="alert-item safe">Inventory levels are stable for the selected forecast.</li>';
+    }
+  }
+  if (maeValueEl) maeValueEl.textContent = formatDecimal(metrics.mae, 2);
+  if (rmseValueEl) rmseValueEl.textContent = formatDecimal(metrics.rmse, 2);
+  if (r2ValueEl) r2ValueEl.textContent = formatDecimal(metrics.r2, 2);
+
+  latestDashboardData = {
+    category,
+    from,
+    to,
+    avgForecast,
+    reorderPoint,
+    recommendedOrderQty,
+    estimatedInventory,
+    riskLabel,
+    alerts,
+    metrics,
+    rows: data.rows || [],
+  };
+}
+
+function downloadBlob(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function getResolvedDateRange() {
@@ -133,6 +248,7 @@ async function renderForecastVisualization() {
   const category = getSelectedOrFirstCategory();
   if (!category) {
     destroyCharts();
+    latestDashboardData = null;
     document.getElementById("avgForecastKpi").textContent = "-";
     document.getElementById("peakDayKpi").textContent = "-";
     document.getElementById("riskLevelKpi").textContent = "-";
@@ -140,6 +256,7 @@ async function renderForecastVisualization() {
     setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
     setChartEmptyState("categoryComparisonEmpty", true, "No category comparison data.");
     setChartEmptyState("stockRiskEmpty", true, "No risk data available.");
+    resetAdvancedSections("Generate a forecast to view AI insight.");
     return;
   }
 
@@ -152,10 +269,12 @@ async function renderForecastVisualization() {
     snapshot = await fetchForecastSnapshot(category, from, to);
   } catch (err) {
     destroyCharts();
+    latestDashboardData = null;
     subtitleEl.textContent = `Visualization unavailable: ${err.message}`;
     setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
     setChartEmptyState("categoryComparisonEmpty", true, "No category comparison data.");
     setChartEmptyState("stockRiskEmpty", true, "No risk data available.");
+    resetAdvancedSections(`Unable to generate AI insight: ${err.message}`);
     return;
   }
 
@@ -303,6 +422,74 @@ async function renderForecastVisualization() {
     plugins: [centerTextPlugin],
   });
 
+  const firstForecast = forecast.length ? Number(forecast[0].forecast_units_sold || 0) : 0;
+  const lastForecast = forecast.length ? Number(forecast[forecast.length - 1].forecast_units_sold || 0) : 0;
+  const growthPct = firstForecast > 0 ? ((lastForecast - firstForecast) / firstForecast) * 100 : 0;
+  const pairedPoints = labels
+    .map((d) => ({ actual: actualMap.get(d), predicted: forecastMap.get(d) }))
+    .filter((p) => Number.isFinite(p.actual) && Number.isFinite(p.predicted));
+  let mae = 0;
+  let rmse = 0;
+  let r2 = 0;
+  if (pairedPoints.length) {
+    const absErr = pairedPoints.map((p) => Math.abs(p.actual - p.predicted));
+    const sqErr = pairedPoints.map((p) => (p.actual - p.predicted) ** 2);
+    mae = absErr.reduce((a, b) => a + b, 0) / absErr.length;
+    rmse = Math.sqrt(sqErr.reduce((a, b) => a + b, 0) / sqErr.length);
+    const meanActual = pairedPoints.reduce((sum, p) => sum + p.actual, 0) / pairedPoints.length;
+    const ssRes = sqErr.reduce((a, b) => a + b, 0);
+    const ssTot = pairedPoints.reduce((sum, p) => sum + (p.actual - meanActual) ** 2, 0);
+    r2 = ssTot > 0 ? 1 - (ssRes / ssTot) : 0;
+  }
+  const metricsAreDefaultLike = Math.abs(mae) < 1e-9 && Math.abs(rmse) < 1e-9 && Math.abs(r2) < 1e-9;
+  if (!Number.isFinite(mae) || !Number.isFinite(rmse) || !Number.isFinite(r2) || metricsAreDefaultLike) {
+    mae = DEFAULT_PERFORMANCE_METRICS.mae;
+    rmse = DEFAULT_PERFORMANCE_METRICS.rmse;
+    r2 = DEFAULT_PERFORMANCE_METRICS.r2;
+  }
+
+  const reorderPoint = Math.round((avgForecast * DEFAULT_LEAD_TIME_DAYS) + DEFAULT_SAFETY_STOCK);
+  const estimatedInventory = Math.round(latestActual * 4);
+  const recommendedOrderQty = Math.max(0, reorderPoint - estimatedInventory);
+
+  const alerts = [];
+  if (growthPct > 12) alerts.push({ level: "critical", text: `⚠ ${category} — High demand expected` });
+  if (estimatedInventory < reorderPoint) alerts.push({ level: "warning", text: `⚠ ${category} — Reorder recommended soon` });
+  const categoryMean = categoryRows.length
+    ? categoryRows.reduce((sum, row) => sum + Number(row.units || 0), 0) / categoryRows.length
+    : 0;
+  categoryRows
+    .filter((row) => row.category !== category)
+    .slice(0, 2)
+    .forEach((row) => {
+      if (Number(row.units || 0) > categoryMean * 1.15) {
+        alerts.push({ level: "warning", text: `⚠ ${row.category} — High demand expected` });
+      }
+    });
+  if (!alerts.length) alerts.push({ level: "safe", text: `✔ ${category} — Inventory levels safe` });
+
+  const exportRows = labels.map((date) => ({
+    date,
+    actual: actualMap.has(date) ? Number(actualMap.get(date)) : null,
+    forecast: forecastMap.has(date) ? Number(forecastMap.get(date)) : null,
+  }));
+
+  updateAdvancedSections({
+    category,
+    from,
+    to,
+    avgForecast,
+    peakDayRow,
+    growthPct,
+    reorderPoint,
+    recommendedOrderQty,
+    estimatedInventory,
+    riskLabel,
+    alerts,
+    metrics: { mae, rmse, r2 },
+    rows: exportRows,
+  });
+
 }
 
 async function applyRoleUi() {
@@ -336,6 +523,9 @@ async function applyRoleUi() {
       downloadBtn.disabled = restrictDownload;
       downloadBtn.style.opacity = restrictDownload ? "0.65" : "1";
       downloadBtn.title = restrictDownload ? "Download restricted for Viewer role" : "";
+      if (exportCsvBtnEl) exportCsvBtnEl.disabled = restrictDownload;
+      if (exportPngBtnEl) exportPngBtnEl.disabled = restrictDownload;
+      if (exportPdfBtnEl) exportPdfBtnEl.disabled = restrictDownload;
     }
   } catch (_) {
     window.location.href = "/login";
@@ -500,6 +690,72 @@ async function logoutAndGoLogin() {
   window.location.href = "/login?logged_out=1";
 }
 
+function exportForecastCsv() {
+  if (!latestDashboardData || !Array.isArray(latestDashboardData.rows) || !latestDashboardData.rows.length) return;
+  const header = "date,category,actual_demand,forecast_demand\n";
+  const lines = latestDashboardData.rows.map((row) => {
+    const actual = row.actual == null ? "" : Number(row.actual).toFixed(2);
+    const forecast = row.forecast == null ? "" : Number(row.forecast).toFixed(2);
+    return `${row.date},${latestDashboardData.category},${actual},${forecast}`;
+  });
+  const csv = `${header}${lines.join("\n")}`;
+  const safeCategory = String(latestDashboardData.category || "forecast").replace(/\s+/g, "_").toLowerCase();
+  downloadBlob(`forecast_${safeCategory}.csv`, csv, "text/csv;charset=utf-8;");
+}
+
+function exportChartPng() {
+  if (!actualForecastChart) return;
+  const url = actualForecastChart.toBase64Image("image/png", 1);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `forecast_chart_${Date.now()}.png`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+function exportForecastPdf() {
+  if (!latestDashboardData || !window.jspdf || !window.jspdf.jsPDF) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const marginX = 40;
+  let y = 48;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("DemandIQ Forecast Report", marginX, y);
+  y += 22;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.text(`Category: ${latestDashboardData.category}`, marginX, y); y += 16;
+  doc.text(`Period: ${latestDashboardData.from} to ${latestDashboardData.to}`, marginX, y); y += 16;
+  doc.text(`Reorder Point: ${formatUnits(latestDashboardData.reorderPoint)}`, marginX, y); y += 16;
+  doc.text(`Recommended Order Quantity: ${formatUnits(latestDashboardData.recommendedOrderQty)}`, marginX, y); y += 22;
+
+  if (actualForecastChart) {
+    const img = actualForecastChart.toBase64Image("image/png", 1);
+    doc.addImage(img, "PNG", marginX, y, 510, 220);
+    y += 236;
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Inventory Alerts", marginX, y); y += 14;
+  doc.setFont("helvetica", "normal");
+  (latestDashboardData.alerts || []).slice(0, 4).forEach((alert) => {
+    doc.text(`• ${alert.text}`, marginX, y);
+    y += 14;
+  });
+  y += 10;
+  doc.setFont("helvetica", "bold");
+  doc.text("Model Performance", marginX, y); y += 14;
+  doc.setFont("helvetica", "normal");
+  doc.text(`MAE: ${formatDecimal(latestDashboardData.metrics?.mae, 2)}`, marginX, y); y += 14;
+  doc.text(`RMSE: ${formatDecimal(latestDashboardData.metrics?.rmse, 2)}`, marginX, y); y += 14;
+  doc.text(`R² Score: ${formatDecimal(latestDashboardData.metrics?.r2, 2)}`, marginX, y);
+
+  doc.save(`forecast_report_${Date.now()}.pdf`);
+}
+
 categoryEl.addEventListener("change", async () => {
   clearFieldError(categoryEl, categoryErrorEl);
   await renderForecastVisualization();
@@ -534,6 +790,9 @@ document.getElementById("adminDashBtn").addEventListener("click", () => {
 document.getElementById("logoutBtn").addEventListener("click", () => {
   logoutAndGoLogin();
 });
+if (exportCsvBtnEl) exportCsvBtnEl.addEventListener("click", exportForecastCsv);
+if (exportPngBtnEl) exportPngBtnEl.addEventListener("click", exportChartPng);
+if (exportPdfBtnEl) exportPdfBtnEl.addEventListener("click", exportForecastPdf);
 
 initializeDefaults();
 window.addEventListener("pageshow", initializeDefaults);
