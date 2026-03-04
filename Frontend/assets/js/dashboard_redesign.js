@@ -99,8 +99,45 @@ function formatDecimal(value, fractionDigits = 2) {
   return num.toFixed(fractionDigits);
 }
 
+function toIsoDate(dateObj) {
+  return dateObj.toISOString().slice(0, 10);
+}
+
+function clampDateToAllowedRange(dateObj) {
+  const d = new Date(dateObj);
+  const min = new Date(ALLOWED_MIN_DATE);
+  const max = new Date(ALLOWED_MAX_DATE);
+  if (d < min) return min;
+  if (d > max) return max;
+  return d;
+}
+
+function getCurrentToNextMonthRange(baseDate = new Date()) {
+  const fromDate = clampDateToAllowedRange(baseDate);
+  const nextMonthYear = fromDate.getFullYear() + Math.floor((fromDate.getMonth() + 1) / 12);
+  const nextMonth = (fromDate.getMonth() + 1) % 12;
+  const lastDayOfNextMonth = new Date(nextMonthYear, nextMonth + 1, 0).getDate();
+  const targetDay = Math.min(fromDate.getDate(), lastDayOfNextMonth);
+  const toDateRaw = new Date(nextMonthYear, nextMonth, targetDay);
+  const toDate = clampDateToAllowedRange(toDateRaw);
+  return {
+    from: toIsoDate(fromDate),
+    to: toIsoDate(toDate),
+  };
+}
+
 function resetAdvancedSections(message) {
-  if (aiInsightTextEl) aiInsightTextEl.textContent = message || "Generate a forecast to view AI insight.";
+  if (aiInsightTextEl) {
+    aiInsightTextEl.innerHTML = `
+      <div class="insight-grid">
+        <div class="insight-row"><span>Summary</span><strong>${message || "Generate a forecast to view AI insight."}</strong></div>
+        <div class="insight-row"><span>Demand Window</span><strong>-</strong></div>
+        <div class="insight-row"><span>Peak Demand</span><strong>-</strong></div>
+        <div class="insight-row"><span>Risk Level</span><strong>-</strong></div>
+        <div class="insight-row"><span>Recommendation</span><strong>-</strong></div>
+      </div>
+    `;
+  }
   if (avgDemandValueEl) avgDemandValueEl.textContent = "-";
   if (leadTimeValueEl) leadTimeValueEl.textContent = `${DEFAULT_LEAD_TIME_DAYS} days`;
   if (safetyStockValueEl) safetyStockValueEl.textContent = formatUnits(DEFAULT_SAFETY_STOCK);
@@ -136,7 +173,18 @@ function updateAdvancedSections(data) {
     : "the selected period";
 
   if (aiInsightTextEl) {
-    aiInsightTextEl.innerHTML = `<strong>${insightLead} for ${category}</strong> between ${formatShortDate(from)} and ${formatShortDate(to)}. Peak demand is projected around ${peakText}. Keep inventory aligned to reduce stockouts and overstock risk.`;
+    const recommendation = reorderPoint > estimatedInventory
+      ? `Increase stock before ${peakDayRow?.date ? formatShortDate(peakDayRow.date) : "peak demand"}.`
+      : "Maintain current stock and monitor trend changes.";
+    aiInsightTextEl.innerHTML = `
+      <div class="insight-grid">
+        <div class="insight-row"><span>Summary</span><strong>${insightLead} for ${category}</strong></div>
+        <div class="insight-row"><span>Demand Window</span><strong>${formatShortDate(from)} to ${formatShortDate(to)}</strong></div>
+        <div class="insight-row"><span>Peak Demand</span><strong>${peakText}</strong></div>
+        <div class="insight-row"><span>Risk Level</span><strong>${riskLabel}</strong></div>
+        <div class="insight-row"><span>Recommendation</span><strong>${recommendation}</strong></div>
+      </div>
+    `;
   }
   if (avgDemandValueEl) avgDemandValueEl.textContent = `${formatUnits(avgForecast, 0)}/day`;
   if (leadTimeValueEl) leadTimeValueEl.textContent = `${DEFAULT_LEAD_TIME_DAYS} days`;
@@ -186,13 +234,7 @@ function getResolvedDateRange() {
   const from = String(fromDateEl.value || "").trim();
   const to = String(toDateEl.value || "").trim();
   if (from && to) return { from, to };
-  const now = new Date();
-  const start = new Date(now);
-  start.setDate(start.getDate() - 13);
-  return {
-    from: start.toISOString().slice(0, 10),
-    to: now.toISOString().slice(0, 10),
-  };
+  return getCurrentToNextMonthRange();
 }
 
 function getSelectedOrFirstCategory() {
@@ -623,8 +665,18 @@ async function initializeDefaults() {
   clearInputState();
   initDatePickers();
   await loadCategories(savedState?.category || "");
-  if (savedState?.fromDate) fromPicker.setDate(savedState.fromDate, true, "Y-m-d");
-  if (savedState?.toDate) toPicker.setDate(savedState.toDate, true, "Y-m-d");
+  if (savedState?.fromDate) {
+    fromPicker.setDate(savedState.fromDate, true, "Y-m-d");
+  }
+  if (savedState?.toDate) {
+    toPicker.setDate(savedState.toDate, true, "Y-m-d");
+  }
+  if (!savedState?.fromDate || !savedState?.toDate) {
+    const rollingRange = getCurrentToNextMonthRange();
+    fromPicker.setDate(rollingRange.from, true, "Y-m-d");
+    toPicker.setDate(rollingRange.to, true, "Y-m-d");
+    saveDashboardState();
+  }
   const shell = document.querySelector(".page-shell");
   if (shell) {
     shell.classList.remove("preload");

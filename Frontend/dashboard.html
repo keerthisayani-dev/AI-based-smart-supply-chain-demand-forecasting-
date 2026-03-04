@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-  <link rel="stylesheet" href="/assets/css/dashboard_glass.css" />
+  <link rel="stylesheet" href="/assets/css/dashboard_glass.css?v=20260304-13" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
@@ -70,7 +70,6 @@
           </div>
         </div>
         <button id="generateBtn" class="btn-primary" type="button">Generate Forecast</button>
-        <p class="helper-text">Use a date range between 2025 and 2031 for forecasting.</p>
       </article>
 
       <article class="surface-card assistant-card" aria-label="Forecast assistant">
@@ -150,39 +149,13 @@
         </ul>
       </article>
 
-      <article class="surface-card analytics-card">
-        <h3>Model Performance</h3>
-        <div class="metric-grid compact">
-          <div class="metric-row">
-            <span>MAE <span class="info-tip" title="Mean Absolute Error: average absolute prediction error.">?</span></span>
-            <strong id="maeValue">-</strong>
-          </div>
-          <div class="metric-row">
-            <span>RMSE <span class="info-tip" title="Root Mean Squared Error: penalizes large errors more.">?</span></span>
-            <strong id="rmseValue">-</strong>
-          </div>
-          <div class="metric-row">
-            <span>R² Score <span class="info-tip" title="Coefficient of determination: closer to 1 means better fit.">?</span></span>
-            <strong id="r2Value">-</strong>
-          </div>
-        </div>
-      </article>
-
-      <article class="surface-card analytics-card">
-        <h3>Export Report</h3>
-        <div class="export-actions">
-          <button id="exportCsvBtn" class="nav-btn export-btn" type="button">Download Forecast CSV</button>
-          <button id="exportPngBtn" class="nav-btn export-btn" type="button">Download Chart PNG</button>
-          <button id="exportPdfBtn" class="nav-btn export-btn" type="button">Generate PDF Report</button>
-        </div>
-      </article>
     </section>
   </main>
 
   <footer class="page-footer">&copy; DemandIQ - AI Demand Forecasting System</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="/assets/js/dashboard_redesign.js"></script>
+  <script src="/assets/js/dashboard_redesign.js?v=20260304-10"></script>
 </body>
 </html>
 

@@ -469,14 +469,21 @@ select.input-error {
   display: none;
 }
 
+#forecastVisualization {
+  display: none;
+}
+
 .analytics-stack {
   display: grid;
-  gap: 24px;
-  margin-top: 32px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+  align-items: stretch;
 }
 
 .analytics-card {
-  padding: 18px;
+  padding: 14px;
+  height: 100%;
 }
 
 .analytics-card h3 {
@@ -491,6 +498,35 @@ select.input-error {
   color: #c4d2ea;
   font-size: 14px;
   line-height: 1.6;
+}
+
+.insight-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.insight-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.insight-row span {
+  color: #aec1de;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.insight-row strong {
+  color: #e9f1ff;
+  font-size: 14px;
+  text-align: right;
 }
 
 .metric-grid {
@@ -540,33 +576,35 @@ select.input-error {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .alert-item {
   border: 1px solid var(--line-soft);
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 14px;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 13px;
   font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.1px;
 }
 
 .alert-item.critical {
-  border-color: rgba(248, 113, 113, 0.55);
-  background: rgba(127, 29, 29, 0.28);
-  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.38);
+  background: rgba(248, 113, 113, 0.1);
+  color: #ffd2d2;
 }
 
 .alert-item.warning {
-  border-color: rgba(245, 158, 11, 0.55);
-  background: rgba(120, 53, 15, 0.28);
-  color: #fde68a;
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.1);
+  color: #f6dc97;
 }
 
 .alert-item.safe {
-  border-color: rgba(74, 222, 128, 0.45);
-  background: rgba(20, 83, 45, 0.2);
-  color: #bbf7d0;
+  border-color: rgba(74, 222, 128, 0.34);
+  background: rgba(74, 222, 128, 0.08);
+  color: #c4f5d4;
 }
 
 .info-tip {
@@ -669,6 +707,10 @@ select.input-error {
   }
 
   .forecast-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-stack {
     grid-template-columns: 1fr;
   }
 }
