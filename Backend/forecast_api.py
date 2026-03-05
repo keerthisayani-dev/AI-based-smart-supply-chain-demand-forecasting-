@@ -2576,6 +2576,9 @@ def admin_delete_user(payload: AdminDeleteUserRequest, request: Request) -> Dict
         target_role = _canonical_role(str(row["role"]))
         target_full_name = str(row["full_name"])
 
+        # Remove dependent rows first so delete works consistently for users with history/uploads.
+        conn.execute("DELETE FROM upload_metadata WHERE uploaded_by = ?", (target_user_id,))
+        conn.execute("DELETE FROM dataset_staging WHERE uploaded_by = ?", (target_user_id,))
         conn.execute("DELETE FROM auth_sessions WHERE user_id = ?", (target_user_id,))
         conn.execute("DELETE FROM auth_tokens WHERE user_id = ?", (target_user_id,))
         conn.execute("DELETE FROM users WHERE id = ?", (target_user_id,))

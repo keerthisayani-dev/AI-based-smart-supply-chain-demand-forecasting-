@@ -310,6 +310,7 @@
       background-size: 12px 8px;
     }
     .role-actions {
+      position: relative;
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -441,6 +442,95 @@
     }
     .add-field-error.is-visible {
       visibility: visible;
+    }
+    .row-delete-error {
+      display: none;
+      position: absolute;
+      right: calc(100% + 8px);
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      line-height: 1.2;
+      color: #ffb4b4;
+      border: 1px solid rgba(235, 122, 122, 0.55);
+      background: rgba(130, 36, 52, 0.2);
+      border-radius: 7px;
+      padding: 4px 7px;
+      width: max-content;
+      max-width: 240px;
+      word-break: break-word;
+      z-index: 5;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+    }
+    .row-delete-error.is-visible {
+      display: block;
+    }
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(3, 8, 18, 0.6);
+      backdrop-filter: blur(2px);
+    }
+    .confirm-overlay.is-open {
+      display: flex;
+    }
+    .confirm-modal {
+      width: min(420px, calc(100% - 24px));
+      border-radius: 14px;
+      border: 1px solid rgba(125, 155, 202, 0.35);
+      background: linear-gradient(180deg, rgba(17, 30, 54, 0.98), rgba(11, 21, 39, 0.98));
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.45);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .confirm-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 800;
+      color: #e8f1ff;
+    }
+    .confirm-message {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.45;
+      color: #c7d7f3;
+      word-break: break-word;
+    }
+    .confirm-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .confirm-cancel-btn,
+    .confirm-delete-btn {
+      min-height: 36px;
+      border-radius: 8px;
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .confirm-cancel-btn {
+      border: 1px solid rgba(125, 155, 202, 0.45);
+      background: rgba(18, 30, 53, 0.95);
+      color: #dbe8ff;
+    }
+    .confirm-delete-btn {
+      border: 1px solid rgba(235, 122, 122, 0.55);
+      background: rgba(130, 36, 52, 0.78);
+      color: #ffd3d3;
+    }
+    .confirm-cancel-btn:hover {
+      background: rgba(27, 43, 73, 0.98);
+    }
+    .confirm-delete-btn:hover {
+      background: rgba(148, 42, 60, 0.84);
     }
 
     @media (max-width: 1100px) {
@@ -587,6 +677,16 @@
       </article>
     </section>
   </main>
+  <div id="confirmOverlay" class="confirm-overlay" aria-hidden="true">
+    <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+      <h4 id="confirmTitle" class="confirm-title">Confirm Deletion</h4>
+      <p id="confirmMessage" class="confirm-message">Delete this user?</p>
+      <div class="confirm-actions">
+        <button id="confirmCancelBtn" type="button" class="confirm-cancel-btn">Cancel</button>
+        <button id="confirmDeleteBtn" type="button" class="confirm-delete-btn">Delete</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     let currentAdminEmail = "";
@@ -639,6 +739,48 @@
       return `<span class="${cls}">${escapeHtml(t)}</span>`;
     }
 
+    function showDeleteConfirmDialog(email) {
+      return new Promise((resolve) => {
+        const overlay = document.getElementById("confirmOverlay");
+        const msg = document.getElementById("confirmMessage");
+        const cancelBtn = document.getElementById("confirmCancelBtn");
+        const deleteBtn = document.getElementById("confirmDeleteBtn");
+        if (!overlay || !msg || !cancelBtn || !deleteBtn) {
+          resolve(false);
+          return;
+        }
+        let settled = false;
+        const cleanup = (result) => {
+          if (settled) return;
+          settled = true;
+          overlay.classList.remove("is-open");
+          overlay.setAttribute("aria-hidden", "true");
+          overlay.removeEventListener("click", onBackdropClick);
+          document.removeEventListener("keydown", onKeydown);
+          cancelBtn.removeEventListener("click", onCancel);
+          deleteBtn.removeEventListener("click", onDelete);
+          resolve(result);
+        };
+        const onCancel = () => cleanup(false);
+        const onDelete = () => cleanup(true);
+        const onBackdropClick = (ev) => {
+          if (ev.target === overlay) cleanup(false);
+        };
+        const onKeydown = (ev) => {
+          if (ev.key === "Escape") cleanup(false);
+        };
+
+        msg.textContent = `Delete user ${email}? This action cannot be undone.`;
+        overlay.classList.add("is-open");
+        overlay.setAttribute("aria-hidden", "false");
+        cancelBtn.addEventListener("click", onCancel);
+        deleteBtn.addEventListener("click", onDelete);
+        overlay.addEventListener("click", onBackdropClick);
+        document.addEventListener("keydown", onKeydown);
+        deleteBtn.focus();
+      });
+    }
+
     function splitDateTimeParts(value) {
       const raw = String(value || "").trim();
       if (!raw) return { date: "-", time: "-" };
@@ -647,6 +789,13 @@
         date: datePart || "-",
         time: timePart || "-",
       };
+    }
+
+    function closestFromEventTarget(target, selector) {
+      if (!target || !selector) return null;
+      if (target instanceof Element) return target.closest(selector);
+      if (target.parentElement) return target.parentElement.closest(selector);
+      return null;
     }
 
     function setAddFieldError(inputId, message) {
@@ -669,6 +818,22 @@
 
     function clearAllAddFieldErrors() {
       Object.keys(addUserFieldConfig).forEach((id) => clearAddFieldError(id));
+    }
+
+    function clearRowDeleteError(row) {
+      if (!row) return;
+      const box = row.querySelector(".row-delete-error");
+      if (!box) return;
+      box.textContent = "";
+      box.classList.remove("is-visible");
+    }
+
+    function setRowDeleteError(row, message) {
+      if (!row) return;
+      const box = row.querySelector(".row-delete-error");
+      if (!box) return;
+      box.textContent = String(message || "Delete failed.");
+      box.classList.add("is-visible");
     }
 
     function resetAddUserForm(clearErrors = true) {
@@ -797,17 +962,17 @@
                 <option value="admin" ${u.role === "admin" ? "selected" : ""}>Admin</option>
               </select>
               <div class="role-actions">
+              <div class="row-delete-error" aria-live="polite"></div>
               <button
                 class="promote-btn"
                 type="button"
                 data-promote-email="${escapeHtml(u.email)}"
-                ${String(u.email || "").toLowerCase() === currentAdminEmail ? "title=\"Your own account role is protected\"" : ""}
               >Promote</button>
               <button
                 class="danger-btn"
                 type="button"
                 data-delete-email="${escapeHtml(u.email)}"
-                ${String(u.email || "").toLowerCase() === currentAdminEmail ? "disabled title=\"You cannot delete your own active admin account\"" : ""}
+                ${String(u.email || "").toLowerCase() === currentAdminEmail ? "data-delete-protected=\"1\"" : ""}
               >Delete</button>
               </div>
             </div>
@@ -844,7 +1009,7 @@
     }
 
     document.getElementById("usersTableBody").addEventListener("click", async (e) => {
-      const btn = e.target.closest("[data-promote-email]");
+      const btn = closestFromEventTarget(e.target, "[data-promote-email]");
       if (!btn) return;
       const email = String(btn.getAttribute("data-promote-email") || "").trim().toLowerCase();
       if (!email) return;
@@ -866,7 +1031,8 @@
         statusEl.textContent = `Role updated: ${email} -> ${formatRole(role)}.`;
         await loadAdminData();
       } catch (err) {
-        statusEl.textContent = err.message || "Failed to update role.";
+        const msg = err.message || "Failed to update role.";
+        statusEl.textContent = msg;
       } finally {
         btn.disabled = false;
         if (!statusEl.textContent) {
@@ -875,12 +1041,18 @@
       }
     });
     document.getElementById("usersTableBody").addEventListener("click", async (e) => {
-      const btn = e.target.closest("[data-delete-email]");
+      const btn = closestFromEventTarget(e.target, "[data-delete-email]");
       if (!btn) return;
       const email = String(btn.getAttribute("data-delete-email") || "").trim().toLowerCase();
       if (!email) return;
+      const row = btn.closest("tr");
+      clearRowDeleteError(row);
+      if (btn.getAttribute("data-delete-protected") === "1") {
+        setRowDeleteError(row, "You cannot delete your own active admin account.");
+        return;
+      }
       const statusEl = document.getElementById("statusText");
-      const ok = confirm(`Delete user ${email}? This cannot be undone.`);
+      const ok = await showDeleteConfirmDialog(email);
       if (!ok) return;
 
       btn.disabled = true;
@@ -894,7 +1066,9 @@
         statusEl.textContent = `User deleted: ${email}.`;
         await loadAdminData();
       } catch (err) {
-        statusEl.textContent = err.message || "Failed to delete user.";
+        const message = err.message || "Failed to delete user.";
+        statusEl.textContent = message;
+        setRowDeleteError(row, message);
       } finally {
         btn.disabled = false;
       }
