@@ -90,6 +90,12 @@
       justify-content: space-between;
       margin-bottom: 10px;
     }
+    .table-note {
+      text-align: left;
+      margin: 0 2px 8px 0;
+      font-size: 12px;
+      color: #8ea3c1;
+    }
     .badge-pill {
       display: inline-flex;
       align-items: center;
@@ -153,6 +159,11 @@
       gap: 8px;
       margin-bottom: 12px;
     }
+    .add-field {
+      display: grid;
+      gap: 4px;
+      align-content: start;
+    }
     .add-input, .add-select {
       border-radius: 8px;
       border: 1px solid rgba(125, 155, 202, 0.45);
@@ -161,6 +172,35 @@
       padding: 8px 10px;
       font-size: 13px;
       font-family: inherit;
+    }
+    .add-select {
+      color: #9fb2cc;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.2;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%239fb2cc' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 34px;
+    }
+    .add-select.has-value {
+      color: #e7edf8;
+    }
+    .add-input.input-error, .add-select.input-error {
+      border-color: rgba(235, 122, 122, 0.85);
+      box-shadow: 0 0 0 2px rgba(235, 122, 122, 0.18);
+    }
+    .add-field-error {
+      min-height: 14px;
+      font-size: 11px;
+      line-height: 1.2;
+      color: #ffb4b4;
+      visibility: hidden;
+    }
+    .add-field-error.is-visible {
+      visibility: visible;
     }
 
     @media (max-width: 1100px) {
@@ -191,7 +231,7 @@
   <main class="admin-shell preload">
     <section class="glass-card">
       <h2 style="margin:0 0 6px;">Admin Dashboard</h2>
-      <p id="statusText" class="muted" style="margin:0;">Loading admin activity...</p>
+      <p id="statusText" class="muted" style="margin:0; display:none;" aria-hidden="true"></p>
     </section>
 
     <section class="summary-grid">
@@ -217,20 +257,32 @@
       <article class="glass-card">
         <div class="toolbar">
           <h3 style="margin:0;">User Accounts</h3>
-          <span class="muted">Latest registered users and roles</span>
         </div>
         <div class="add-user-grid">
-          <input id="addFullName" class="add-input" type="text" placeholder="Full name" />
-          <input id="addEmail" class="add-input" type="email" placeholder="name@gmail.com" />
-          <input id="addPassword" class="add-input" type="password" placeholder="Password (min 8 chars)" />
-          <select id="addRole" class="add-select">
-            <option value="" selected disabled>Select Role</option>
-            <option value="viewer">Viewer</option>
-            <option value="inventory_manager">Inventory Manager</option>
-            <option value="admin">Admin</option>
-          </select>
+          <div class="add-field">
+            <input id="addFullName" class="add-input" type="text" placeholder="Full name" autocomplete="off" />
+            <div id="addFullNameError" class="add-field-error" role="alert" aria-live="polite"></div>
+          </div>
+          <div class="add-field">
+            <input id="addEmail" class="add-input" type="email" placeholder="name@gmail.com" name="new_user_email" autocomplete="off" />
+            <div id="addEmailError" class="add-field-error" role="alert" aria-live="polite"></div>
+          </div>
+          <div class="add-field">
+            <input id="addPassword" class="add-input" type="password" placeholder="Password (min 8 chars)" name="new_user_password" autocomplete="new-password" />
+            <div id="addPasswordError" class="add-field-error" role="alert" aria-live="polite"></div>
+          </div>
+          <div class="add-field">
+            <select id="addRole" class="add-select">
+              <option value="" selected disabled>Select role</option>
+              <option value="viewer">Viewer</option>
+              <option value="inventory_manager">Inventory Manager</option>
+              <option value="admin">Admin</option>
+            </select>
+            <div id="addRoleError" class="add-field-error" role="alert" aria-live="polite"></div>
+          </div>
           <button id="addUserBtn" class="promote-btn" type="button">Add User</button>
         </div>
+        <p class="table-note">Latest registered users and roles</p>
         <div class="table-wrap">
           <table>
             <thead>
@@ -272,6 +324,12 @@
 
   <script>
     let currentAdminEmail = "";
+    const addUserFieldConfig = {
+      addFullName: "addFullNameError",
+      addEmail: "addEmailError",
+      addPassword: "addPasswordError",
+      addRole: "addRoleError",
+    };
 
     function formatRole(role) {
       const map = {
@@ -313,6 +371,109 @@
       const t = String(eventType || "");
       const cls = `badge-pill event-${t}`;
       return `<span class="${cls}">${escapeHtml(t)}</span>`;
+    }
+
+    function setAddFieldError(inputId, message) {
+      const input = document.getElementById(inputId);
+      const error = document.getElementById(addUserFieldConfig[inputId] || "");
+      if (!input || !error) return;
+      input.classList.add("input-error");
+      error.textContent = String(message || "");
+      error.classList.add("is-visible");
+    }
+
+    function clearAddFieldError(inputId) {
+      const input = document.getElementById(inputId);
+      const error = document.getElementById(addUserFieldConfig[inputId] || "");
+      if (!input || !error) return;
+      input.classList.remove("input-error");
+      error.textContent = "";
+      error.classList.remove("is-visible");
+    }
+
+    function clearAllAddFieldErrors() {
+      Object.keys(addUserFieldConfig).forEach((id) => clearAddFieldError(id));
+    }
+
+    function resetAddUserForm(clearErrors = true) {
+      document.getElementById("addFullName").value = "";
+      document.getElementById("addEmail").value = "";
+      document.getElementById("addPassword").value = "";
+      document.getElementById("addRole").value = "";
+      updateAddRoleVisualState();
+      if (clearErrors) clearAllAddFieldErrors();
+    }
+
+    function updateAddRoleVisualState() {
+      const roleEl = document.getElementById("addRole");
+      const hasRole = Boolean(String(roleEl?.value || "").trim());
+      roleEl.classList.toggle("has-value", hasRole);
+    }
+
+    function validateAddUserForm() {
+      clearAllAddFieldErrors();
+      const fullName = String(document.getElementById("addFullName").value || "").trim();
+      const email = String(document.getElementById("addEmail").value || "").trim().toLowerCase();
+      const password = String(document.getElementById("addPassword").value || "");
+      const role = String(document.getElementById("addRole").value || "").trim();
+      let hasError = false;
+
+      if (!fullName) {
+        setAddFieldError("addFullName", "Full name is required.");
+        hasError = true;
+      }
+      if (!email) {
+        setAddFieldError("addEmail", "Email is required.");
+        hasError = true;
+      } else {
+        const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        if (!emailOk) {
+          setAddFieldError("addEmail", "Enter a valid email address.");
+          hasError = true;
+        }
+      }
+      if (!password) {
+        setAddFieldError("addPassword", "Password is required.");
+        hasError = true;
+      } else {
+        const meetsLength = password.length >= 8;
+        const hasUpper = /[A-Z]/.test(password);
+        const hasNumber = /\d/.test(password);
+        const hasSpecial = /[^A-Za-z0-9]/.test(password);
+        if (!(meetsLength && hasUpper && hasNumber && hasSpecial)) {
+          setAddFieldError("addPassword", "Use 8+ chars, 1 uppercase, 1 number, 1 special character.");
+          hasError = true;
+        }
+      }
+      if (!role) {
+        setAddFieldError("addRole", "Role is required.");
+        hasError = true;
+      }
+
+      if (hasError) return null;
+      return { fullName, email, password, role };
+    }
+
+    function applyServerErrorToField(message) {
+      const msg = String(message || "Failed to create user.");
+      const lower = msg.toLowerCase();
+      if (lower.includes("password")) {
+        setAddFieldError("addPassword", msg);
+        return true;
+      }
+      if (lower.includes("email")) {
+        setAddFieldError("addEmail", msg);
+        return true;
+      }
+      if (lower.includes("name")) {
+        setAddFieldError("addFullName", msg);
+        return true;
+      }
+      if (lower.includes("role")) {
+        setAddFieldError("addRole", msg);
+        return true;
+      }
+      return false;
     }
 
     async function ensureAdmin() {
@@ -464,21 +625,15 @@
       }
     });
     document.getElementById("addUserBtn").addEventListener("click", async () => {
-      const fullName = String(document.getElementById("addFullName").value || "").trim();
-      const email = String(document.getElementById("addEmail").value || "").trim().toLowerCase();
-      const password = String(document.getElementById("addPassword").value || "");
-      const role = String(document.getElementById("addRole").value || "").trim();
       const statusEl = document.getElementById("statusText");
+      const validated = validateAddUserForm();
 
-      if (!fullName || !email || !password || !role) {
-        statusEl.textContent = "Fill all Add User fields.";
-        return;
-      }
-      if (password.length < 8) {
-        statusEl.textContent = "Password must be at least 8 characters.";
+      if (!validated) {
+        statusEl.textContent = "Please correct highlighted fields.";
         return;
       }
 
+      const { fullName, email, password, role } = validated;
       const btn = document.getElementById("addUserBtn");
       btn.disabled = true;
       statusEl.textContent = `Creating user ${email}...`;
@@ -488,17 +643,23 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ full_name: fullName, email, password, role }),
         });
-        document.getElementById("addFullName").value = "";
-        document.getElementById("addEmail").value = "";
-        document.getElementById("addPassword").value = "";
-        document.getElementById("addRole").value = "";
+        resetAddUserForm(true);
         statusEl.textContent = `User created: ${email}.`;
         await loadAdminData();
       } catch (err) {
-        statusEl.textContent = err.message || "Failed to create user.";
+        const mapped = applyServerErrorToField(err?.message || "");
+        statusEl.textContent = mapped ? "Please correct highlighted fields." : (err.message || "Failed to create user.");
       } finally {
         btn.disabled = false;
       }
+    });
+
+    document.getElementById("addFullName").addEventListener("input", () => clearAddFieldError("addFullName"));
+    document.getElementById("addEmail").addEventListener("input", () => clearAddFieldError("addEmail"));
+    document.getElementById("addPassword").addEventListener("input", () => clearAddFieldError("addPassword"));
+    document.getElementById("addRole").addEventListener("change", () => {
+      clearAddFieldError("addRole");
+      updateAddRoleVisualState();
     });
     document.getElementById("toDashboardBtn").addEventListener("click", () => {
       window.location.href = "/dashboard";
@@ -515,6 +676,8 @@
 
     (async () => {
       try {
+        resetAddUserForm(true);
+        setTimeout(() => resetAddUserForm(false), 120);
         const user = await ensureAdmin();
         if (!user) return;
         await loadAdminData();
