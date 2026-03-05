@@ -33,6 +33,7 @@ const LOGIN_CLEAR_AFTER_LOGOUT_KEY = "demandiq_clear_login_after_logout_v1";
 const DEFAULT_LEAD_TIME_DAYS = 5;
 const DEFAULT_SAFETY_STOCK = 150;
 const DEFAULT_PERFORMANCE_METRICS = { mae: 8.41, rmse: 10.26, r2: 0.89 };
+const RENDER_DEBOUNCE_MS = 180;
 
 let fromPicker = null;
 let toPicker = null;
@@ -41,6 +42,9 @@ let categoryComparisonChart = null;
 let stockRiskGaugeChart = null;
 const vizDataCache = new Map();
 let latestDashboardData = null;
+let renderDebounceTimer = null;
+let renderRunId = 0;
+let latestRenderKey = "";
 
 function apiBase() {
   return window.location.origin;
@@ -275,6 +279,37 @@ function getSelectedOrFirstCategory() {
   return categoryEl.value || "";
 }
 
+function buildRenderKey() {
+  const category = getSelectedOrFirstCategory();
+  const { from, to } = getResolvedDateRange();
+  return `${category}|${from}|${to}`;
+}
+
+function queueRenderForecastVisualization(options = {}) {
+  const immediate = Boolean(options?.immediate);
+  const run = async () => {
+    const renderKey = buildRenderKey();
+    if (renderKey === latestRenderKey) return;
+    const runId = ++renderRunId;
+    await renderForecastVisualization(runId, renderKey);
+  };
+
+  if (immediate) {
+    if (renderDebounceTimer) {
+      clearTimeout(renderDebounceTimer);
+      renderDebounceTimer = null;
+    }
+    return run();
+  }
+
+  if (renderDebounceTimer) clearTimeout(renderDebounceTimer);
+  renderDebounceTimer = setTimeout(() => {
+    renderDebounceTimer = null;
+    run();
+  }, RENDER_DEBOUNCE_MS);
+  return undefined;
+}
+
 async function fetchForecastSnapshot(category, fromDate, toDate) {
   const key = `${category}|${fromDate}|${toDate}`;
   if (vizDataCache.has(key)) return vizDataCache.get(key);
@@ -317,10 +352,12 @@ function destroyCharts() {
   categoryComparisonChart = null;
   stockRiskGaugeChart = null;
 }
-async function renderForecastVisualization() {
+async function renderForecastVisualization(runId = null, requestedKey = "") {
   if (typeof Chart === "undefined") return;
+  const isStale = () => Number.isFinite(runId) && runId !== renderRunId;
   const category = getSelectedOrFirstCategory();
   if (!category) {
+    if (isStale()) return;
     destroyCharts();
     latestDashboardData = null;
     document.getElementById("avgForecastKpi").textContent = "-";
@@ -331,6 +368,7 @@ async function renderForecastVisualization() {
     setChartEmptyState("categoryComparisonEmpty", true, "No category comparison data.");
     setChartEmptyState("stockRiskEmpty", true, "No risk data available.");
     resetAdvancedSections("Generate a forecast to view AI insight.");
+    latestRenderKey = requestedKey || buildRenderKey();
     return;
   }
 
@@ -341,7 +379,9 @@ async function renderForecastVisualization() {
   let snapshot;
   try {
     snapshot = await fetchForecastSnapshot(category, from, to);
+    if (isStale()) return;
   } catch (err) {
+    if (isStale()) return;
     destroyCharts();
     latestDashboardData = null;
     subtitleEl.textContent = `Visualization unavailable: ${err.message}`;
@@ -440,6 +480,7 @@ async function renderForecastVisualization() {
       return { category: cat, units: 0 };
     }
   }));
+  if (isStale()) return;
 
   const barCtx = document.getElementById("categoryComparisonChart").getContext("2d");
   const barGrad = barCtx.createLinearGradient(0, 0, 0, 320);
@@ -563,6 +604,7 @@ async function renderForecastVisualization() {
     metrics: { mae, rmse, r2 },
     rows: exportRows,
   });
+  latestRenderKey = requestedKey || `${category}|${from}|${to}`;
 
 }
 
@@ -684,6 +726,11 @@ function readDashboardState() {
   }
 }
 
+function getNavigationType() {
+  const navEntry = performance.getEntriesByType("navigation")[0];
+  return navEntry ? navEntry.type : "";
+}
+
 function consumeForceClearFlag() {
   const shouldClear = sessionStorage.getItem(DASHBOARD_FORCE_CLEAR_KEY) === "1";
   if (shouldClear) sessionStorage.removeItem(DASHBOARD_FORCE_CLEAR_KEY);
@@ -693,8 +740,8 @@ function consumeForceClearFlag() {
 async function initializeDefaults() {
   clearAllErrors();
   await applyRoleUi();
-  // Preserve form state across page refresh; only clear after explicit logout/reset flows.
-  const shouldClear = consumeForceClearFlag();
+  // Static behavior: always clear form state on browser refresh.
+  const shouldClear = getNavigationType() === "reload" || consumeForceClearFlag();
   const savedState = shouldClear ? null : readDashboardState();
   if (shouldClear) clearDashboardState();
   clearInputState();
@@ -725,7 +772,7 @@ async function initializeDefaults() {
     shell.classList.remove("preload");
     shell.classList.add("ready");
   }
-  await renderForecastVisualization();
+  await queueRenderForecastVisualization({ immediate: true });
 }
 
 function validateInputs() {
@@ -851,31 +898,31 @@ function exportForecastPdf() {
   doc.save(`forecast_report_${Date.now()}.pdf`);
 }
 
-categoryEl.addEventListener("change", async () => {
+categoryEl.addEventListener("change", () => {
   clearFieldError(categoryEl, categoryErrorEl);
   updateCategoryPlaceholderState();
   saveDashboardState();
-  await renderForecastVisualization();
+  queueRenderForecastVisualization();
 });
-fromDateEl.addEventListener("input", async () => {
+fromDateEl.addEventListener("input", () => {
   clearFieldError(fromDateEl, fromDateErrorEl);
   saveDashboardState();
-  await renderForecastVisualization();
+  queueRenderForecastVisualization();
 });
-fromDateEl.addEventListener("change", async () => {
+fromDateEl.addEventListener("change", () => {
   clearFieldError(fromDateEl, fromDateErrorEl);
   saveDashboardState();
-  await renderForecastVisualization();
+  queueRenderForecastVisualization();
 });
-toDateEl.addEventListener("input", async () => {
+toDateEl.addEventListener("input", () => {
   clearFieldError(toDateEl, toDateErrorEl);
   saveDashboardState();
-  await renderForecastVisualization();
+  queueRenderForecastVisualization();
 });
-toDateEl.addEventListener("change", async () => {
+toDateEl.addEventListener("change", () => {
   clearFieldError(toDateEl, toDateErrorEl);
   saveDashboardState();
-  await renderForecastVisualization();
+  queueRenderForecastVisualization();
 });
 
 document.getElementById("generateBtn").addEventListener("click", () => goToResults("forecast"));
