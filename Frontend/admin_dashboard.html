@@ -462,7 +462,6 @@
       <div class="top-nav-actions">
         <span id="userNameBadge" class="user-badge">User: ...</span>
         <span id="userBadge" class="user-badge">Role: ...</span>
-        <button id="refreshBtn" class="nav-btn" type="button">Refresh</button>
         <button id="toDashboardBtn" class="nav-btn" type="button">Dashboard</button>
         <button id="logoutBtn" class="nav-btn" type="button">Logout</button>
       </div>
@@ -844,11 +843,6 @@
       });
     }
 
-    document.getElementById("refreshBtn").addEventListener("click", () => {
-      loadAdminData().catch((err) => {
-        document.getElementById("statusText").textContent = err.message || "Failed to refresh admin dashboard.";
-      });
-    });
     document.getElementById("usersTableBody").addEventListener("click", async (e) => {
       const btn = e.target.closest("[data-promote-email]");
       if (!btn) return;

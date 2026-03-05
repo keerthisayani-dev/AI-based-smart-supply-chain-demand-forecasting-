@@ -934,11 +934,8 @@ document.getElementById("pastDemandBtn").addEventListener("click", () => {
   goToResults("past");
 });
 document.getElementById("backBtn").addEventListener("click", () => {
-  if (window.history.length > 1) {
-    window.history.back();
-  } else {
-    window.location.href = "/login";
-  }
+  // Use a fixed route so Back does not reopen admin dashboard from history.
+  window.location.href = "/login";
 });
 document.getElementById("adminDashBtn").addEventListener("click", () => {
   window.location.href = "/admin/dashboard";
