@@ -469,45 +469,6 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
     setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
   }
 
-  const categoryOptions = Array.from(categoryEl.options || []).map((opt) => String(opt.value || "").trim()).filter(Boolean).slice(0, 6);
-  const categoryRows = await Promise.all(categoryOptions.map(async (cat) => {
-    try {
-      const snap = await fetchForecastSnapshot(cat, from, to);
-      const totalActual = snap.filteredHistory.reduce((sum, r) => sum + Number(r.actual_units_sold || 0), 0);
-      const totalProjected = snap.filteredForecast.reduce((sum, r) => sum + Number(r.forecast_units_sold || 0), 0);
-      return { category: cat, units: totalActual > 0 ? totalActual : totalProjected };
-    } catch (_) {
-      return { category: cat, units: 0 };
-    }
-  }));
-  if (isStale()) return;
-
-  const barCtx = document.getElementById("categoryComparisonChart").getContext("2d");
-  const barGrad = barCtx.createLinearGradient(0, 0, 0, 320);
-  barGrad.addColorStop(0, "rgba(79, 172, 254, 0.95)");
-  barGrad.addColorStop(1, "rgba(123, 97, 255, 0.75)");
-
-  if (categoryComparisonChart) categoryComparisonChart.destroy();
-  if (categoryRows.length) {
-    setChartEmptyState("categoryComparisonEmpty", false);
-    categoryComparisonChart = new Chart(barCtx, {
-      type: "bar",
-      data: { labels: categoryRows.map((r) => r.category), datasets: [{ label: "Units Sold", data: categoryRows.map((r) => Number(r.units.toFixed(1))), backgroundColor: barGrad, borderRadius: 8, borderSkipped: false }] },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 1200, easing: "easeOutQuart" },
-        plugins: { legend: { labels: { color: "#dbe7ff", boxWidth: 12, boxHeight: 2, usePointStyle: true } } },
-        scales: {
-          x: { ticks: { color: "#9cb0d8" }, grid: { display: false } },
-          y: { ticks: { color: "#9cb0d8" }, grid: { color: "rgba(148, 163, 184, 0.12)" } },
-        },
-      },
-    });
-  } else {
-    setChartEmptyState("categoryComparisonEmpty", true, "No category comparison data.");
-  }
-
   const centerTextPlugin = {
     id: "centerTextPlugin",
     afterDraw(chart) {
@@ -570,17 +531,6 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
   const alerts = [];
   if (growthPct > 12) alerts.push({ level: "critical", text: `⚠ ${category} — High demand expected` });
   if (estimatedInventory < reorderPoint) alerts.push({ level: "warning", text: `⚠ ${category} — Reorder recommended soon` });
-  const categoryMean = categoryRows.length
-    ? categoryRows.reduce((sum, row) => sum + Number(row.units || 0), 0) / categoryRows.length
-    : 0;
-  categoryRows
-    .filter((row) => row.category !== category)
-    .slice(0, 2)
-    .forEach((row) => {
-      if (Number(row.units || 0) > categoryMean * 1.15) {
-        alerts.push({ level: "warning", text: `⚠ ${row.category} — High demand expected` });
-      }
-    });
   if (!alerts.length) alerts.push({ level: "safe", text: `✔ ${category} — Inventory levels safe` });
 
   const exportRows = labels.map((date) => ({
@@ -605,6 +555,48 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
     rows: exportRows,
   });
   latestRenderKey = requestedKey || `${category}|${from}|${to}`;
+
+  const categoryOptions = Array.from(categoryEl.options || [])
+    .map((opt) => String(opt.value || "").trim())
+    .filter(Boolean)
+    .slice(0, 6);
+  const categoryRows = await Promise.all(categoryOptions.map(async (cat) => {
+    try {
+      const snap = await fetchForecastSnapshot(cat, from, to);
+      const totalActual = snap.filteredHistory.reduce((sum, r) => sum + Number(r.actual_units_sold || 0), 0);
+      const totalProjected = snap.filteredForecast.reduce((sum, r) => sum + Number(r.forecast_units_sold || 0), 0);
+      return { category: cat, units: totalActual > 0 ? totalActual : totalProjected };
+    } catch (_) {
+      return { category: cat, units: 0 };
+    }
+  }));
+  if (isStale()) return;
+
+  const barCtx = document.getElementById("categoryComparisonChart").getContext("2d");
+  const barGrad = barCtx.createLinearGradient(0, 0, 0, 320);
+  barGrad.addColorStop(0, "rgba(79, 172, 254, 0.95)");
+  barGrad.addColorStop(1, "rgba(123, 97, 255, 0.75)");
+
+  if (categoryComparisonChart) categoryComparisonChart.destroy();
+  if (categoryRows.length) {
+    setChartEmptyState("categoryComparisonEmpty", false);
+    categoryComparisonChart = new Chart(barCtx, {
+      type: "bar",
+      data: { labels: categoryRows.map((r) => r.category), datasets: [{ label: "Units Sold", data: categoryRows.map((r) => Number(r.units.toFixed(1))), backgroundColor: barGrad, borderRadius: 8, borderSkipped: false }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1200, easing: "easeOutQuart" },
+        plugins: { legend: { labels: { color: "#dbe7ff", boxWidth: 12, boxHeight: 2, usePointStyle: true } } },
+        scales: {
+          x: { ticks: { color: "#9cb0d8" }, grid: { display: false } },
+          y: { ticks: { color: "#9cb0d8" }, grid: { color: "rgba(148, 163, 184, 0.12)" } },
+        },
+      },
+    });
+  } else {
+    setChartEmptyState("categoryComparisonEmpty", true, "No category comparison data.");
+  }
 
 }
 
