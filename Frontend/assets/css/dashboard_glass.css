@@ -859,6 +859,9 @@ select.input-error {
 .flatpickr-day.prevMonthDay,
 .flatpickr-day.nextMonthDay {
   color: rgba(143, 166, 207, 0.55) !important;
+  pointer-events: none;
+  cursor: not-allowed;
+  user-select: none;
 }
 
 .flatpickr-day.today {
