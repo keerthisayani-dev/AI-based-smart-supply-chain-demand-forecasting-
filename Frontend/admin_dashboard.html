@@ -378,6 +378,9 @@
     .password-wrap .add-input {
       padding-right: 38px;
     }
+    .password-mask {
+      -webkit-text-security: disc;
+    }
     .password-toggle {
       position: absolute;
       top: 50%;
@@ -614,7 +617,7 @@
           </div>
           <div class="add-field">
             <div class="password-wrap">
-              <input id="addPassword" class="add-input" type="password" placeholder="Password" name="new_user_password" autocomplete="new-password" autocapitalize="off" spellcheck="false" readonly />
+              <input id="addPassword" class="add-input password-mask" type="text" placeholder="Password" name="new_user_secret" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" readonly />
               <button id="addPasswordToggle" class="password-toggle" type="button" aria-label="Show password" title="Show password">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
@@ -1131,8 +1134,8 @@
       const passwordEl = document.getElementById("addPassword");
       const toggleEl = document.getElementById("addPasswordToggle");
       if (!passwordEl || !toggleEl) return;
-      const show = passwordEl.type === "password";
-      passwordEl.type = show ? "text" : "password";
+      const show = passwordEl.classList.contains("password-mask");
+      passwordEl.classList.toggle("password-mask", !show);
       toggleEl.setAttribute("aria-label", show ? "Hide password" : "Show password");
       toggleEl.setAttribute("title", show ? "Hide password" : "Show password");
     });
