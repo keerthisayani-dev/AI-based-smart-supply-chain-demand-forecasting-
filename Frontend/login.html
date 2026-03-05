@@ -970,6 +970,17 @@
     const MAX_SAVED_LOGIN_PROFILES = 12;
     const STRONG_PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
     const STRONG_PASSWORD_MESSAGE = "Password must be at least 8 characters and include 1 uppercase letter, 1 number, and 1 special character.";
+    const ROLE_OPTIONS_SIGNIN = `
+      <option value="" selected disabled>Select Role</option>
+      <option value="admin">Admin</option>
+      <option value="inventory_manager">Inventory Manager</option>
+      <option value="viewer">Viewer</option>
+    `;
+    const ROLE_OPTIONS_CREATE = `
+      <option value="" selected disabled hidden>Select Role</option>
+      <option value="inventory_manager">Inventory Manager</option>
+      <option value="viewer">Viewer</option>
+    `;
     let authMode = "signin";
 
     function loadSavedLoginProfiles() {
@@ -1167,6 +1178,15 @@
       authMode = mode === "create" ? "create" : "signin";
       const createMode = authMode === "create";
       const roleHelp = document.getElementById("roleHelp");
+      const previousRole = String(roleEl.value || "").trim();
+      roleEl.innerHTML = createMode ? ROLE_OPTIONS_CREATE : ROLE_OPTIONS_SIGNIN;
+      if (createMode && (previousRole === "inventory_manager" || previousRole === "viewer")) {
+        roleEl.value = previousRole;
+      } else if (!createMode && (previousRole === "admin" || previousRole === "inventory_manager" || previousRole === "viewer")) {
+        roleEl.value = previousRole;
+      } else {
+        roleEl.value = "";
+      }
       modeSignInBtn.classList.toggle("active", !createMode);
       modeCreateBtn.classList.toggle("active", createMode);
       firstNameField.classList.toggle("is-hidden", !createMode);
