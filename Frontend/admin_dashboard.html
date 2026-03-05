@@ -612,7 +612,7 @@
             <div id="addFullNameError" class="add-field-error" role="alert" aria-live="polite"></div>
           </div>
           <div class="add-field">
-            <input id="addEmail" class="add-input" type="text" inputmode="email" placeholder="name@gmail.com" name="new_user_email" autocomplete="off" autocapitalize="off" spellcheck="false" readonly />
+            <input id="addEmail" class="add-input" type="text" inputmode="email" placeholder="name@gmail.com" name="new_user_contact" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" readonly />
             <div id="addEmailError" class="add-field-error" role="alert" aria-live="polite"></div>
           </div>
           <div class="add-field">
@@ -1116,16 +1116,25 @@
     document.getElementById("addFullName").addEventListener("input", () => clearAddFieldError("addFullName"));
     document.getElementById("addEmail").addEventListener("input", () => clearAddFieldError("addEmail"));
     document.getElementById("addPassword").addEventListener("input", () => clearAddFieldError("addPassword"));
-    ["addEmail", "addPassword"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const unlock = () => {
-        if (el.hasAttribute("readonly")) el.removeAttribute("readonly");
-      };
-      el.addEventListener("focus", unlock);
-      el.addEventListener("pointerdown", unlock);
-      el.addEventListener("keydown", unlock);
-    });
+    (() => {
+      const emailEl = document.getElementById("addEmail");
+      if (emailEl) {
+        const unlockEmail = () => {
+          if (emailEl.hasAttribute("readonly")) emailEl.removeAttribute("readonly");
+        };
+        emailEl.addEventListener("keydown", unlockEmail);
+        emailEl.addEventListener("paste", unlockEmail);
+      }
+      const passwordEl = document.getElementById("addPassword");
+      if (passwordEl) {
+        const unlockPassword = () => {
+          if (passwordEl.hasAttribute("readonly")) passwordEl.removeAttribute("readonly");
+        };
+        passwordEl.addEventListener("focus", unlockPassword);
+        passwordEl.addEventListener("pointerdown", unlockPassword);
+        passwordEl.addEventListener("keydown", unlockPassword);
+      }
+    })();
     document.getElementById("addRole").addEventListener("change", () => {
       clearAddFieldError("addRole");
       updateAddRoleVisualState();
