@@ -261,6 +261,14 @@ input::placeholder {
   color: #8fa1bf;
 }
 
+#category {
+  color: #8fa1bf;
+}
+
+#category.has-value {
+  color: #d9e6fb;
+}
+
 input:focus,
 select:focus {
   border-color: rgba(78, 144, 247, 0.95);

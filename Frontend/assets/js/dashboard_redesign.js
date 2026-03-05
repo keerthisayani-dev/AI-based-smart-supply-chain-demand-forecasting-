@@ -272,9 +272,7 @@ function getResolvedDateRange() {
 }
 
 function getSelectedOrFirstCategory() {
-  if (categoryEl.value) return categoryEl.value;
-  const first = Array.from(categoryEl.options || []).find((opt) => opt.value);
-  return first ? first.value : "";
+  return categoryEl.value || "";
 }
 
 async function fetchForecastSnapshot(category, fromDate, toDate) {
@@ -610,14 +608,12 @@ async function applyRoleUi() {
 function initDatePickers() {
   if (fromPicker) fromPicker.destroy();
   if (toPicker) toPicker.destroy();
-  const rollingRange = getCurrentToNextMonthRange();
   fromPicker = flatpickr(fromDateEl, {
     dateFormat: "Y-m-d",
     allowInput: false,
     monthSelectorType: "static",
     minDate: ALLOWED_MIN_DATE,
     maxDate: ALLOWED_MAX_DATE,
-    defaultDate: rollingRange.from,
   });
   toPicker = flatpickr(toDateEl, {
     dateFormat: "Y-m-d",
@@ -625,7 +621,6 @@ function initDatePickers() {
     monthSelectorType: "static",
     minDate: ALLOWED_MIN_DATE,
     maxDate: ALLOWED_MAX_DATE,
-    defaultDate: rollingRange.to,
   });
 }
 
@@ -646,6 +641,7 @@ async function loadCategories(preferredCategory) {
     if (preferredCategory && dropdownValues.includes(preferredCategory)) {
       categoryEl.value = preferredCategory;
     }
+    updateCategoryPlaceholderState();
   } catch (err) {
     console.error(`Failed to load categories: ${err.message}`);
     setFieldError(categoryEl, categoryErrorEl, "Unable to load categories. Please refresh and try again.");
@@ -654,8 +650,14 @@ async function loadCategories(preferredCategory) {
 
 function clearInputState() {
   categoryEl.innerHTML = "";
+  categoryEl.classList.remove("has-value");
   fromDateEl.value = "";
   toDateEl.value = "";
+}
+
+function updateCategoryPlaceholderState() {
+  const hasValue = Boolean(String(categoryEl.value || "").trim());
+  categoryEl.classList.toggle("has-value", hasValue);
 }
 
 function saveDashboardState() {
@@ -682,11 +684,6 @@ function readDashboardState() {
   }
 }
 
-function getNavigationType() {
-  const navEntry = performance.getEntriesByType("navigation")[0];
-  return navEntry ? navEntry.type : "";
-}
-
 function consumeForceClearFlag() {
   const shouldClear = sessionStorage.getItem(DASHBOARD_FORCE_CLEAR_KEY) === "1";
   if (shouldClear) sessionStorage.removeItem(DASHBOARD_FORCE_CLEAR_KEY);
@@ -696,31 +693,32 @@ function consumeForceClearFlag() {
 async function initializeDefaults() {
   clearAllErrors();
   await applyRoleUi();
-  const shouldClear = getNavigationType() === "reload" || consumeForceClearFlag();
+  // Preserve form state across page refresh; only clear after explicit logout/reset flows.
+  const shouldClear = consumeForceClearFlag();
   const savedState = shouldClear ? null : readDashboardState();
   if (shouldClear) clearDashboardState();
   clearInputState();
   initDatePickers();
   await loadCategories(savedState?.category || "");
-  if (savedState?.fromDate) {
+  const hasSavedCategory = Boolean(savedState?.category);
+  if (hasSavedCategory && savedState?.fromDate) {
     fromPicker.setDate(savedState.fromDate, true, "Y-m-d");
   }
-  if (savedState?.toDate) {
+  if (hasSavedCategory && savedState?.toDate) {
     toPicker.setDate(savedState.toDate, true, "Y-m-d");
   }
   const minAllowedStr = ALLOWED_MIN_DATE;
   const maxAllowedStr = ALLOWED_MAX_DATE;
   const savedFrom = String(savedState?.fromDate || "");
   const savedTo = String(savedState?.toDate || "");
-  const hasValidSavedRange = savedFrom && savedTo
+  const hasValidSavedRange = hasSavedCategory
+    && savedFrom && savedTo
     && savedFrom >= minAllowedStr
     && savedTo <= maxAllowedStr
     && savedFrom <= savedTo;
   if (!hasValidSavedRange) {
-    const rollingRange = getCurrentToNextMonthRange();
-    fromPicker.setDate(rollingRange.from, true, "Y-m-d");
-    toPicker.setDate(rollingRange.to, true, "Y-m-d");
-    saveDashboardState();
+    fromPicker.clear();
+    toPicker.clear();
   }
   const shell = document.querySelector(".page-shell");
   if (shell) {
@@ -855,14 +853,28 @@ function exportForecastPdf() {
 
 categoryEl.addEventListener("change", async () => {
   clearFieldError(categoryEl, categoryErrorEl);
+  updateCategoryPlaceholderState();
+  saveDashboardState();
   await renderForecastVisualization();
 });
 fromDateEl.addEventListener("input", async () => {
   clearFieldError(fromDateEl, fromDateErrorEl);
+  saveDashboardState();
+  await renderForecastVisualization();
+});
+fromDateEl.addEventListener("change", async () => {
+  clearFieldError(fromDateEl, fromDateErrorEl);
+  saveDashboardState();
   await renderForecastVisualization();
 });
 toDateEl.addEventListener("input", async () => {
   clearFieldError(toDateEl, toDateErrorEl);
+  saveDashboardState();
+  await renderForecastVisualization();
+});
+toDateEl.addEventListener("change", async () => {
+  clearFieldError(toDateEl, toDateErrorEl);
+  saveDashboardState();
   await renderForecastVisualization();
 });
 
