@@ -32,6 +32,27 @@
       grid-template-columns: repeat(4, minmax(180px, 1fr));
       gap: 12px;
     }
+    .top-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .user-badge {
+      min-height: 38px;
+      border-radius: 999px;
+      border: 1px solid rgba(126, 149, 188, 0.28);
+      background: rgba(255, 255, 255, 0.04);
+      color: #dfe9fb;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 14px;
+      white-space: nowrap;
+    }
     .summary-card {
       min-height: 112px;
       padding: 14px 16px;
@@ -332,6 +353,14 @@
       gap: 4px;
       align-content: start;
     }
+    .autofill-decoy {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
     .add-input, .add-select {
       border-radius: 8px;
       border: 1px solid rgba(125, 155, 202, 0.45);
@@ -341,6 +370,42 @@
       font-size: 13px;
       min-height: 46px;
       font-family: inherit;
+    }
+    .password-wrap {
+      position: relative;
+    }
+    .password-wrap .add-input {
+      padding-right: 38px;
+    }
+    .password-toggle {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      width: 22px;
+      height: 22px;
+      border: 0;
+      border-radius: 6px;
+      padding: 0;
+      background: transparent;
+      color: #9fb2cc;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .password-toggle:hover {
+      color: #d7e6ff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .password-toggle svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
     #addUserBtn {
       min-height: 46px;
@@ -448,16 +513,26 @@
         </div>
         <div class="panel-content">
         <div class="add-user-grid">
+          <input class="autofill-decoy" type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true" />
+          <input class="autofill-decoy" type="password" name="password" autocomplete="current-password" tabindex="-1" aria-hidden="true" />
           <div class="add-field">
             <input id="addFullName" class="add-input" type="text" placeholder="Full name" autocomplete="off" />
             <div id="addFullNameError" class="add-field-error" role="alert" aria-live="polite"></div>
           </div>
           <div class="add-field">
-            <input id="addEmail" class="add-input" type="email" placeholder="name@gmail.com" name="new_user_email" autocomplete="off" />
+            <input id="addEmail" class="add-input" type="text" inputmode="email" placeholder="name@gmail.com" name="new_user_email" autocomplete="off" autocapitalize="off" spellcheck="false" readonly />
             <div id="addEmailError" class="add-field-error" role="alert" aria-live="polite"></div>
           </div>
           <div class="add-field">
-            <input id="addPassword" class="add-input" type="password" placeholder="Password (min 8 chars)" name="new_user_password" autocomplete="new-password" />
+            <div class="password-wrap">
+              <input id="addPassword" class="add-input" type="password" placeholder="Password" name="new_user_password" autocomplete="new-password" autocapitalize="off" spellcheck="false" readonly />
+              <button id="addPasswordToggle" class="password-toggle" type="button" aria-label="Show password" title="Show password">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
             <div id="addPasswordError" class="add-field-error" role="alert" aria-live="polite"></div>
           </div>
           <div class="add-field">
@@ -863,9 +938,28 @@
     document.getElementById("addFullName").addEventListener("input", () => clearAddFieldError("addFullName"));
     document.getElementById("addEmail").addEventListener("input", () => clearAddFieldError("addEmail"));
     document.getElementById("addPassword").addEventListener("input", () => clearAddFieldError("addPassword"));
+    ["addEmail", "addPassword"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const unlock = () => {
+        if (el.hasAttribute("readonly")) el.removeAttribute("readonly");
+      };
+      el.addEventListener("focus", unlock);
+      el.addEventListener("pointerdown", unlock);
+      el.addEventListener("keydown", unlock);
+    });
     document.getElementById("addRole").addEventListener("change", () => {
       clearAddFieldError("addRole");
       updateAddRoleVisualState();
+    });
+    document.getElementById("addPasswordToggle").addEventListener("click", () => {
+      const passwordEl = document.getElementById("addPassword");
+      const toggleEl = document.getElementById("addPasswordToggle");
+      if (!passwordEl || !toggleEl) return;
+      const show = passwordEl.type === "password";
+      passwordEl.type = show ? "text" : "password";
+      toggleEl.setAttribute("aria-label", show ? "Hide password" : "Show password");
+      toggleEl.setAttribute("title", show ? "Hide password" : "Show password");
     });
     document.getElementById("toDashboardBtn").addEventListener("click", () => {
       window.location.href = "/dashboard";

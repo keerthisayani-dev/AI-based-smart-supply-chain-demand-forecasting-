@@ -261,6 +261,11 @@ def _canonical_role(role: str) -> str:
     return ROLE_ALIASES.get(str(role or "").strip().lower(), "")
 
 
+def _normalize_full_name(value: str) -> str:
+    # Normalize whitespace so name uniqueness checks are consistent.
+    return " ".join(str(value or "").strip().split())
+
+
 def _init_auth_db() -> None:
     with _get_auth_db_conn() as conn:
         conn.execute(
@@ -1504,7 +1509,7 @@ def auth_login(payload: LoginRequest, request: Request) -> JSONResponse:
 
 @app.post("/auth/register")
 def auth_register(payload: RegisterRequest, request: Request) -> JSONResponse:
-    full_name = payload.full_name.strip()
+    full_name = _normalize_full_name(payload.full_name)
     email = payload.email.strip().lower()
     password = payload.password or ""
     role = _canonical_role(payload.role)
@@ -1532,6 +1537,12 @@ def auth_register(payload: RegisterRequest, request: Request) -> JSONResponse:
         ).fetchone()
         if existing is not None:
             raise HTTPException(status_code=409, detail="An account already exists for this email")
+        existing_name = conn.execute(
+            "SELECT id FROM users WHERE lower(trim(full_name)) = lower(trim(?))",
+            (full_name,),
+        ).fetchone()
+        if existing_name is not None:
+            raise HTTPException(status_code=409, detail="An account already exists for this full name")
 
         cur = conn.execute(
             """
@@ -2394,7 +2405,7 @@ def admin_list_users(request: Request, limit: int = 200) -> Dict[str, Any]:
 @app.post("/admin/users/create")
 def admin_create_user(payload: AdminCreateUserRequest, request: Request) -> Dict[str, Any]:
     admin_user = _require_roles(request, {ROLE_ADMIN})
-    full_name = payload.full_name.strip()
+    full_name = _normalize_full_name(payload.full_name)
     email = payload.email.strip().lower()
     password = payload.password or ""
     role = _canonical_role(payload.role)
@@ -2418,6 +2429,12 @@ def admin_create_user(payload: AdminCreateUserRequest, request: Request) -> Dict
         ).fetchone()
         if existing is not None:
             raise HTTPException(status_code=409, detail="An account already exists for this email")
+        existing_name = conn.execute(
+            "SELECT id FROM users WHERE lower(trim(full_name)) = lower(trim(?))",
+            (full_name,),
+        ).fetchone()
+        if existing_name is not None:
+            raise HTTPException(status_code=409, detail="An account already exists for this full name")
         cur = conn.execute(
             """
             INSERT INTO users (email, full_name, role, password_hash, is_active, email_verified)
