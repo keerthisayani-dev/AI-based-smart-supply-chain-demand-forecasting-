@@ -626,9 +626,7 @@
           </div>
           <div class="add-field">
             <select id="addRole" class="add-select">
-              <option value="" selected disabled>Select role</option>
-              <option value="viewer">Viewer</option>
-              <option value="inventory_manager">Inventory Manager</option>
+              <option value="" selected disabled hidden>Select role</option>
               <option value="admin">Admin</option>
             </select>
             <div id="addRoleError" class="add-field-error" role="alert" aria-live="polite"></div>
@@ -705,6 +703,17 @@
       };
       const k = String(role || "").toLowerCase();
       return map[k] || (role || "Unknown");
+    }
+
+    function buildAdminRoleOptions(currentRole) {
+      const role = String(currentRole || "").trim().toLowerCase();
+      if (role === "admin") {
+        return '<option value="admin" selected>Admin</option>';
+      }
+      return `
+        <option value="${escapeHtml(role)}" selected hidden>${escapeHtml(formatRole(role))}</option>
+        <option value="admin">Admin</option>
+      `;
     }
 
     function escapeHtml(v) {
@@ -957,9 +966,7 @@
           <td>
             <div class="role-edit">
               <select class="role-select" data-role-email="${escapeHtml(u.email)}">
-                <option value="viewer" ${u.role === "viewer" ? "selected" : ""}>Viewer</option>
-                <option value="inventory_manager" ${u.role === "inventory_manager" ? "selected" : ""}>Inventory Manager</option>
-                <option value="admin" ${u.role === "admin" ? "selected" : ""}>Admin</option>
+                ${buildAdminRoleOptions(u.role)}
               </select>
               <div class="role-actions">
               <div class="row-delete-error" aria-live="polite"></div>
