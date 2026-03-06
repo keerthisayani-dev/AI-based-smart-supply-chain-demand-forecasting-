@@ -207,7 +207,7 @@ body {
 
 .page-shell.ready > * {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
   transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
@@ -274,6 +274,7 @@ body {
   grid-template-columns: 2.1fr 1.45fr;
   gap: 20px;
   align-items: start;
+  overflow: visible;
 }
 
 .surface-card {
@@ -288,12 +289,14 @@ body {
   border: 0;
   box-shadow: none;
   background: transparent;
+  overflow: visible;
 }
 
 .field {
   display: grid;
   gap: 8px;
   margin-bottom: 14px;
+  overflow: visible;
 }
 
 label {
@@ -393,15 +396,15 @@ select {
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  z-index: 60;
+  z-index: 200;
   border-radius: 12px;
   border: 1px solid rgba(148, 163, 184, 0.28);
-  background: rgba(12, 22, 38, 0.98);
+  background: #0d1a2d;
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.34);
   display: none;
   padding: 6px;
-  max-height: 230px;
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 .select-shell.is-open .category-menu {
