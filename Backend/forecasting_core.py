@@ -13,7 +13,54 @@ TARGET_COL = "units sold"
 DATE_COL = "date"
 CATEGORY_COL = "category"
 PRODUCT_COL = CATEGORY_COL
-MODEL_INFO = "LinearRegression with lag + rolling + seasonal calendar features"
+MODEL_INFO = "LinearRegression with lag + rolling + seasonal calendar features + adaptive holiday-aware dynamics"
+
+FIXED_HOLIDAYS_MM_DD: Dict[str, str] = {
+    "01-14": "Makar Sankranti / Pongal",
+    "01-26": "Republic Day",
+    "08-15": "Independence Day",
+    "10-02": "Gandhi Jayanti",
+    "12-25": "Christmas",
+}
+
+SPECIAL_HOLIDAYS_BY_DATE: Dict[str, str] = {
+    "2025-03-14": "Holi",
+    "2025-03-31": "Eid-ul-Fitr",
+    "2025-10-02": "Dussehra",
+    "2025-10-20": "Diwali",
+    "2026-03-04": "Holi",
+    "2026-03-21": "Eid-ul-Fitr",
+    "2026-10-20": "Dussehra",
+    "2026-11-08": "Diwali",
+    "2027-03-24": "Holi",
+    "2027-03-11": "Eid-ul-Fitr",
+    "2027-10-10": "Dussehra",
+    "2027-10-29": "Diwali",
+    "2028-03-13": "Holi",
+    "2028-02-28": "Eid-ul-Fitr",
+    "2028-09-30": "Dussehra",
+    "2028-10-17": "Diwali",
+    "2029-03-02": "Holi",
+    "2029-02-16": "Eid-ul-Fitr",
+    "2029-10-19": "Dussehra",
+    "2029-11-05": "Diwali",
+    "2030-03-22": "Holi",
+    "2030-03-08": "Eid-ul-Fitr",
+    "2030-10-08": "Dussehra",
+    "2030-10-26": "Diwali",
+    "2031-03-12": "Holi",
+    "2031-02-25": "Eid-ul-Fitr",
+    "2031-09-28": "Dussehra",
+    "2031-10-15": "Diwali",
+}
+
+
+def _holiday_name_for_date(ts: pd.Timestamp) -> str:
+    iso = ts.date().isoformat()
+    if iso in SPECIAL_HOLIDAYS_BY_DATE:
+        return SPECIAL_HOLIDAYS_BY_DATE[iso]
+    mmdd = iso[5:]
+    return FIXED_HOLIDAYS_MM_DD.get(mmdd, "")
 
 
 @dataclass
@@ -292,8 +339,17 @@ def forecast_next_days(
     lower_bound = max(0.0, q05 * 0.75)
     upper_bound = max(lower_bound + 1.0, q95 * 1.20)
 
+    # Learn recent movement and variability to avoid repetitive static-looking forecasts.
+    recent_tail = hist_target.tail(28)
+    recent_mean = float(recent_tail.mean()) if not recent_tail.empty else baseline_mean
+    recent_mean = max(recent_mean, 1e-6)
+    recent_vol = float(recent_tail.std(ddof=0)) if len(recent_tail) >= 2 else 0.0
+    vol_ratio = float(np.clip(recent_vol / recent_mean, 0.01, 0.10))
+    trend_component = float(recent_tail.diff().dropna().tail(14).mean()) if len(recent_tail) >= 3 else 0.0
+
     rows = []
     current_date = start_date
+    prev_value = float(history[target].iloc[-1]) if len(history) else 0.0
 
     for _ in range(horizon):
         current_date = current_date + pd.Timedelta(days=1)
@@ -306,9 +362,34 @@ def forecast_next_days(
         seasonal_target = baseline_mean * dow_factor.get(dow, 1.0) * month_factor.get(month, 1.0)
         lag7 = float(history[target].iloc[-7]) if len(history) >= 7 else float(history[target].iloc[-1])
 
-        # Blend model output with learned seasonal priors and weekly persistence.
-        blended = (0.45 * non_negative_pred) + (0.35 * seasonal_target) + (0.20 * lag7)
+        # Blend model output with priors; keep lag7 lighter to reduce weekly pattern lock-in.
+        blended = (0.62 * non_negative_pred) + (0.23 * seasonal_target) + (0.15 * lag7)
         pred = float(np.clip(blended, lower_bound, upper_bound))
+
+        # Add deterministic date-sensitive movement so curve is not static/repetitive.
+        drift = float(np.clip(trend_component / recent_mean, -0.03, 0.03))
+        micro_cycle = (
+            0.65 * np.sin(2 * np.pi * current_date.dayofyear / 29.0)
+            + 0.35 * np.sin(2 * np.pi * current_date.dayofyear / 11.0)
+        )
+        dynamic_factor = 1.0 + drift + (vol_ratio * micro_cycle)
+        pred = max(0.0, pred * dynamic_factor)
+
+        # Keep forecast trend date-sensitive and avoid repetitive weekly dips.
+        # Non-holiday days are stabilized; holiday days are allowed to dip.
+        holiday_name = _holiday_name_for_date(current_date)
+        if holiday_name:
+            holiday_floor = prev_value * (0.78 - (0.20 * vol_ratio))
+            holiday_ceiling = prev_value * (0.94 - (0.06 * vol_ratio))
+            pred = float(np.clip(pred, holiday_floor, holiday_ceiling))
+        else:
+            swing = float(np.clip(0.018 + (0.8 * vol_ratio), 0.018, 0.09))
+            non_holiday_floor = prev_value * (1.0 - swing)
+            non_holiday_ceiling = prev_value * (1.0 + swing)
+            pred = float(np.clip(pred, non_holiday_floor, non_holiday_ceiling))
+
+        pred = float(np.clip(pred, lower_bound, upper_bound))
+        prev_value = pred
 
         new_hist_row = {col: np.nan for col in history.columns}
         new_hist_row[target] = pred

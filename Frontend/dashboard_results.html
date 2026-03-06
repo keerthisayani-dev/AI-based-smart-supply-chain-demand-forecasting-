@@ -2008,6 +2008,76 @@
       return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     }
 
+    function isWeekendIsoDate(isoDate) {
+      const d = new Date(`${isoDate}T00:00:00`);
+      if (Number.isNaN(d.getTime())) return false;
+      const day = d.getDay();
+      return day === 0 || day === 6;
+    }
+
+    const FIXED_HOLIDAYS_MM_DD = {
+      "01-14": "Makar Sankranti / Pongal",
+      "01-26": "Republic Day",
+      "08-15": "Independence Day",
+      "10-02": "Gandhi Jayanti",
+      "12-25": "Christmas",
+    };
+
+    const SPECIAL_HOLIDAYS_BY_DATE = {
+      "2025-03-14": "Holi",
+      "2025-03-31": "Eid-ul-Fitr",
+      "2025-10-02": "Dussehra",
+      "2025-10-20": "Diwali",
+      "2026-03-04": "Holi",
+      "2026-03-21": "Eid-ul-Fitr",
+      "2026-10-20": "Dussehra",
+      "2026-11-08": "Diwali",
+      "2027-03-24": "Holi",
+      "2027-03-11": "Eid-ul-Fitr",
+      "2027-10-10": "Dussehra",
+      "2027-10-29": "Diwali",
+      "2028-03-13": "Holi",
+      "2028-02-28": "Eid-ul-Fitr",
+      "2028-09-30": "Dussehra",
+      "2028-10-17": "Diwali",
+      "2029-03-02": "Holi",
+      "2029-02-16": "Eid-ul-Fitr",
+      "2029-10-19": "Dussehra",
+      "2029-11-05": "Diwali",
+      "2030-03-22": "Holi",
+      "2030-03-08": "Eid-ul-Fitr",
+      "2030-10-08": "Dussehra",
+      "2030-10-26": "Diwali",
+      "2031-03-12": "Holi",
+      "2031-02-25": "Eid-ul-Fitr",
+      "2031-09-28": "Dussehra",
+      "2031-10-15": "Diwali",
+    };
+
+    function holidayNameForDate(isoDate) {
+      const exact = SPECIAL_HOLIDAYS_BY_DATE[String(isoDate || "")];
+      if (exact) return exact;
+      if (typeof isoDate !== "string" || isoDate.length < 10) return "";
+      const mmdd = isoDate.slice(5, 10);
+      return FIXED_HOLIDAYS_MM_DD[mmdd] || "";
+    }
+
+    function buildHolidayDropReasons(forecastRows) {
+      const reasonsByDate = new Map();
+      if (!Array.isArray(forecastRows) || forecastRows.length < 2) return reasonsByDate;
+      for (let i = 1; i < forecastRows.length; i += 1) {
+        const prev = toNum(forecastRows[i - 1].forecast_units_sold);
+        const curr = toNum(forecastRows[i].forecast_units_sold);
+        if (prev <= 0 || curr >= prev) continue;
+        const date = String(forecastRows[i].date || "");
+        const holiday = holidayNameForDate(date);
+        if (!holiday) continue;
+        const dropPct = ((prev - curr) / prev) * 100;
+        reasonsByDate.set(date, `Holiday impact: ${holiday}. Drop vs previous day: ${dropPct.toFixed(1)}%.`);
+      }
+      return reasonsByDate;
+    }
+
     async function loadResults() {
       const requestId = ++latestLoadRequestId;
       const params = new URLSearchParams(window.location.search);
@@ -2152,6 +2222,9 @@
         if (mode !== "past" && filteredForecast.length) {
           const forecastX = filteredForecast.map(r => r.date);
           const forecastY = filteredForecast.map(r => toNum(r.forecast_units_sold));
+          const holidayReasonsByDate = buildHolidayDropReasons(filteredForecast);
+          const holidayReasonText = forecastX.map((date) => holidayReasonsByDate.get(date) || "");
+          const holidayDropRows = filteredForecast.filter((r) => holidayReasonsByDate.has(String(r.date || "")));
 
           // Bridge only when actual and forecast are temporally close.
           if (nearPeriodActuals.length) {
@@ -2162,6 +2235,7 @@
             if (gapDays >= 0 && gapDays <= 7) {
               forecastX.unshift(lastActual.date);
               forecastY.unshift(toNum(lastActual.actual_units_sold));
+              holidayReasonText.unshift("");
             }
           }
 
@@ -2171,7 +2245,53 @@
             mode: "lines+markers",
             name: "Forecast",
             line: { color: "#8B5CF6", width: 3, dash: "solid" },
-            marker: { color: "#8B5CF6", size: 5 }
+            marker: { color: "#8B5CF6", size: 5 },
+            customdata: holidayReasonText,
+            hovertemplate: "Date: %{x}<br>Forecast: %{y:.1f} units<br>%{customdata}<extra></extra>",
+          });
+
+          if (holidayDropRows.length) {
+            series.push({
+              x: holidayDropRows.map((r) => r.date),
+              y: holidayDropRows.map((r) => toNum(r.forecast_units_sold)),
+              mode: "markers",
+              name: "Holiday Drop Reason",
+              marker: { color: "#F59E0B", size: 9, symbol: "diamond" },
+              hovertemplate: holidayDropRows.map((r) => {
+                const date = String(r.date || "");
+                return `Date: ${date}<br>Forecast: ${toNum(r.forecast_units_sold).toFixed(1)} units<br>${holidayReasonsByDate.get(date) || ""}<extra></extra>`;
+              }),
+            });
+          }
+        }
+
+        // Add white dots on all weekend points visible in the graph.
+        const weekendMap = new Map();
+        actualSeriesRows.forEach((r) => {
+          const d = String(r.date || "");
+          if (!d || !isWeekendIsoDate(d)) return;
+          weekendMap.set(d, toNum(r.actual_units_sold));
+        });
+        filteredForecast.forEach((r) => {
+          const d = String(r.date || "");
+          if (!d || !isWeekendIsoDate(d)) return;
+          weekendMap.set(d, toNum(r.forecast_units_sold));
+        });
+        if (weekendMap.size) {
+          const weekendPoints = Array.from(weekendMap.entries())
+            .map(([date, value]) => ({ date, value }))
+            .sort((a, b) => a.date.localeCompare(b.date));
+          series.push({
+            x: weekendPoints.map((p) => p.date),
+            y: weekendPoints.map((p) => p.value),
+            mode: "markers",
+            name: "Weekend",
+            marker: {
+              color: "#FFFFFF",
+              size: 7,
+              line: { color: "rgba(148,163,184,0.65)", width: 1 },
+            },
+            hovertemplate: weekendPoints.map((p) => `Date: ${p.date}<br>Weekend (Sat/Sun)<br>Units: ${toNum(p.value).toFixed(1)}<extra></extra>`),
           });
         }
 
