@@ -56,9 +56,15 @@
       <article class="surface-card forecast-inputs">
         <div class="field">
           <label for="category">Category</label>
-          <select id="category" autocomplete="off">
-            <option value="" selected disabled hidden>Select category</option>
-          </select>
+          <div class="select-shell" id="categoryShell">
+            <select id="category" autocomplete="off" aria-hidden="true" tabindex="-1">
+              <option value="" selected disabled>Select category</option>
+            </select>
+            <button id="categoryTrigger" class="category-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span id="categoryTriggerText">Select category</span>
+            </button>
+            <div id="categoryMenu" class="category-menu" role="listbox" aria-label="Category options"></div>
+          </div>
           <div id="categoryError" class="field-error" role="alert" aria-live="polite"></div>
         </div>
         <div class="date-grid">

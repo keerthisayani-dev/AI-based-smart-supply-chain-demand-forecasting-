@@ -2,6 +2,10 @@
 const categoryEl = document.getElementById("category");
 const fromDateEl = document.getElementById("fromDate");
 const toDateEl = document.getElementById("toDate");
+const categoryShellEl = document.getElementById("categoryShell");
+const categoryTriggerEl = document.getElementById("categoryTrigger");
+const categoryTriggerTextEl = document.getElementById("categoryTriggerText");
+const categoryMenuEl = document.getElementById("categoryMenu");
 const categoryErrorEl = document.getElementById("categoryError");
 const fromDateErrorEl = document.getElementById("fromDateError");
 const toDateErrorEl = document.getElementById("toDateError");
@@ -54,12 +58,14 @@ function setFieldError(inputEl, errorEl, message) {
   errorEl.textContent = String(message || "");
   errorEl.classList.add("is-visible");
   inputEl.classList.add("input-error");
+  if (inputEl === categoryEl && categoryTriggerEl) categoryTriggerEl.classList.add("input-error");
 }
 
 function clearFieldError(inputEl, errorEl) {
   errorEl.textContent = "";
   errorEl.classList.remove("is-visible");
   inputEl.classList.remove("input-error");
+  if (inputEl === categoryEl && categoryTriggerEl) categoryTriggerEl.classList.remove("input-error");
 }
 
 function clearAllErrors() {
@@ -630,7 +636,13 @@ async function applyRoleUi() {
       const restrictDownload = role === "viewer";
       downloadBtn.disabled = restrictDownload;
       downloadBtn.style.opacity = restrictDownload ? "0.65" : "1";
-      downloadBtn.title = restrictDownload ? "Download restricted for Viewer role" : "";
+      downloadBtn.classList.toggle("is-restricted", restrictDownload);
+      if (restrictDownload) {
+        downloadBtn.setAttribute("data-restrict-msg", "Download restricted for Viewer role");
+      } else {
+        downloadBtn.removeAttribute("data-restrict-msg");
+      }
+      downloadBtn.removeAttribute("title");
       if (exportCsvBtnEl) exportCsvBtnEl.disabled = restrictDownload;
       if (exportPngBtnEl) exportPngBtnEl.disabled = restrictDownload;
       if (exportPdfBtnEl) exportPdfBtnEl.disabled = restrictDownload;
@@ -665,7 +677,7 @@ async function loadCategories(preferredCategory) {
     const data = await resp.json();
     const categories = Array.isArray(data.categories) ? data.categories : [];
     const dropdownValues = [...new Set(categories.map((v) => String(v).trim()).filter(Boolean))].sort();
-    categoryEl.innerHTML = '<option value="" selected disabled hidden>Select category</option>';
+    categoryEl.innerHTML = '<option value="" selected disabled>Select category</option>';
     dropdownValues.forEach((cat) => {
       const opt = document.createElement("option");
       opt.value = cat;
@@ -676,6 +688,7 @@ async function loadCategories(preferredCategory) {
       categoryEl.value = preferredCategory;
     }
     updateCategoryPlaceholderState();
+    rebuildCategoryMenu();
   } catch (err) {
     console.error(`Failed to load categories: ${err.message}`);
     setFieldError(categoryEl, categoryErrorEl, "Unable to load categories. Please refresh and try again.");
@@ -685,6 +698,9 @@ async function loadCategories(preferredCategory) {
 function clearInputState() {
   categoryEl.innerHTML = "";
   categoryEl.classList.remove("has-value");
+  if (categoryTriggerTextEl) categoryTriggerTextEl.textContent = "Select category";
+  if (categoryTriggerEl) categoryTriggerEl.classList.remove("has-value");
+  if (categoryMenuEl) categoryMenuEl.innerHTML = "";
   fromDateEl.value = "";
   toDateEl.value = "";
 }
@@ -692,6 +708,63 @@ function clearInputState() {
 function updateCategoryPlaceholderState() {
   const hasValue = Boolean(String(categoryEl.value || "").trim());
   categoryEl.classList.toggle("has-value", hasValue);
+  if (categoryTriggerEl) categoryTriggerEl.classList.toggle("has-value", hasValue);
+  if (categoryTriggerTextEl) {
+    if (!hasValue) {
+      categoryTriggerTextEl.textContent = "Select category";
+    } else {
+      const selectedOption = categoryEl.options[categoryEl.selectedIndex];
+      categoryTriggerTextEl.textContent = String(selectedOption?.textContent || categoryEl.value || "Select category");
+    }
+  }
+}
+
+function closeCategoryMenu() {
+  if (!categoryShellEl || !categoryTriggerEl) return;
+  categoryShellEl.classList.remove("is-open");
+  categoryTriggerEl.setAttribute("aria-expanded", "false");
+}
+
+function openCategoryMenu() {
+  if (!categoryShellEl || !categoryTriggerEl) return;
+  categoryShellEl.classList.add("is-open");
+  categoryTriggerEl.setAttribute("aria-expanded", "true");
+}
+
+function rebuildCategoryMenu() {
+  if (!categoryMenuEl) return;
+  const options = Array.from(categoryEl.options || [])
+    .map((opt) => ({
+      value: String(opt.value || ""),
+      label: String(opt.textContent || "").trim(),
+      disabled: Boolean(opt.disabled),
+    }))
+    .filter((opt) => opt.value && !opt.disabled);
+
+  categoryMenuEl.innerHTML = "";
+  if (!options.length) {
+    const empty = document.createElement("div");
+    empty.className = "category-option";
+    empty.style.cursor = "default";
+    empty.style.opacity = ".8";
+    empty.textContent = "No categories available";
+    categoryMenuEl.appendChild(empty);
+    return;
+  }
+
+  options.forEach((opt) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `category-option${opt.value === categoryEl.value ? " is-selected" : ""}`;
+    btn.dataset.value = opt.value;
+    btn.textContent = opt.label;
+    btn.addEventListener("click", () => {
+      categoryEl.value = opt.value;
+      categoryEl.dispatchEvent(new Event("change", { bubbles: true }));
+      closeCategoryMenu();
+    });
+    categoryMenuEl.appendChild(btn);
+  });
 }
 
 function saveDashboardState() {
@@ -893,6 +966,7 @@ function exportForecastPdf() {
 categoryEl.addEventListener("change", () => {
   clearFieldError(categoryEl, categoryErrorEl);
   updateCategoryPlaceholderState();
+  rebuildCategoryMenu();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
@@ -934,6 +1008,24 @@ document.getElementById("adminDashBtn").addEventListener("click", () => {
 });
 document.getElementById("logoutBtn").addEventListener("click", () => {
   logoutAndGoLogin();
+});
+if (categoryTriggerEl) {
+  categoryTriggerEl.addEventListener("click", () => {
+    if (!categoryShellEl) return;
+    const isOpen = categoryShellEl.classList.contains("is-open");
+    if (isOpen) closeCategoryMenu();
+    else openCategoryMenu();
+  });
+}
+document.addEventListener("click", (event) => {
+  if (!categoryShellEl) return;
+  const target = event.target;
+  if (target instanceof Node && !categoryShellEl.contains(target)) {
+    closeCategoryMenu();
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeCategoryMenu();
 });
 if (exportCsvBtnEl) exportCsvBtnEl.addEventListener("click", exportForecastCsv);
 if (exportPngBtnEl) exportPngBtnEl.addEventListener("click", exportChartPng);
