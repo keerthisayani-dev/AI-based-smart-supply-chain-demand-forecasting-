@@ -980,12 +980,12 @@
       />
       <div class="field is-hidden" id="firstNameField">
         <label for="firstName">First Name</label>
-        <input id="firstName" type="text" placeholder="Your first name" autocomplete="off" />
+        <input id="firstName" type="search" name="first_name_input" placeholder="Your first name" autocomplete="new-password" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" aria-autocomplete="none" data-lpignore="true" data-1p-ignore="true" data-form-type="other" readonly />
         <p id="firstNameError" class="field-error" aria-live="polite"></p>
       </div>
       <div class="field is-hidden" id="lastNameField">
         <label for="lastName">Last Name</label>
-        <input id="lastName" type="text" placeholder="Your last name" autocomplete="off" />
+        <input id="lastName" type="search" name="last_name_input" placeholder="Your last name" autocomplete="new-password" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" aria-autocomplete="none" data-lpignore="true" data-1p-ignore="true" data-form-type="other" readonly />
         <p id="lastNameError" class="field-error" aria-live="polite"></p>
       </div>
       <div class="field">
@@ -1372,11 +1372,31 @@
         emailEl.setAttribute("autocomplete", "one-time-code");
         emailEl.setAttribute("type", "search");
         emailEl.setAttribute("inputmode", "text");
+        firstNameEl.setAttribute("name", `create_first_${Date.now()}`);
+        firstNameEl.setAttribute("autocomplete", "new-password");
+        firstNameEl.setAttribute("type", "search");
+        firstNameEl.setAttribute("inputmode", "text");
+        firstNameEl.setAttribute("readonly", "readonly");
+        lastNameEl.setAttribute("name", `create_last_${Date.now()}`);
+        lastNameEl.setAttribute("autocomplete", "new-password");
+        lastNameEl.setAttribute("type", "search");
+        lastNameEl.setAttribute("inputmode", "text");
+        lastNameEl.setAttribute("readonly", "readonly");
       } else {
         emailEl.setAttribute("name", "contact_identifier");
         emailEl.setAttribute("autocomplete", "new-password");
         emailEl.setAttribute("type", "text");
         emailEl.setAttribute("inputmode", "email");
+        firstNameEl.setAttribute("name", "first_name_input");
+        firstNameEl.setAttribute("autocomplete", "off");
+        firstNameEl.setAttribute("type", "text");
+        firstNameEl.setAttribute("inputmode", "text");
+        firstNameEl.removeAttribute("readonly");
+        lastNameEl.setAttribute("name", "last_name_input");
+        lastNameEl.setAttribute("autocomplete", "off");
+        lastNameEl.setAttribute("type", "text");
+        lastNameEl.setAttribute("inputmode", "text");
+        lastNameEl.removeAttribute("readonly");
       }
       emailEl.setAttribute("readonly", "readonly");
       closeSavedEmailSuggestions();
@@ -1582,6 +1602,18 @@
     passwordEl.addEventListener("input", () => clearSingleFieldError(passwordEl));
     firstNameEl.addEventListener("input", () => clearSingleFieldError(firstNameEl));
     lastNameEl.addEventListener("input", () => clearSingleFieldError(lastNameEl));
+    firstNameEl.addEventListener("focus", () => {
+      if (firstNameEl.hasAttribute("readonly")) setTimeout(() => firstNameEl.removeAttribute("readonly"), 0);
+    });
+    firstNameEl.addEventListener("pointerdown", () => {
+      if (firstNameEl.hasAttribute("readonly")) firstNameEl.removeAttribute("readonly");
+    });
+    lastNameEl.addEventListener("focus", () => {
+      if (lastNameEl.hasAttribute("readonly")) setTimeout(() => lastNameEl.removeAttribute("readonly"), 0);
+    });
+    lastNameEl.addEventListener("pointerdown", () => {
+      if (lastNameEl.hasAttribute("readonly")) lastNameEl.removeAttribute("readonly");
+    });
     confirmPasswordEl.addEventListener("input", () => clearSingleFieldError(confirmPasswordEl));
     wirePasswordToggle(togglePasswordBtn, passwordEl, true);
     wirePasswordToggle(toggleConfirmPasswordBtn, confirmPasswordEl, true);
