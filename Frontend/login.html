@@ -870,10 +870,13 @@
             inputmode="email"
             required
             placeholder="name@gmail.com"
-            autocomplete="new-password"
+            autocomplete="off"
             autocapitalize="off"
             autocorrect="off"
             spellcheck="false"
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-form-type="other"
           />
           <div id="savedEmailList" class="email-suggestions" role="listbox" aria-label="Saved emails"></div>
         </div>
@@ -918,7 +921,7 @@
       <div class="field is-hidden" id="confirmPasswordField">
         <label for="confirmPassword">Confirm Password</label>
         <div class="password-wrap">
-          <input id="confirmPassword" type="password" placeholder="Re-enter password" autocomplete="new-password" />
+          <input id="confirmPassword" type="text" class="password-mask" placeholder="Re-enter password" autocomplete="new-password" />
           <button id="toggleConfirmPassword" class="password-toggle" type="button" aria-label="Show confirm password" title="Show confirm password">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
@@ -1036,6 +1039,11 @@
 
     function renderSavedEmailSuggestions(filterText = "") {
       if (!savedEmailListEl) return;
+      if (authMode !== "signin") {
+        savedEmailListEl.innerHTML = "";
+        closeSavedEmailSuggestions();
+        return;
+      }
       const profiles = loadSavedLoginProfiles()
         .sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0))
         .filter((p) => String(p.email || "").includes(String(filterText || "").trim().toLowerCase()));
@@ -1053,6 +1061,7 @@
     }
 
     function applySavedProfile(emailInput) {
+      if (authMode !== "signin") return;
       const typed = String(emailInput || "").trim().toLowerCase();
       if (!typed) return;
       const match = loadSavedLoginProfiles().find((p) => p.email === typed);
@@ -1179,6 +1188,14 @@
       const createMode = authMode === "create";
       const roleHelp = document.getElementById("roleHelp");
       const previousRole = String(roleEl.value || "").trim();
+      // Keep sign-in autofill support, but aggressively disable popups in create mode.
+      emailEl.setAttribute("name", createMode ? "register_contact_identifier" : "login_email_id");
+      emailEl.setAttribute("autocomplete", createMode ? "new-password" : "username");
+      emailEl.setAttribute("readonly", createMode ? "readonly" : "");
+      if (!createMode) {
+        emailEl.removeAttribute("readonly");
+      }
+      closeSavedEmailSuggestions();
       roleEl.innerHTML = createMode ? ROLE_OPTIONS_CREATE : ROLE_OPTIONS_SIGNIN;
       if (createMode && (previousRole === "inventory_manager" || previousRole === "viewer")) {
         roleEl.value = previousRole;
@@ -1361,7 +1378,7 @@
     lastNameEl.addEventListener("input", () => clearSingleFieldError(lastNameEl));
     confirmPasswordEl.addEventListener("input", () => clearSingleFieldError(confirmPasswordEl));
     wirePasswordToggle(togglePasswordBtn, passwordEl, true);
-    wirePasswordToggle(toggleConfirmPasswordBtn, confirmPasswordEl, false);
+    wirePasswordToggle(toggleConfirmPasswordBtn, confirmPasswordEl, true);
     passwordEl.addEventListener("focus", () => {
       if (passwordEl.hasAttribute("readonly")) {
         passwordEl.removeAttribute("readonly");
@@ -1381,8 +1398,22 @@
       applySavedProfile(emailEl.value);
       setTimeout(closeSavedEmailSuggestions, 120);
     });
-    emailEl.addEventListener("input", () => renderSavedEmailSuggestions(emailEl.value));
+    emailEl.addEventListener("input", () => {
+      if (authMode !== "signin") {
+        closeSavedEmailSuggestions();
+        return;
+      }
+      renderSavedEmailSuggestions(emailEl.value);
+    });
     emailEl.addEventListener("focus", () => {
+      if (authMode === "create" && emailEl.hasAttribute("readonly")) {
+        // Remove readonly only after focus to reduce browser account chooser prompts.
+        setTimeout(() => emailEl.removeAttribute("readonly"), 0);
+      }
+      if (authMode !== "signin") {
+        closeSavedEmailSuggestions();
+        return;
+      }
       renderSavedEmailSuggestions(emailEl.value);
     });
     savedEmailListEl.addEventListener("mousedown", (e) => {
