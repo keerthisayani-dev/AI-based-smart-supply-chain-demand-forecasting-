@@ -1366,8 +1366,18 @@
       const roleHelp = document.getElementById("roleHelp");
       const previousRole = String(roleEl.value || "").trim();
       // Keep browser popup suppression in both modes.
-      emailEl.setAttribute("name", createMode ? "register_contact_identifier" : "contact_identifier");
-      emailEl.setAttribute("autocomplete", "new-password");
+      if (createMode) {
+        // Strong anti-autofill profile for create mode.
+        emailEl.setAttribute("name", `create_contact_${Date.now()}`);
+        emailEl.setAttribute("autocomplete", "one-time-code");
+        emailEl.setAttribute("type", "search");
+        emailEl.setAttribute("inputmode", "text");
+      } else {
+        emailEl.setAttribute("name", "contact_identifier");
+        emailEl.setAttribute("autocomplete", "new-password");
+        emailEl.setAttribute("type", "text");
+        emailEl.setAttribute("inputmode", "email");
+      }
       emailEl.setAttribute("readonly", "readonly");
       closeSavedEmailSuggestions();
       roleEl.innerHTML = createMode ? ROLE_OPTIONS_CREATE : ROLE_OPTIONS_SIGNIN;
