@@ -1375,8 +1375,6 @@ def index() -> RedirectResponse:
 
 @app.get("/login", include_in_schema=False)
 def login(request: Request) -> Response:
-    if _current_user_from_request(request):
-        return RedirectResponse(url="/dashboard", status_code=307)
     if not FRONTEND_LOGIN_HTML_PATH.exists():
         raise HTTPException(
             status_code=404,
@@ -1767,6 +1765,43 @@ def auth_roles() -> Dict[str, Any]:
             {"value": ROLE_VIEWER, "label": "Viewer"},
         ]
     }
+
+
+@app.get("/auth/account-suggestions")
+def auth_account_suggestions(q: str = "", limit: int = 12) -> Dict[str, Any]:
+    # Login-page helper: return active (non-deleted) accounts only.
+    query = str(q or "").strip().lower()
+    limit = max(1, min(int(limit or 12), 50))
+    with _get_auth_db_conn() as conn:
+        if query:
+            rows = conn.execute(
+                """
+                SELECT email, role
+                FROM users
+                WHERE is_active = 1
+                  AND lower(email) LIKE ?
+                ORDER BY email ASC
+                LIMIT ?
+                """,
+                (f"%{query}%", limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """
+                SELECT email, role
+                FROM users
+                WHERE is_active = 1
+                ORDER BY email ASC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+    accounts = [
+        {"email": str(r["email"]).strip().lower(), "role": _canonical_role(str(r["role"]))}
+        for r in rows
+        if str(r["email"]).strip()
+    ]
+    return {"accounts": accounts}
 
 
 @app.get("/health")

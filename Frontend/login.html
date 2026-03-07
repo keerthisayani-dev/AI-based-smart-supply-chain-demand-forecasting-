@@ -720,12 +720,12 @@
       right: 0;
       top: calc(100% + 8px);
       z-index: 30;
-      background: rgba(11, 17, 28, 0.98);
-      border: 1px solid var(--line-soft);
+      background: linear-gradient(180deg, rgba(8, 20, 44, 0.98), rgba(6, 16, 34, 0.98));
+      border: 1px solid rgba(94, 157, 255, 0.48);
       border-radius: 12px;
-      box-shadow: 0 14px 28px rgba(2, 8, 22, 0.5);
-      max-height: 220px;
-      overflow: auto;
+      box-shadow: 0 14px 28px rgba(2, 8, 22, 0.5), 0 0 0 1px rgba(120, 184, 255, 0.18) inset;
+      max-height: none;
+      overflow: visible;
       display: none;
       padding: 6px;
     }
@@ -736,7 +736,7 @@
 
     .email-suggestion-item {
       width: 100%;
-      border: 1px solid transparent;
+      border: 1px solid rgba(120, 184, 255, 0.15);
       background: transparent;
       color: #dce7f7;
       text-align: left;
@@ -748,8 +748,8 @@
     }
 
     .email-suggestion-item:hover {
-      border-color: rgba(110, 161, 255, 0.45);
-      background: rgba(79, 140, 255, 0.12);
+      border-color: rgba(110, 161, 255, 0.62);
+      background: rgba(60, 122, 236, 0.2);
     }
 
     .row {
@@ -993,18 +993,19 @@
         <div class="email-suggest-wrap">
           <input
             id="email"
-            name="login_email_id"
+            name="contact_identifier"
             type="text"
             inputmode="email"
             required
             placeholder="name@gmail.com"
-            autocomplete="off"
+            autocomplete="new-password"
             autocapitalize="off"
             autocorrect="off"
             spellcheck="false"
             data-lpignore="true"
             data-1p-ignore="true"
             data-form-type="other"
+            readonly
           />
           <div id="savedEmailList" class="email-suggestions" role="listbox" aria-label="Saved emails"></div>
         </div>
@@ -1120,6 +1121,7 @@
       <option value="viewer">Viewer</option>
     `;
     let authMode = "signin";
+    let liveAccountSuggestions = [];
 
     function loadSavedLoginProfiles() {
       try {
@@ -1194,47 +1196,60 @@
         .join("");
     }
 
-    function renderSavedEmailSuggestions(filterText = "") {
+    async function renderSavedEmailSuggestions(filterText = "") {
       if (!savedEmailListEl) return;
       if (authMode !== "signin") {
         savedEmailListEl.innerHTML = "";
+        liveAccountSuggestions = [];
         closeSavedEmailSuggestions();
         return;
       }
-      const profiles = loadSavedLoginProfiles()
-        .sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0))
-        .filter((p) => String(p.email || "").includes(String(filterText || "").trim().toLowerCase()));
+      try {
+        const q = String(filterText || "").trim();
+        const resp = await fetch(`/auth/account-suggestions?q=${encodeURIComponent(q)}&limit=12`, {
+          cache: "no-store",
+        });
+        if (!resp.ok) {
+          savedEmailListEl.innerHTML = "";
+          liveAccountSuggestions = [];
+          closeSavedEmailSuggestions();
+          return;
+        }
+        const data = await resp.json();
+        const accounts = Array.isArray(data?.accounts) ? data.accounts : [];
+        liveAccountSuggestions = accounts
+          .map((a) => ({
+            email: String(a?.email || "").trim().toLowerCase(),
+            role: String(a?.role || "").trim(),
+          }))
+          .filter((a) => a.email);
 
-      if (!profiles.length) {
+        if (!liveAccountSuggestions.length) {
+          savedEmailListEl.innerHTML = "";
+          closeSavedEmailSuggestions();
+          return;
+        }
+
+        savedEmailListEl.innerHTML = liveAccountSuggestions
+          .map((a) => `<button type="button" class="email-suggestion-item" data-email="${a.email.replaceAll('"', "&quot;")}" data-role="${a.role.replaceAll('"', "&quot;")}">${a.email}</button>`)
+          .join("");
+        savedEmailListEl.classList.add("is-open");
+      } catch (_) {
         savedEmailListEl.innerHTML = "";
+        liveAccountSuggestions = [];
         closeSavedEmailSuggestions();
-        return;
       }
-
-      savedEmailListEl.innerHTML = profiles
-        .map((p) => `<button type="button" class="email-suggestion-item" data-email="${p.email.replaceAll('"', "&quot;")}">${p.email}</button>`)
-        .join("");
-      savedEmailListEl.classList.add("is-open");
     }
 
     function applySavedProfile(emailInput) {
       if (authMode !== "signin") return;
       const typed = String(emailInput || "").trim().toLowerCase();
       if (!typed) return;
-      const match = loadSavedLoginProfiles().find((p) => p.email === typed);
+      const match = liveAccountSuggestions.find((p) => p.email === typed);
       if (!match) return;
       if (match.role) {
         roleEl.value = match.role;
-      }
-      rememberMeEl.checked = Boolean(match.remember_me);
-      if (passwordEl.hasAttribute("readonly")) {
-        passwordEl.removeAttribute("readonly");
-      }
-      passwordEl.value = String(match.password || "");
-      if (authMode === "create" && match.full_name && !`${firstNameEl.value} ${lastNameEl.value}`.trim()) {
-        const [first = "", ...rest] = String(match.full_name).trim().split(/\s+/);
-        firstNameEl.value = first;
-        lastNameEl.value = rest.join(" ");
+        syncRoleTriggerText();
       }
     }
 
@@ -1245,9 +1260,7 @@
           credentials: "same-origin",
           cache: "no-store",
         });
-        if (resp.ok) {
-          window.location.href = "/dashboard";
-        }
+        // Keep login page as the landing page even when a valid session exists.
       } catch (_) {
         // Keep user on login page if auth check fails.
       }
@@ -1322,6 +1335,8 @@
       roleEl.selectedIndex = 0;
       authErrorEl.textContent = "";
       closeSavedEmailSuggestions();
+      savedEmailListEl.innerHTML = "";
+      liveAccountSuggestions = [];
     }
 
     function consumeLogoutClearFlag() {
@@ -1350,13 +1365,10 @@
       loginForm.setAttribute("data-mode", authMode);
       const roleHelp = document.getElementById("roleHelp");
       const previousRole = String(roleEl.value || "").trim();
-      // Keep sign-in autofill support, but aggressively disable popups in create mode.
-      emailEl.setAttribute("name", createMode ? "register_contact_identifier" : "login_email_id");
-      emailEl.setAttribute("autocomplete", createMode ? "new-password" : "username");
-      emailEl.setAttribute("readonly", createMode ? "readonly" : "");
-      if (!createMode) {
-        emailEl.removeAttribute("readonly");
-      }
+      // Keep browser popup suppression in both modes.
+      emailEl.setAttribute("name", createMode ? "register_contact_identifier" : "contact_identifier");
+      emailEl.setAttribute("autocomplete", "new-password");
+      emailEl.setAttribute("readonly", "readonly");
       closeSavedEmailSuggestions();
       roleEl.innerHTML = createMode ? ROLE_OPTIONS_CREATE : ROLE_OPTIONS_SIGNIN;
       if (createMode && (previousRole === "inventory_manager" || previousRole === "viewer")) {
@@ -1581,6 +1593,11 @@
       if (!roleSelectShellEl || roleSelectShellEl.contains(e.target)) return;
       closeRoleMenu();
     });
+    document.addEventListener("click", (e) => {
+      const wrap = emailEl?.closest(".email-suggest-wrap");
+      if (!wrap || wrap.contains(e.target)) return;
+      closeSavedEmailSuggestions();
+    });
     emailEl.addEventListener("change", () => applySavedProfile(emailEl.value));
     emailEl.addEventListener("blur", () => {
       applySavedProfile(emailEl.value);
@@ -1594,7 +1611,7 @@
       renderSavedEmailSuggestions(emailEl.value);
     });
     emailEl.addEventListener("focus", () => {
-      if (authMode === "create" && emailEl.hasAttribute("readonly")) {
+      if (emailEl.hasAttribute("readonly")) {
         // Remove readonly only after focus to reduce browser account chooser prompts.
         setTimeout(() => emailEl.removeAttribute("readonly"), 0);
       }
@@ -1604,12 +1621,23 @@
       }
       renderSavedEmailSuggestions(emailEl.value);
     });
+    emailEl.addEventListener("pointerdown", () => {
+      if (emailEl.hasAttribute("readonly")) {
+        emailEl.removeAttribute("readonly");
+      }
+      closeSavedEmailSuggestions();
+    });
     savedEmailListEl.addEventListener("mousedown", (e) => {
       const btn = e.target.closest(".email-suggestion-item");
       if (!btn) return;
       const selected = String(btn.getAttribute("data-email") || "").trim();
+      const selectedRole = String(btn.getAttribute("data-role") || "").trim();
       if (!selected) return;
       emailEl.value = selected;
+      if (selectedRole) {
+        roleEl.value = selectedRole;
+        syncRoleTriggerText();
+      }
       applySavedProfile(selected);
       closeSavedEmailSuggestions();
       emailEl.focus();
