@@ -492,6 +492,22 @@
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
 
+    select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #9fb2cc 50%),
+        linear-gradient(135deg, #9fb2cc 50%, transparent 50%);
+      background-position:
+        calc(100% - 18px) calc(50% - 3px),
+        calc(100% - 12px) calc(50% - 3px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      padding-right: 34px;
+      color-scheme: dark;
+    }
+
     input:focus,
     select:focus {
       outline: none;
@@ -513,6 +529,91 @@
     }
     .field-error.is-visible {
       display: block;
+    }
+
+    .custom-select {
+      position: relative;
+    }
+
+    .custom-select-trigger {
+      width: 100%;
+      height: 54px;
+      padding: 0 40px 0 16px;
+      border-radius: 14px;
+      border: 1px solid var(--line-soft);
+      background: rgba(15, 23, 42, 0.5);
+      color: #e5e7eb;
+      font-size: 17px;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      position: relative;
+    }
+
+    .custom-select-trigger::after {
+      content: "";
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid #9fb2cc;
+      border-bottom: 2px solid #9fb2cc;
+      transform: translateY(-65%) rotate(45deg);
+      pointer-events: none;
+    }
+
+    .custom-select-trigger.is-placeholder {
+      color: var(--muted);
+    }
+
+    .custom-select-menu {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 8px);
+      background: rgba(11, 17, 28, 0.98);
+      border: 1px solid rgba(96, 156, 255, 0.55);
+      border-radius: 12px;
+      box-shadow:
+        0 14px 28px rgba(2, 8, 22, 0.5),
+        0 0 0 1px rgba(120, 184, 255, 0.22) inset;
+      padding: 6px;
+      display: none;
+      z-index: 40;
+    }
+
+    .custom-select-menu.is-open {
+      display: block;
+    }
+
+    .custom-select-item {
+      width: 100%;
+      border: 1px solid rgba(120, 184, 255, 0.18);
+      background: transparent;
+      color: #dce7f7;
+      text-align: left;
+      font-size: 14px;
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .custom-select-item:hover {
+      border-color: rgba(110, 161, 255, 0.45);
+      background: rgba(79, 140, 255, 0.12);
+    }
+
+    .native-role-select {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+      left: -9999px;
+      top: -9999px;
     }
 
     input::placeholder {
@@ -541,6 +642,33 @@
 
     #role option[value=""] {
       color: var(--muted);
+    }
+
+    /* Avoid bright flash/glow on role dropdown focus. */
+    #role {
+      transition: none;
+      -webkit-tap-highlight-color: transparent;
+      color-scheme: dark;
+      background-color: rgba(15, 23, 42, 0.5);
+    }
+
+    #role:focus,
+    #role:focus-visible {
+      outline: none;
+      border-color: var(--line-soft);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    /* Extra-hard override only for Create Account mode. */
+    #loginForm[data-mode="create"] #role,
+    #loginForm[data-mode="create"] #role:hover,
+    #loginForm[data-mode="create"] #role:focus,
+    #loginForm[data-mode="create"] #role:focus-visible,
+    #loginForm[data-mode="create"] #role:active {
+      outline: none !important;
+      border-color: var(--line-soft) !important;
+      box-shadow: none !important;
+      background: rgba(15, 23, 42, 0.5) !important;
     }
 
     .email-suggest-wrap {
@@ -884,12 +1012,16 @@
       </div>
       <div class="field">
         <label for="role">Role</label>
-        <select id="role" required>
-          <option value="" selected disabled>Select Role</option>
-          <option value="admin">Admin</option>
-          <option value="inventory_manager">Inventory Manager</option>
-          <option value="viewer">Viewer</option>
-        </select>
+        <div class="custom-select" id="roleSelectShell">
+          <button id="roleTrigger" class="custom-select-trigger is-placeholder" type="button" aria-haspopup="listbox" aria-expanded="false">Select Role</button>
+          <div id="roleMenu" class="custom-select-menu" role="listbox" aria-label="Role options"></div>
+          <select id="role" class="native-role-select" required tabindex="-1" aria-hidden="true">
+            <option value="" selected disabled>Select Role</option>
+            <option value="admin">Admin</option>
+            <option value="inventory_manager">Inventory Manager</option>
+            <option value="viewer">Viewer</option>
+          </select>
+        </div>
         <p id="roleError" class="field-error" aria-live="polite"></p>
         <p id="roleHelp" class="role-help is-hidden"><strong>Note:</strong> Admin accounts cannot be created here. Use Sign In with admin credentials.</p>
       </div>
@@ -960,6 +1092,9 @@
     const confirmPasswordField = document.getElementById("confirmPasswordField");
     const submitBtn = document.getElementById("submitBtn");
     const savedEmailListEl = document.getElementById("savedEmailList");
+    const roleSelectShellEl = document.getElementById("roleSelectShell");
+    const roleTriggerEl = document.getElementById("roleTrigger");
+    const roleMenuEl = document.getElementById("roleMenu");
     const togglePasswordBtn = document.getElementById("togglePassword");
     const toggleConfirmPasswordBtn = document.getElementById("toggleConfirmPassword");
     const firstNameErrorEl = document.getElementById("firstNameError");
@@ -1037,6 +1172,28 @@
       savedEmailListEl.classList.remove("is-open");
     }
 
+    function closeRoleMenu() {
+      if (!roleMenuEl || !roleTriggerEl) return;
+      roleMenuEl.classList.remove("is-open");
+      roleTriggerEl.setAttribute("aria-expanded", "false");
+    }
+
+    function syncRoleTriggerText() {
+      if (!roleTriggerEl || !roleEl) return;
+      const selected = roleEl.options[roleEl.selectedIndex];
+      const label = selected && selected.value ? selected.textContent : "Select Role";
+      roleTriggerEl.textContent = label;
+      roleTriggerEl.classList.toggle("is-placeholder", !selected || !selected.value);
+    }
+
+    function renderRoleMenu() {
+      if (!roleMenuEl || !roleEl) return;
+      const options = Array.from(roleEl.options).filter((opt) => opt.value);
+      roleMenuEl.innerHTML = options
+        .map((opt) => `<button type="button" class="custom-select-item" data-value="${opt.value}">${opt.text}</button>`)
+        .join("");
+    }
+
     function renderSavedEmailSuggestions(filterText = "") {
       if (!savedEmailListEl) return;
       if (authMode !== "signin") {
@@ -1102,6 +1259,7 @@
       });
       modeSignInBtn.disabled = disabled;
       modeCreateBtn.disabled = disabled;
+      if (roleTriggerEl) roleTriggerEl.disabled = disabled;
     }
 
     function clearFieldErrors() {
@@ -1121,6 +1279,7 @@
         if (!el) return;
         el.classList.remove("input-error");
       });
+      if (roleTriggerEl) roleTriggerEl.classList.remove("input-error");
     }
 
     function fieldErrorElFor(fieldId) {
@@ -1136,6 +1295,7 @@
     function markFieldError(el, message) {
       if (!el) return;
       el.classList.add("input-error");
+      if (el === roleEl && roleTriggerEl) roleTriggerEl.classList.add("input-error");
       const targetErrorEl = fieldErrorElFor(el.id);
       if (!targetErrorEl) return;
       targetErrorEl.textContent = message || "Invalid value.";
@@ -1145,6 +1305,7 @@
     function clearSingleFieldError(el) {
       if (!el) return;
       el.classList.remove("input-error");
+      if (el === roleEl && roleTriggerEl) roleTriggerEl.classList.remove("input-error");
       const targetErrorEl = fieldErrorElFor(el.id);
       if (!targetErrorEl) return;
       targetErrorEl.textContent = "";
@@ -1186,6 +1347,7 @@
     function setMode(mode) {
       authMode = mode === "create" ? "create" : "signin";
       const createMode = authMode === "create";
+      loginForm.setAttribute("data-mode", authMode);
       const roleHelp = document.getElementById("roleHelp");
       const previousRole = String(roleEl.value || "").trim();
       // Keep sign-in autofill support, but aggressively disable popups in create mode.
@@ -1213,6 +1375,9 @@
       submitBtn.textContent = createMode ? "Create Account" : "Sign In";
       authErrorEl.textContent = "";
       clearFieldErrors();
+      renderRoleMenu();
+      syncRoleTriggerText();
+      closeRoleMenu();
     }
 
     function setPasswordToggleIcon(buttonEl, isVisible) {
@@ -1373,6 +1538,25 @@
     modeCreateBtn.addEventListener("click", () => setMode("create"));
     emailEl.addEventListener("input", () => clearSingleFieldError(emailEl));
     roleEl.addEventListener("change", () => clearSingleFieldError(roleEl));
+    roleTriggerEl.addEventListener("click", () => {
+      const willOpen = !roleMenuEl.classList.contains("is-open");
+      closeRoleMenu();
+      if (willOpen) {
+        roleMenuEl.classList.add("is-open");
+        roleTriggerEl.setAttribute("aria-expanded", "true");
+      }
+    });
+    roleMenuEl.addEventListener("click", (e) => {
+      const item = e.target.closest("[data-value]");
+      if (!item) return;
+      const value = String(item.getAttribute("data-value") || "").trim();
+      if (!value) return;
+      roleEl.value = value;
+      syncRoleTriggerText();
+      clearSingleFieldError(roleEl);
+      closeRoleMenu();
+      roleEl.dispatchEvent(new Event("change"));
+    });
     passwordEl.addEventListener("input", () => clearSingleFieldError(passwordEl));
     firstNameEl.addEventListener("input", () => clearSingleFieldError(firstNameEl));
     lastNameEl.addEventListener("input", () => clearSingleFieldError(lastNameEl));
@@ -1392,6 +1576,10 @@
     roleEl.addEventListener("change", () => {
       const roleHelp = document.getElementById("roleHelp");
       roleHelp.classList.toggle("is-hidden", !(authMode === "create" && roleEl.value === "admin"));
+    });
+    document.addEventListener("click", (e) => {
+      if (!roleSelectShellEl || roleSelectShellEl.contains(e.target)) return;
+      closeRoleMenu();
     });
     emailEl.addEventListener("change", () => applySavedProfile(emailEl.value));
     emailEl.addEventListener("blur", () => {
@@ -1427,6 +1615,8 @@
       emailEl.focus();
     });
     setMode("signin");
+    renderRoleMenu();
+    syncRoleTriggerText();
     consumeLogoutClearFlag();
     clearCredentialFields();
     renderSavedEmailSuggestions();
