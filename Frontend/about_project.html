@@ -439,7 +439,6 @@
           <span class="menu-text">Admin Dashboard</span>
         </button>
       </div>
-
       <div class="sidebar-divider"></div>
       <div class="logout-section">
         <button class="menu-item" id="logoutBtn" type="button">
@@ -508,6 +507,21 @@
         In this project, the "better" value is determined by lower forecast error and improved inventory decisions over historical operation.
       </p>
     </section>
+
+    <section class="glass-card">
+      <h2>Explainable AI (XAI) Module</h2>
+      <p>
+        Many AI models are black boxes. This module explains why demand predictions move up or down so managers can trust operational decisions.
+      </p>
+      <ul>
+        <li>SHAP values: shows feature-level contribution to the next forecasted demand value.</li>
+        <li>Feature importance: ranks model drivers using coefficient magnitude.</li>
+        <li>Forecast explanation dashboard: summarizes top positive/negative drivers with clear tables.</li>
+      </ul>
+      <p>
+        Explainable models help managers understand why demand predictions change.
+      </p>
+    </section>
   </main>
 
   <footer class="page-footer">� DemandIQ - AI Demand Forecasting System</footer>
@@ -550,6 +564,7 @@
         window.location.href = "/login";
       }
     }
+
 
     document.getElementById("backBtn").addEventListener("click", () => {
       window.location.href = "/dashboard";

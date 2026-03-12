@@ -775,6 +775,72 @@
       color: #9fb5df;
       font-size: 13px;
     }
+    .xai-summary {
+      margin: 0;
+      color: #c9d8ef;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .xai-meta-row {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .xai-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px 10px;
+      font-size: 12px;
+      color: #d8e5fb;
+    }
+    .xai-grid {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .xai-subcard {
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px;
+    }
+    .xai-subtitle {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: #e9f1ff;
+      font-weight: 700;
+    }
+    .xai-table-wrap {
+      width: 100%;
+      overflow: auto;
+    }
+    .xai-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .xai-table th,
+    .xai-table td {
+      text-align: left;
+      padding: 7px 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      color: #d7e2f7;
+      white-space: nowrap;
+    }
+    .xai-table th {
+      color: #9fb2d6;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+    .xai-impact-up { color: #34d399; }
+    .xai-impact-down { color: #fca5a5; }
 
     .control-row {
       display: flex;
@@ -1135,7 +1201,8 @@
     @media (max-width: 980px) {
       .metrics,
       .data-grid,
-      .insight-grid {
+      .insight-grid,
+      .xai-grid {
         grid-template-columns: 1fr;
       }
       .top-nav {
@@ -1267,7 +1334,6 @@
           <span class="menu-text">Admin Dashboard</span>
         </button>
       </div>
-
       <div class="sidebar-divider"></div>
       <div class="logout-section">
         <button class="menu-item" id="logoutBtn" type="button">
@@ -1367,6 +1433,53 @@
         <article class="insight-card">
           <div class="insight-k">Profit Margin</div>
           <div class="insight-v" id="marginValue">0.00%</div>
+        </article>
+      </div>
+    </section>
+    <section class="glass-card" id="xaiSection">
+      <div class="chart-head">
+        <h3>Explainable AI (XAI) Module</h3>
+      </div>
+      <p class="xai-summary" id="xaiSummaryText">Generate a forecast to view SHAP values and feature importance.</p>
+      <div class="xai-meta-row">
+        <span class="xai-pill" id="xaiForecastDate">Forecast Date: -</span>
+        <span class="xai-pill" id="xaiServedForecast">Predicted Units: -</span>
+        <span class="xai-pill" id="xaiExpectedValue">Baseline (Expected): -</span>
+      </div>
+      <div class="xai-grid">
+        <article class="xai-subcard">
+          <h4 class="xai-subtitle">SHAP Values (Top Drivers)</h4>
+          <div class="xai-table-wrap">
+            <table class="xai-table">
+              <thead>
+                <tr>
+                  <th>Feature</th>
+                  <th>Contribution</th>
+                  <th>Direction</th>
+                </tr>
+              </thead>
+              <tbody id="xaiContribBody">
+                <tr><td colspan="3">No explanation available.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+        <article class="xai-subcard">
+          <h4 class="xai-subtitle">Feature Importance</h4>
+          <div class="xai-table-wrap">
+            <table class="xai-table">
+              <thead>
+                <tr>
+                  <th>Feature</th>
+                  <th>Importance %</th>
+                  <th>|Coefficient|</th>
+                </tr>
+              </thead>
+              <tbody id="xaiImportanceBody">
+                <tr><td colspan="3">No explanation available.</td></tr>
+              </tbody>
+            </table>
+          </div>
         </article>
       </div>
     </section>
@@ -1555,6 +1668,77 @@
       document.getElementById("marginValue").textContent = `${marginPct.toFixed(2)}%`;
     }
 
+    function resetXaiPanel(message) {
+      document.getElementById("xaiSummaryText").textContent = String(message || "No explanation available.");
+      document.getElementById("xaiForecastDate").textContent = "Forecast Date: -";
+      document.getElementById("xaiServedForecast").textContent = "Predicted Units: -";
+      document.getElementById("xaiExpectedValue").textContent = "Baseline (Expected): -";
+      document.getElementById("xaiContribBody").innerHTML = "<tr><td colspan='3'>No explanation available.</td></tr>";
+      document.getElementById("xaiImportanceBody").innerHTML = "<tr><td colspan='3'>No explanation available.</td></tr>";
+    }
+
+    function renderXaiPanel(explainPayload) {
+      const summary = String(explainPayload?.summary || "No explanation available.");
+      const forecastDate = String(explainPayload?.forecast_date || "-");
+      const servedUnits = toNum(explainPayload?.predictions?.served_forecast_units);
+      const expectedUnits = toNum(explainPayload?.predictions?.expected_value_units);
+      const contributions = Array.isArray(explainPayload?.top_contributions) ? explainPayload.top_contributions : [];
+      const importance = Array.isArray(explainPayload?.feature_importance) ? explainPayload.feature_importance : [];
+
+      document.getElementById("xaiSummaryText").textContent = summary;
+      document.getElementById("xaiForecastDate").textContent = `Forecast Date: ${forecastDate}`;
+      document.getElementById("xaiServedForecast").textContent = `Predicted Units: ${servedUnits.toFixed(2)}`;
+      document.getElementById("xaiExpectedValue").textContent = `Baseline (Expected): ${expectedUnits.toFixed(2)}`;
+
+      if (!contributions.length) {
+        document.getElementById("xaiContribBody").innerHTML = "<tr><td colspan='3'>No SHAP contributions returned.</td></tr>";
+      } else {
+        document.getElementById("xaiContribBody").innerHTML = contributions.map((row) => {
+          const feature = escapeHtml(row?.feature || "");
+          const shapValue = toNum(row?.shap_value);
+          const direction = String(row?.direction || (shapValue >= 0 ? "increase" : "decrease"));
+          const cls = shapValue >= 0 ? "xai-impact-up" : "xai-impact-down";
+          return `
+            <tr>
+              <td>${feature}</td>
+              <td class="${cls}">${shapValue >= 0 ? "+" : ""}${shapValue.toFixed(3)}</td>
+              <td>${escapeHtml(direction)}</td>
+            </tr>
+          `;
+        }).join("");
+      }
+
+      if (!importance.length) {
+        document.getElementById("xaiImportanceBody").innerHTML = "<tr><td colspan='3'>No feature importance returned.</td></tr>";
+      } else {
+        document.getElementById("xaiImportanceBody").innerHTML = importance.map((row) => `
+          <tr>
+            <td>${escapeHtml(row?.feature || "")}</td>
+            <td>${toNum(row?.importance_pct).toFixed(2)}%</td>
+            <td>${toNum(row?.abs_coefficient).toFixed(5)}</td>
+          </tr>
+        `).join("");
+      }
+    }
+
+    async function fetchXaiPayload(category, anchorDate) {
+      const url = `${apiBase()}/forecast/${encodeURIComponent(category)}/explain?anchor_date=${encodeURIComponent(anchorDate)}`;
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        let detail = `HTTP ${resp.status}`;
+        try {
+          const err = await resp.json();
+          if (err && typeof err.detail === "string" && err.detail.trim()) {
+            detail = err.detail;
+          }
+        } catch (_) {
+          // Keep fallback status message.
+        }
+        throw new Error(detail);
+      }
+      return resp.json();
+    }
+
     async function applyRoleUi() {
       const userNameBadgeEl = document.getElementById("userNameBadge");
       const userBadgeEl = document.getElementById("userBadge");
@@ -1586,6 +1770,7 @@
         window.location.href = "/login";
       }
     }
+
 
     function renderTable(target, rows, cols) {
       if (!rows.length) {
@@ -2114,6 +2299,7 @@
         contextEl.textContent = "Category: Missing";
         periodTextEl.textContent = "Period: Missing";
         roleTextEl.textContent = roleAccessNote;
+        resetXaiPanel("Select category and date range to view model explanations.");
         return;
       }
 
@@ -2133,6 +2319,7 @@
       const forecastAnchorDate = anchorForForecast.toISOString().slice(0, 10);
 
       try {
+        resetXaiPanel("Loading SHAP values and feature importance...");
         async function fetchForecastPayload(anchorDate, horizonDays) {
           const url = `${apiBase()}/forecast/${encodeURIComponent(category)}?horizon=${horizonDays}&history_lookback_days=${lookback}&anchor_date=${anchorDate}`;
           const resp = await fetch(url);
@@ -2152,8 +2339,21 @@
         }
 
         const requestAnchor = currentMode === "forecast" ? forecastAnchorDate : toDate;
-        const data = await fetchForecastPayload(requestAnchor, periodDays);
+        const [forecastResult, xaiResult] = await Promise.allSettled([
+          fetchForecastPayload(requestAnchor, periodDays),
+          fetchXaiPayload(category, requestAnchor),
+        ]);
+        if (forecastResult.status !== "fulfilled") {
+          throw forecastResult.reason;
+        }
+        const data = forecastResult.value;
         if (requestId !== latestLoadRequestId) return;
+        if (xaiResult.status === "fulfilled") {
+          renderXaiPanel(xaiResult.value);
+        } else {
+          const explainMsg = String(xaiResult.reason?.message || "Could not load explanation.");
+          resetXaiPanel(`XAI unavailable: ${explainMsg}`);
+        }
 
         const history = Array.isArray(data.history) ? data.history : [];
         const forecast = Array.isArray(data.forecast) ? data.forecast : [];
@@ -2394,6 +2594,7 @@
       } catch (err) {
         if (requestId !== latestLoadRequestId) return;
         contextEl.textContent = `Failed to fetch forecast: ${err.message}`;
+        resetXaiPanel(`XAI unavailable: ${err.message}`);
       }
     }
 

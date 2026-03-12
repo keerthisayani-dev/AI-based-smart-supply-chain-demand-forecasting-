@@ -1,4 +1,6 @@
 __pycache__/
 *.py[cod]
 .env
+Backend/auth_runtime.db
+Backend/auth_runtime.db-journal
 

@@ -8,6 +8,7 @@ import json
 import shutil
 import base64
 import re
+import math
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,6 +33,7 @@ try:
         TARGET_COL,
         DATE_COL,
         MODEL_INFO,
+        build_features,
         build_daily_series,
         forecast_next_days,
         load_sales_data,
@@ -44,6 +46,7 @@ except ImportError:  # Allows running as a script from Backend/
         TARGET_COL,
         DATE_COL,
         MODEL_INFO,
+        build_features,
         build_daily_series,
         forecast_next_days,
         load_sales_data,
@@ -61,6 +64,10 @@ FRONTEND_ADMIN_HTML_PATH = PROJECT_DIR / "Frontend" / "admin_dashboard.html"
 FRONTEND_ABOUT_HTML_PATH = PROJECT_DIR / "Frontend" / "about_project.html"
 HISTORY_DB_PATH = PROJECT_DIR / "Backend" / "forecast_history.db"
 AUTH_DB_PATH = PROJECT_DIR / "Backend" / "auth.db"
+LOCAL_RUNTIME_DB_DIR = Path(os.getenv("LOCALAPPDATA", str(PROJECT_DIR))) / "DemandIQ"
+LOCAL_RUNTIME_DB_DIR.mkdir(parents=True, exist_ok=True)
+AUTH_RUNTIME_DB_PATH = LOCAL_RUNTIME_DB_DIR / "auth_runtime.db"
+HISTORY_RUNTIME_DB_PATH = LOCAL_RUNTIME_DB_DIR / "forecast_history_runtime.db"
 UPLOADS_ROOT = PROJECT_DIR / "uploads"
 UPLOADS_SALES_DIR = UPLOADS_ROOT / "sales"
 UPLOADS_INVENTORY_DIR = UPLOADS_ROOT / "inventory"
@@ -130,6 +137,8 @@ app.add_middleware(
 )
 app.mount("/assets", StaticFiles(directory=PROJECT_DIR / "Frontend" / "assets"), name="assets")
 _engine_lock = threading.Lock()
+_active_auth_db_path = AUTH_DB_PATH
+_active_history_db_path = HISTORY_DB_PATH
 
 
 @dataclass
@@ -211,15 +220,42 @@ _load_env_file(PROJECT_DIR / ".env")
 
 
 def _get_history_db_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(HISTORY_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    global _active_history_db_path
+    def _open_with_probe(path: Path) -> sqlite3.Connection:
+        conn = sqlite3.connect(path)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA user_version").fetchone()
+        conn.execute("CREATE TABLE IF NOT EXISTS __history_rw_probe (id INTEGER PRIMARY KEY)")
+        conn.commit()
+        return conn
+
+    try:
+        return _open_with_probe(_active_history_db_path)
+    except sqlite3.OperationalError:
+        if _active_history_db_path != HISTORY_RUNTIME_DB_PATH:
+            _active_history_db_path = HISTORY_RUNTIME_DB_PATH
+            return _open_with_probe(_active_history_db_path)
+        raise
 
 
 def _get_auth_db_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(AUTH_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    global _active_auth_db_path
+    def _open_with_probe(path: Path) -> sqlite3.Connection:
+        conn = sqlite3.connect(path)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA user_version").fetchone()
+        # Write probe to ensure DB is actually writable in this environment.
+        conn.execute("CREATE TABLE IF NOT EXISTS __auth_rw_probe (id INTEGER PRIMARY KEY)")
+        conn.commit()
+        return conn
+
+    try:
+        return _open_with_probe(_active_auth_db_path)
+    except sqlite3.OperationalError:
+        if _active_auth_db_path != AUTH_RUNTIME_DB_PATH:
+            _active_auth_db_path = AUTH_RUNTIME_DB_PATH
+            return _open_with_probe(_active_auth_db_path)
+        raise
 
 
 def _password_hash(password: str, salt_hex: Optional[str] = None) -> str:
@@ -1304,6 +1340,181 @@ def _forecast_for_category(
     return forecast_df.to_dict(orient="records")
 
 
+def _build_next_feature_row_from_history(
+    history: pd.DataFrame,
+    feature_cols: List[str],
+    target: str,
+    forecast_date: pd.Timestamp,
+) -> Dict[str, float]:
+    row: Dict[str, float] = {}
+    lag_lookup = {"lag_1": 1, "lag_7": 7, "lag_14": 14, "lag_28": 28}
+    static_values: Dict[str, float] = {}
+    for col in feature_cols:
+        if col in history.columns and col != target:
+            try:
+                static_values[col] = float(history[col].iloc[-1])
+            except Exception:
+                continue
+
+    for col in feature_cols:
+        if col in lag_lookup:
+            lag = lag_lookup[col]
+            if len(history) >= lag:
+                row[col] = float(history[target].iloc[-lag])
+            else:
+                row[col] = float(history[target].iloc[-1])
+        elif col == "rolling_mean_7":
+            row[col] = float(history[target].iloc[-7:].mean())
+        elif col == "rolling_mean_14":
+            tail = history[target].iloc[-14:] if len(history) >= 14 else history[target]
+            row[col] = float(tail.mean())
+        elif col == "rolling_std_7":
+            row[col] = float(history[target].iloc[-7:].std(ddof=0)) if len(history) >= 2 else 0.0
+        elif col == "dayofweek":
+            row[col] = int(forecast_date.dayofweek)
+        elif col == "month":
+            row[col] = int(forecast_date.month)
+        elif col == "is_weekend":
+            row[col] = int(forecast_date.dayofweek in [5, 6])
+        elif col == "dow_sin":
+            row[col] = float(math.sin(2 * math.pi * forecast_date.dayofweek / 7.0))
+        elif col == "dow_cos":
+            row[col] = float(math.cos(2 * math.pi * forecast_date.dayofweek / 7.0))
+        elif col == "month_sin":
+            row[col] = float(math.sin(2 * math.pi * forecast_date.month / 12.0))
+        elif col == "month_cos":
+            row[col] = float(math.cos(2 * math.pi * forecast_date.month / 12.0))
+        elif col == "doy_sin":
+            row[col] = float(math.sin(2 * math.pi * forecast_date.dayofyear / 365.25))
+        elif col == "doy_cos":
+            row[col] = float(math.cos(2 * math.pi * forecast_date.dayofyear / 365.25))
+        elif col == "time_idx":
+            row[col] = float(len(history))
+        elif col in static_values:
+            row[col] = float(static_values[col])
+        else:
+            row[col] = 0.0
+    return row
+
+
+def _explain_forecast_for_category(
+    df: pd.DataFrame,
+    category: str,
+    anchor_date: Optional[pd.Timestamp] = None,
+) -> Dict[str, Any]:
+    selector_col, resolved_category = _resolve_selector(df, category)
+    trained = _get_trained_model(df, resolved_category, selector_col=selector_col)
+    target = trained.target
+
+    full_history = trained.daily_history.copy().sort_index()
+    history = full_history.copy()
+    if anchor_date is not None:
+        anchor = pd.to_datetime(anchor_date).normalize()
+        history = history[history.index <= anchor]
+        if history.empty or len(full_history) == 0:
+            raise ValueError("anchor_date is earlier than available product history")
+        # Keep explanation date aligned with forecast API behavior:
+        # when anchor_date is supplied, prediction starts at anchor_date + 1.
+        forecast_date = anchor + pd.Timedelta(days=1)
+    else:
+        forecast_date = pd.to_datetime(history.index.max()).normalize() + pd.Timedelta(days=1)
+
+    if history.empty:
+        raise ValueError(f"No rows found for category {category}")
+
+    feature_cols = list(trained.features)
+    next_feature_map = _build_next_feature_row_from_history(
+        history=history,
+        feature_cols=feature_cols,
+        target=target,
+        forecast_date=forecast_date,
+    )
+
+    feat = build_features(history, target=target)
+    feat = feat.dropna(subset=feature_cols + [target])
+    if feat.empty:
+        raise ValueError("Not enough history to compute explanation features")
+
+    feature_means = feat[feature_cols].mean()
+    coefs = list(getattr(trained.model, "coef_", []))
+    if len(coefs) != len(feature_cols):
+        raise ValueError("Model coefficients do not match expected feature set")
+    intercept = float(getattr(trained.model, "intercept_", 0.0))
+
+    expected_value = intercept
+    raw_prediction = intercept
+    contributions: List[Dict[str, Any]] = []
+
+    abs_coef_total = sum(abs(float(c)) for c in coefs) or 1.0
+    feature_importance: List[Dict[str, Any]] = []
+
+    for idx, feature in enumerate(feature_cols):
+        coef = float(coefs[idx])
+        mean_val = float(feature_means.get(feature, 0.0))
+        feature_val = float(next_feature_map.get(feature, 0.0))
+        shap_value = coef * (feature_val - mean_val)
+        expected_value += coef * mean_val
+        raw_prediction += coef * feature_val
+        contributions.append(
+            {
+                "feature": feature,
+                "feature_value": round(feature_val, 5),
+                "mean_value": round(mean_val, 5),
+                "coefficient": round(coef, 8),
+                "shap_value": round(shap_value, 5),
+                "direction": "increase" if shap_value >= 0 else "decrease",
+            }
+        )
+        feature_importance.append(
+            {
+                "feature": feature,
+                "importance_pct": round((abs(coef) / abs_coef_total) * 100.0, 2),
+                "abs_coefficient": round(abs(coef), 8),
+            }
+        )
+
+    contributions = sorted(contributions, key=lambda x: abs(float(x["shap_value"])), reverse=True)
+    feature_importance = sorted(feature_importance, key=lambda x: float(x["importance_pct"]), reverse=True)
+
+    next_day_forecast_df = forecast_next_days(trained, horizon=1, anchor_date=anchor_date)
+    served_forecast = (
+        float(next_day_forecast_df.iloc[0]["forecast_units_sold"])
+        if not next_day_forecast_df.empty
+        else max(0.0, raw_prediction)
+    )
+
+    top_positive = next((item for item in contributions if float(item["shap_value"]) > 0), None)
+    top_negative = next((item for item in contributions if float(item["shap_value"]) < 0), None)
+    summary_parts = [f"Next-day forecast for {resolved_category} is {served_forecast:.2f} units."]
+    if top_positive:
+        summary_parts.append(
+            f"Strongest upward driver: {top_positive['feature']} ({float(top_positive['shap_value']):+.2f})."
+        )
+    if top_negative:
+        summary_parts.append(
+            f"Strongest downward driver: {top_negative['feature']} ({float(top_negative['shap_value']):+.2f})."
+        )
+
+    return {
+        "category": resolved_category,
+        "forecast_date": forecast_date.date().isoformat(),
+        "model_info": MODEL_INFO,
+        "xai_techniques": [
+            "SHAP values (linear exact decomposition)",
+            "Feature importance (absolute coefficients)",
+            "Forecast explanation dashboard",
+        ],
+        "summary": " ".join(summary_parts),
+        "predictions": {
+            "served_forecast_units": round(served_forecast, 3),
+            "linear_raw_prediction_units": round(float(raw_prediction), 3),
+            "expected_value_units": round(float(expected_value), 3),
+        },
+        "top_contributions": contributions[:8],
+        "feature_importance": feature_importance[:10],
+    }
+
+
 def _fallback_forecast_for_category(
     df: pd.DataFrame,
     category: str,
@@ -1901,6 +2112,37 @@ def get_forecast(
         "history": history,
         "forecast": rows,
     }
+
+
+@app.get("/forecast/{category}/explain")
+def get_forecast_explanation(
+    request: Request,
+    category: str,
+    anchor_date: Optional[str] = None,
+) -> Dict[str, Any]:
+    _require_roles(request, ALLOWED_LOGIN_ROLES)
+
+    parsed_anchor: Optional[pd.Timestamp] = None
+    if anchor_date:
+        parsed_anchor = pd.to_datetime(anchor_date, errors="coerce")
+        if pd.isna(parsed_anchor):
+            raise HTTPException(status_code=400, detail="anchor_date must be a valid date")
+        parsed_anchor = parsed_anchor.normalize()
+
+    with _engine_lock:
+        df = _get_cached_df()
+        try:
+            explanation = _explain_forecast_for_category(
+                df,
+                category=category,
+                anchor_date=parsed_anchor,
+            )
+        except ValueError as exc:
+            msg = str(exc)
+            if "No rows found for category" in msg:
+                raise HTTPException(status_code=404, detail=msg) from exc
+            raise HTTPException(status_code=400, detail=msg) from exc
+    return explanation
 
 
 @app.get("/forecast-history")
