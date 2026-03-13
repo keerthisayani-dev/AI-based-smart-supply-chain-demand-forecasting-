@@ -2650,6 +2650,15 @@
       return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     }
 
+    function normalizeToIsoDate(value) {
+      const raw = String(value || "").trim();
+      if (!raw) return "";
+      if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+      const parsed = new Date(raw);
+      if (Number.isNaN(parsed.getTime())) return "";
+      return parsed.toISOString().slice(0, 10);
+    }
+
     function isWeekendIsoDate(isoDate) {
       const d = new Date(`${isoDate}T00:00:00`);
       if (Number.isNaN(d.getTime())) return false;
@@ -2767,8 +2776,15 @@
       exportState.fromDate = fromDate;
       exportState.toDate = toDate;
 
-      const fromDateObj = new Date(fromDate);
-      const toDateObj = new Date(toDate);
+      const fromIso = normalizeToIsoDate(fromDate);
+      const toIso = normalizeToIsoDate(toDate);
+      if (!fromIso || !toIso) {
+        contextEl.textContent = "Invalid date range selected.";
+        resetXaiPanel("Invalid date range for forecast request.");
+        return;
+      }
+      const fromDateObj = new Date(`${fromIso}T00:00:00Z`);
+      const toDateObj = new Date(`${toIso}T00:00:00Z`);
       const periodDays = Math.max(1, Math.floor((toDateObj - fromDateObj) / 86400000) + 1);
       const lookback = Math.max(60, periodDays);
       const anchorForForecast = new Date(fromDateObj);
@@ -2815,16 +2831,17 @@
         const history = Array.isArray(data.history) ? data.history : [];
         const forecast = Array.isArray(data.forecast) ? data.forecast : [];
 
-        const fromTs = new Date(fromDate).getTime();
-        const toTs = new Date(toDate).getTime();
-        const filteredHistory = history.filter(r => {
-          const t = new Date(r.date).getTime();
-          return t >= fromTs && t <= toTs;
+        const filteredHistory = history.filter((r) => {
+          const d = normalizeToIsoDate(r.date);
+          return d && d >= fromIso && d <= toIso;
         });
-        const filteredForecast = forecast.filter(r => {
-          const t = new Date(r.date).getTime();
-          return t >= fromTs && t <= toTs;
+        let filteredForecast = forecast.filter((r) => {
+          const d = normalizeToIsoDate(r.date);
+          return d && d >= fromIso && d <= toIso;
         });
+        if (currentMode === "forecast" && !filteredForecast.length && forecast.length) {
+          filteredForecast = [...forecast];
+        }
         const pastHistoryForDisplay = (currentMode === "past" && !filteredHistory.length) ? history : filteredHistory;
         updateInsightsAndFinancials(filteredForecast, history);
 
@@ -2856,8 +2873,8 @@
         document.getElementById("mAvg").textContent = exportState.avg.toFixed(2);
         document.getElementById("mActual").textContent = latestActual.toFixed(1);
 
-        const selectedFromTs = new Date(fromDate).getTime();
-        const selectedToTs = new Date(toDate).getTime();
+        const selectedFromTs = new Date(`${fromIso}T00:00:00Z`).getTime();
+        const selectedToTs = new Date(`${toIso}T23:59:59Z`).getTime();
         const contextWindowStart = selectedFromTs - (45 * 86400000);
         const nearPeriodActuals = history.filter((r) => {
           const t = new Date(r.date).getTime();
