@@ -10,9 +10,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
@@ -965,6 +967,50 @@
     .delta-pos { color: #34d399; }
     .delta-neg { color: #fca5a5; }
 
+    .flatpickr-calendar {
+      background: #0f172a;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      box-shadow: 0 14px 30px rgba(2, 6, 23, 0.6);
+      color: #dbeafe;
+    }
+    .flatpickr-months .flatpickr-month,
+    .flatpickr-current-month,
+    .flatpickr-weekdays,
+    .flatpickr-weekday,
+    .flatpickr-day {
+      color: #dbeafe;
+      fill: #dbeafe;
+    }
+    .flatpickr-current-month .flatpickr-monthDropdown-months,
+    .flatpickr-current-month input.cur-year,
+    .flatpickr-weekday,
+    .flatpickr-months .flatpickr-prev-month svg,
+    .flatpickr-months .flatpickr-next-month svg {
+      color: #e6edf7 !important;
+      fill: #e6edf7 !important;
+    }
+    .flatpickr-weekday {
+      opacity: 1 !important;
+    }
+    .flatpickr-weekdays {
+      background: rgba(30, 41, 59, 0.75);
+    }
+    .flatpickr-day:hover {
+      background: rgba(59, 130, 246, 0.25);
+      border-color: rgba(59, 130, 246, 0.45);
+    }
+    .flatpickr-day.selected,
+    .flatpickr-day.startRange,
+    .flatpickr-day.endRange,
+    .flatpickr-day.inRange {
+      background: linear-gradient(135deg, #4f7cff, #7c4dff);
+      border-color: transparent;
+      color: #ffffff;
+    }
+    .flatpickr-day.today {
+      border-color: rgba(96, 165, 250, 0.8);
+    }
+
     .control-row {
       display: flex;
       gap: 8px;
@@ -1619,8 +1665,8 @@
             <button class="btn" id="dynLoadRecordsBtn" type="button">Load Records</button>
           </div>
           <div class="dynamic-row">
-            <input id="dynFilterFromDate" type="date" />
-            <input id="dynFilterToDate" type="date" />
+            <input id="dynFilterFromDate" type="text" placeholder="YYYY-MM-DD" />
+            <input id="dynFilterToDate" type="text" placeholder="YYYY-MM-DD" />
           </div>
           <p class="dynamic-note" id="dynEditorStatus">Load records to edit or delete existing entries.</p>
           <div class="dynamic-editor-table-wrap">
@@ -1640,7 +1686,7 @@
             </table>
           </div>
           <div class="dynamic-row-3">
-            <input id="dynAddDate" type="date" />
+            <input id="dynAddDate" type="text" placeholder="YYYY-MM-DD" />
             <select id="dynAddProduct"></select>
             <input id="dynAddUnits" type="number" step="0.01" placeholder="Units sold" />
           </div>
@@ -1657,12 +1703,12 @@
             <select id="cmpRightProduct"></select>
           </div>
           <div class="dynamic-row">
-            <input id="cmpLeftFrom" type="date" />
-            <input id="cmpLeftTo" type="date" />
+            <input id="cmpLeftFrom" type="text" placeholder="YYYY-MM-DD" />
+            <input id="cmpLeftTo" type="text" placeholder="YYYY-MM-DD" />
           </div>
           <div class="dynamic-row">
-            <input id="cmpRightFrom" type="date" />
-            <input id="cmpRightTo" type="date" />
+            <input id="cmpRightFrom" type="text" placeholder="YYYY-MM-DD" />
+            <input id="cmpRightTo" type="text" placeholder="YYYY-MM-DD" />
           </div>
           <div class="dynamic-actions">
             <button class="btn" id="cmpRunBtn" type="button">Compare</button>
@@ -1770,6 +1816,7 @@
     const SIDEBAR_COLLAPSED_KEY = "results_sidebar_collapsed_v1";
     let dynamicProductOptions = [];
     let dynamicRecordsCache = [];
+    let dynamicDatePickers = [];
 
     function apiBase() {
       return window.location.origin;
@@ -1997,6 +2044,40 @@
       }
     }
 
+    function initDynamicDatePickers(minDate = "", maxDate = "") {
+      if (!window.flatpickr) return;
+      dynamicDatePickers.forEach((picker) => {
+        try {
+          picker.destroy();
+        } catch (_) {
+          // Ignore destroy errors.
+        }
+      });
+      dynamicDatePickers = [];
+      const ids = [
+        "dynFilterFromDate",
+        "dynFilterToDate",
+        "dynAddDate",
+        "cmpLeftFrom",
+        "cmpLeftTo",
+        "cmpRightFrom",
+        "cmpRightTo",
+      ];
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const picker = window.flatpickr(el, {
+          dateFormat: "Y-m-d",
+          allowInput: false,
+          monthSelectorType: "static",
+          ...(minDate ? { minDate } : {}),
+          ...(maxDate ? { maxDate } : {}),
+          ...(el.value ? { defaultDate: el.value } : {}),
+        });
+        dynamicDatePickers.push(picker);
+      });
+    }
+
     function renderDynamicRecords(items) {
       const body = document.getElementById("dynEditorBody");
       if (!body) return;
@@ -2073,6 +2154,7 @@
       if (leftToEl && !leftToEl.value && maxDate) leftToEl.value = maxDate;
       if (rightFromEl && !rightFromEl.value && minDate) rightFromEl.value = minDate;
       if (rightToEl && !rightToEl.value && maxDate) rightToEl.value = maxDate;
+      initDynamicDatePickers(minDate, maxDate);
       if (dynamicProductOptions.length) {
         const rightSel = document.getElementById("cmpRightProduct");
         if (rightSel && !rightSel.value) rightSel.value = dynamicProductOptions[Math.min(1, dynamicProductOptions.length - 1)];
@@ -2882,21 +2964,18 @@
         }
 
         const requestAnchor = currentMode === "forecast" ? forecastAnchorDate : toDate;
-        const [forecastResult, xaiResult] = await Promise.allSettled([
-          fetchForecastPayload(requestAnchor, periodDays),
-          fetchXaiPayload(category, requestAnchor),
-        ]);
-        if (forecastResult.status !== "fulfilled") {
-          throw forecastResult.reason;
-        }
-        const data = forecastResult.value;
+        const data = await fetchForecastPayload(requestAnchor, periodDays);
         if (requestId !== latestLoadRequestId) return;
-        if (xaiResult.status === "fulfilled") {
-          renderXaiPanel(xaiResult.value);
-        } else {
-          const explainMsg = String(xaiResult.reason?.message || "Could not load explanation.");
-          resetXaiPanel(`XAI unavailable: ${explainMsg}`);
-        }
+        fetchXaiPayload(category, requestAnchor)
+          .then((payload) => {
+            if (requestId !== latestLoadRequestId) return;
+            renderXaiPanel(payload);
+          })
+          .catch((err) => {
+            if (requestId !== latestLoadRequestId) return;
+            const explainMsg = String(err?.message || "Could not load explanation.");
+            resetXaiPanel(`XAI unavailable: ${explainMsg}`);
+          });
 
         const history = Array.isArray(data.history) ? data.history : [];
         const forecast = Array.isArray(data.forecast) ? data.forecast : [];
@@ -3120,15 +3199,25 @@
         exportState.forecastBaseRows = [...filteredForecast];
         applyGranularityTable();
 
-        const loadedRecent = await loadRecentHistory(category);
-        if (requestId !== latestLoadRequestId) return;
-        if (!loadedRecent) {
-          renderTable(
-            document.getElementById("historyTable"),
-            exportState.historyRows,
-            exportState.historyCols
-          );
-        }
+        loadRecentHistory(category)
+          .then((loadedRecent) => {
+            if (requestId !== latestLoadRequestId) return;
+            if (!loadedRecent) {
+              renderTable(
+                document.getElementById("historyTable"),
+                exportState.historyRows,
+                exportState.historyCols
+              );
+            }
+          })
+          .catch(() => {
+            if (requestId !== latestLoadRequestId) return;
+            renderTable(
+              document.getElementById("historyTable"),
+              exportState.historyRows,
+              exportState.historyCols
+            );
+          });
         renderTable(
           document.getElementById("forecastTable"),
           exportState.forecastRows,
@@ -3813,14 +3902,14 @@
         }
       }
       await applyRoleUi();
-      try {
-        await loadDynamicOptions();
-        await loadDynamicRecords();
-      } catch (err) {
-        setDynamicEditorStatus(`Dynamic data unavailable: ${String(err?.message || "Unknown error")}`);
-        setCompareStatus(`Dynamic compare unavailable: ${String(err?.message || "Unknown error")}`);
-      }
       await loadResults();
+      // Load dynamic editor data in background so forecast results render immediately.
+      loadDynamicOptions()
+        .then(() => loadDynamicRecords())
+        .catch((err) => {
+          setDynamicEditorStatus(`Dynamic data unavailable: ${String(err?.message || "Unknown error")}`);
+          setCompareStatus(`Dynamic compare unavailable: ${String(err?.message || "Unknown error")}`);
+        });
       const shell = document.querySelector(".page-shell");
       if (shell) {
         shell.classList.remove("preload");
