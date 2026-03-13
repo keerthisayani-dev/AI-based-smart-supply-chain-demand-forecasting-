@@ -8,7 +8,6 @@ import json
 import shutil
 import base64
 import re
-import math
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,7 +32,6 @@ try:
         TARGET_COL,
         DATE_COL,
         MODEL_INFO,
-        build_features,
         build_daily_series,
         forecast_next_days,
         load_sales_data,
@@ -46,7 +44,6 @@ except ImportError:  # Allows running as a script from Backend/
         TARGET_COL,
         DATE_COL,
         MODEL_INFO,
-        build_features,
         build_daily_series,
         forecast_next_days,
         load_sales_data,
@@ -64,10 +61,6 @@ FRONTEND_ADMIN_HTML_PATH = PROJECT_DIR / "Frontend" / "admin_dashboard.html"
 FRONTEND_ABOUT_HTML_PATH = PROJECT_DIR / "Frontend" / "about_project.html"
 HISTORY_DB_PATH = PROJECT_DIR / "Backend" / "forecast_history.db"
 AUTH_DB_PATH = PROJECT_DIR / "Backend" / "auth.db"
-LOCAL_RUNTIME_DB_DIR = Path(os.getenv("LOCALAPPDATA", str(PROJECT_DIR))) / "DemandIQ"
-LOCAL_RUNTIME_DB_DIR.mkdir(parents=True, exist_ok=True)
-AUTH_RUNTIME_DB_PATH = LOCAL_RUNTIME_DB_DIR / "auth_runtime.db"
-HISTORY_RUNTIME_DB_PATH = LOCAL_RUNTIME_DB_DIR / "forecast_history_runtime.db"
 UPLOADS_ROOT = PROJECT_DIR / "uploads"
 UPLOADS_SALES_DIR = UPLOADS_ROOT / "sales"
 UPLOADS_INVENTORY_DIR = UPLOADS_ROOT / "inventory"
@@ -137,8 +130,6 @@ app.add_middleware(
 )
 app.mount("/assets", StaticFiles(directory=PROJECT_DIR / "Frontend" / "assets"), name="assets")
 _engine_lock = threading.Lock()
-_active_auth_db_path = AUTH_DB_PATH
-_active_history_db_path = HISTORY_DB_PATH
 
 
 @dataclass
@@ -220,42 +211,15 @@ _load_env_file(PROJECT_DIR / ".env")
 
 
 def _get_history_db_conn() -> sqlite3.Connection:
-    global _active_history_db_path
-    def _open_with_probe(path: Path) -> sqlite3.Connection:
-        conn = sqlite3.connect(path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA user_version").fetchone()
-        conn.execute("CREATE TABLE IF NOT EXISTS __history_rw_probe (id INTEGER PRIMARY KEY)")
-        conn.commit()
-        return conn
-
-    try:
-        return _open_with_probe(_active_history_db_path)
-    except sqlite3.OperationalError:
-        if _active_history_db_path != HISTORY_RUNTIME_DB_PATH:
-            _active_history_db_path = HISTORY_RUNTIME_DB_PATH
-            return _open_with_probe(_active_history_db_path)
-        raise
+    conn = sqlite3.connect(HISTORY_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 def _get_auth_db_conn() -> sqlite3.Connection:
-    global _active_auth_db_path
-    def _open_with_probe(path: Path) -> sqlite3.Connection:
-        conn = sqlite3.connect(path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA user_version").fetchone()
-        # Write probe to ensure DB is actually writable in this environment.
-        conn.execute("CREATE TABLE IF NOT EXISTS __auth_rw_probe (id INTEGER PRIMARY KEY)")
-        conn.commit()
-        return conn
-
-    try:
-        return _open_with_probe(_active_auth_db_path)
-    except sqlite3.OperationalError:
-        if _active_auth_db_path != AUTH_RUNTIME_DB_PATH:
-            _active_auth_db_path = AUTH_RUNTIME_DB_PATH
-            return _open_with_probe(_active_auth_db_path)
-        raise
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 def _password_hash(password: str, salt_hex: Optional[str] = None) -> str:
@@ -1172,12 +1136,269 @@ class AdminDeleteUserRequest(BaseModel):
     email: str
 
 
+class DynamicAddRecordRequest(BaseModel):
+    record: Dict[str, Any]
+
+
+class DynamicEditRecordRequest(BaseModel):
+    record_id: str
+    updates: Dict[str, Any]
+
+
+class DynamicDeleteRecordRequest(BaseModel):
+    record_id: str
+
+
+class DynamicCompareRequest(BaseModel):
+    left_product: str
+    right_product: str
+    left_from: str
+    left_to: str
+    right_from: str
+    right_to: str
+
+
 def _norm_text(value: Any) -> str:
     return str(value).strip()
 
 
 def _norm_key(value: Any) -> str:
     return _norm_text(value).lower()
+
+
+def _dynamic_alias_map() -> Dict[str, set[str]]:
+    return {
+        "record_id": {"id", "row_id", "recordid"},
+        "date": {"order_date", "sales_date", "transaction_date"},
+        "product_id": {"product id", "product", "sku", "item_id", "item id"},
+        "category": {"product_category", "item_category"},
+        "units_sold": {"units sold", "qty_sold", "quantity_sold"},
+        "price": {"unit_price", "selling_price"},
+        "discount": {"discount_pct", "discount_percentage"},
+        "inventory_level": {"inventory level", "stock_level", "current_stock"},
+        "units_ordered": {"units ordered", "qty_ordered", "quantity_ordered"},
+        "demand_forecast": {"demand forecast", "forecast_units", "forecast"},
+    }
+
+
+def _dynamic_output_col(canonical: str) -> str:
+    mapping = {
+        "record_id": "record_id",
+        "date": "date",
+        "product_id": "product id",
+        "category": "category",
+        "units_sold": "units sold",
+        "price": "price",
+        "discount": "discount",
+        "inventory_level": "inventory level",
+        "units_ordered": "units ordered",
+        "demand_forecast": "demand forecast",
+    }
+    return mapping.get(canonical, canonical)
+
+
+def _dynamic_find_col(df: pd.DataFrame, canonical: str) -> Optional[str]:
+    alias_map = _dynamic_alias_map()
+    aliases = alias_map.get(canonical, set())
+    target_key = _col_key(canonical)
+    alias_keys = {_col_key(a) for a in aliases}
+    for col in df.columns:
+        key = _col_key(col)
+        if key == target_key or key in alias_keys:
+            return str(col)
+    return None
+
+
+def _dynamic_get_series(df: pd.DataFrame, col: Optional[str]) -> pd.Series:
+    if not col or col not in df.columns:
+        return pd.Series(index=df.index, dtype="object")
+    data = df[col]
+    if isinstance(data, pd.DataFrame):
+        if data.shape[1] == 0:
+            return pd.Series(index=df.index, dtype="object")
+        return data.iloc[:, 0]
+    return data
+
+
+def _dynamic_ensure_col(df: pd.DataFrame, canonical: str) -> str:
+    existing = _dynamic_find_col(df, canonical)
+    if existing:
+        return existing
+    out_col = _dynamic_output_col(canonical)
+    df[out_col] = pd.NA
+    return out_col
+
+
+def _dynamic_ensure_record_ids(df: pd.DataFrame) -> str:
+    col = _dynamic_ensure_col(df, "record_id")
+    used: set[str] = set()
+    next_num = 1
+    values = _dynamic_get_series(df, col).astype("string")
+    for idx in df.index:
+        cell = values.loc[idx]
+        if isinstance(cell, pd.Series):
+            non_null = cell.dropna()
+            cell = non_null.iloc[0] if not non_null.empty else ""
+        if cell is None:
+            raw = ""
+        else:
+            raw = str(cell).strip()
+            if raw.lower() == "nan":
+                raw = ""
+        if raw and raw.lower() != "nan" and raw not in used:
+            used.add(raw)
+            continue
+        while True:
+            cand = f"rec-{next_num:06d}"
+            next_num += 1
+            if cand not in used:
+                df.at[idx, col] = cand
+                used.add(cand)
+                break
+    return col
+
+
+def _load_dynamic_dataset() -> pd.DataFrame:
+    if not CSV_PATH.exists():
+        raise HTTPException(status_code=404, detail="Dataset file not found")
+    try:
+        df = pd.read_csv(CSV_PATH)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to read dataset: {exc}") from exc
+    df.columns = [str(c).strip() for c in df.columns]
+    _dynamic_ensure_record_ids(df)
+    return df
+
+
+def _save_dynamic_dataset(df: pd.DataFrame) -> None:
+    df.to_csv(CSV_PATH, index=False)
+    _invalidate_engine_cache()
+
+
+def _canonical_dynamic_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+    out: Dict[str, Any] = {}
+    alias_map = _dynamic_alias_map()
+    key_to_canonical: Dict[str, str] = {}
+    for canonical, aliases in alias_map.items():
+        key_to_canonical[_col_key(canonical)] = canonical
+        for alias in aliases:
+            key_to_canonical[_col_key(alias)] = canonical
+    for key, value in (payload or {}).items():
+        canonical = key_to_canonical.get(_col_key(key))
+        if canonical:
+            out[canonical] = value
+    return out
+
+
+def _dynamic_item_from_row(row: pd.Series, col_map: Dict[str, Optional[str]]) -> Dict[str, Any]:
+    def _grab(name: str) -> Any:
+        col = col_map.get(name)
+        if not col:
+            return None
+        value = row.get(col, None)
+        if isinstance(value, pd.DataFrame):
+            if value.empty:
+                return None
+            value = value.iloc[0, 0]
+        if isinstance(value, pd.Series):
+            if value.empty:
+                return None
+            non_null = value.dropna()
+            if non_null.empty:
+                return None
+            value = non_null.iloc[0]
+        if value is None:
+            return None
+        try:
+            if pd.isna(value):
+                return None
+        except Exception:
+            pass
+        return value
+
+    date_val = _grab("date")
+    date_iso = ""
+    if date_val is not None:
+        parsed_series = parse_date_series(pd.Series([date_val]))
+        parsed = parsed_series.iloc[0] if len(parsed_series) else pd.NaT
+        if not pd.isna(parsed):
+            date_iso = pd.Timestamp(parsed).strftime("%Y-%m-%d")
+        else:
+            date_iso = str(date_val)
+
+    return {
+        "record_id": str(_grab("record_id") or "").strip(),
+        "date": date_iso,
+        "product_id": str(_grab("product_id") or "").strip(),
+        "category": str(_grab("category") or "").strip(),
+        "units_sold": float(pd.to_numeric(_grab("units_sold"), errors="coerce") or 0.0),
+        "price": None if _grab("price") is None else float(pd.to_numeric(_grab("price"), errors="coerce") or 0.0),
+        "discount": None if _grab("discount") is None else float(pd.to_numeric(_grab("discount"), errors="coerce") or 0.0),
+        "inventory_level": None if _grab("inventory_level") is None else float(pd.to_numeric(_grab("inventory_level"), errors="coerce") or 0.0),
+        "units_ordered": None if _grab("units_ordered") is None else float(pd.to_numeric(_grab("units_ordered"), errors="coerce") or 0.0),
+        "demand_forecast": None if _grab("demand_forecast") is None else float(pd.to_numeric(_grab("demand_forecast"), errors="coerce") or 0.0),
+    }
+
+
+def _filter_dynamic_product(df: pd.DataFrame, product_value: str) -> pd.DataFrame:
+    if not product_value:
+        return df
+    requested = str(product_value).strip().lower()
+    cat_col = _dynamic_find_col(df, "category")
+    prod_col = _dynamic_find_col(df, "product_id")
+    mask = pd.Series(False, index=df.index, dtype=bool)
+    if cat_col:
+        cat_values = _dynamic_get_series(df, cat_col).astype("string").fillna("").str.strip().str.lower()
+        mask = mask | (cat_values == requested)
+    if prod_col:
+        prod_values = _dynamic_get_series(df, prod_col).astype("string").fillna("").str.strip().str.lower()
+        mask = mask | (prod_values == requested)
+    mask = mask.fillna(False).astype(bool)
+    return df.loc[mask].copy()
+
+
+def _date_filtered(df: pd.DataFrame, from_date: str, to_date: str) -> pd.DataFrame:
+    date_col = _dynamic_find_col(df, "date")
+    if not date_col:
+        return df
+    if not from_date or not to_date:
+        return df
+    start_ts = pd.to_datetime(from_date, errors="coerce")
+    end_ts = pd.to_datetime(to_date, errors="coerce")
+    if pd.isna(start_ts) or pd.isna(end_ts):
+        raise HTTPException(status_code=400, detail="Invalid from/to date values")
+    dates = parse_date_series(_dynamic_get_series(df, date_col))
+    mask = dates.notna() & (dates >= start_ts) & (dates <= end_ts)
+    return df.loc[mask].copy()
+
+
+def _compare_metrics(df: pd.DataFrame) -> Dict[str, float]:
+    rows = float(len(df.index))
+
+    def _avg(canonical: str) -> float:
+        col = _dynamic_find_col(df, canonical)
+        if not col or rows <= 0:
+            return 0.0
+        vals = pd.to_numeric(_dynamic_get_series(df, col), errors="coerce")
+        return float(vals.mean()) if vals.notna().any() else 0.0
+
+    def _sum(canonical: str) -> float:
+        col = _dynamic_find_col(df, canonical)
+        if not col:
+            return 0.0
+        vals = pd.to_numeric(_dynamic_get_series(df, col), errors="coerce")
+        return float(vals.sum()) if vals.notna().any() else 0.0
+
+    return {
+        "rows": rows,
+        "total_units_sold": _sum("units_sold"),
+        "avg_units_sold": _avg("units_sold"),
+        "avg_price": _avg("price"),
+        "avg_discount": _avg("discount"),
+        "avg_inventory_level": _avg("inventory_level"),
+        "avg_units_ordered": _avg("units_ordered"),
+        "avg_demand_forecast": _avg("demand_forecast"),
+    }
 
 
 def _looks_like_product_id(value: str) -> bool:
@@ -1338,181 +1559,6 @@ def _forecast_for_category(
     trained = _get_trained_model(df, resolved_category, selector_col=selector_col)
     forecast_df = forecast_next_days(trained, horizon=horizon, anchor_date=anchor_date)
     return forecast_df.to_dict(orient="records")
-
-
-def _build_next_feature_row_from_history(
-    history: pd.DataFrame,
-    feature_cols: List[str],
-    target: str,
-    forecast_date: pd.Timestamp,
-) -> Dict[str, float]:
-    row: Dict[str, float] = {}
-    lag_lookup = {"lag_1": 1, "lag_7": 7, "lag_14": 14, "lag_28": 28}
-    static_values: Dict[str, float] = {}
-    for col in feature_cols:
-        if col in history.columns and col != target:
-            try:
-                static_values[col] = float(history[col].iloc[-1])
-            except Exception:
-                continue
-
-    for col in feature_cols:
-        if col in lag_lookup:
-            lag = lag_lookup[col]
-            if len(history) >= lag:
-                row[col] = float(history[target].iloc[-lag])
-            else:
-                row[col] = float(history[target].iloc[-1])
-        elif col == "rolling_mean_7":
-            row[col] = float(history[target].iloc[-7:].mean())
-        elif col == "rolling_mean_14":
-            tail = history[target].iloc[-14:] if len(history) >= 14 else history[target]
-            row[col] = float(tail.mean())
-        elif col == "rolling_std_7":
-            row[col] = float(history[target].iloc[-7:].std(ddof=0)) if len(history) >= 2 else 0.0
-        elif col == "dayofweek":
-            row[col] = int(forecast_date.dayofweek)
-        elif col == "month":
-            row[col] = int(forecast_date.month)
-        elif col == "is_weekend":
-            row[col] = int(forecast_date.dayofweek in [5, 6])
-        elif col == "dow_sin":
-            row[col] = float(math.sin(2 * math.pi * forecast_date.dayofweek / 7.0))
-        elif col == "dow_cos":
-            row[col] = float(math.cos(2 * math.pi * forecast_date.dayofweek / 7.0))
-        elif col == "month_sin":
-            row[col] = float(math.sin(2 * math.pi * forecast_date.month / 12.0))
-        elif col == "month_cos":
-            row[col] = float(math.cos(2 * math.pi * forecast_date.month / 12.0))
-        elif col == "doy_sin":
-            row[col] = float(math.sin(2 * math.pi * forecast_date.dayofyear / 365.25))
-        elif col == "doy_cos":
-            row[col] = float(math.cos(2 * math.pi * forecast_date.dayofyear / 365.25))
-        elif col == "time_idx":
-            row[col] = float(len(history))
-        elif col in static_values:
-            row[col] = float(static_values[col])
-        else:
-            row[col] = 0.0
-    return row
-
-
-def _explain_forecast_for_category(
-    df: pd.DataFrame,
-    category: str,
-    anchor_date: Optional[pd.Timestamp] = None,
-) -> Dict[str, Any]:
-    selector_col, resolved_category = _resolve_selector(df, category)
-    trained = _get_trained_model(df, resolved_category, selector_col=selector_col)
-    target = trained.target
-
-    full_history = trained.daily_history.copy().sort_index()
-    history = full_history.copy()
-    if anchor_date is not None:
-        anchor = pd.to_datetime(anchor_date).normalize()
-        history = history[history.index <= anchor]
-        if history.empty or len(full_history) == 0:
-            raise ValueError("anchor_date is earlier than available product history")
-        # Keep explanation date aligned with forecast API behavior:
-        # when anchor_date is supplied, prediction starts at anchor_date + 1.
-        forecast_date = anchor + pd.Timedelta(days=1)
-    else:
-        forecast_date = pd.to_datetime(history.index.max()).normalize() + pd.Timedelta(days=1)
-
-    if history.empty:
-        raise ValueError(f"No rows found for category {category}")
-
-    feature_cols = list(trained.features)
-    next_feature_map = _build_next_feature_row_from_history(
-        history=history,
-        feature_cols=feature_cols,
-        target=target,
-        forecast_date=forecast_date,
-    )
-
-    feat = build_features(history, target=target)
-    feat = feat.dropna(subset=feature_cols + [target])
-    if feat.empty:
-        raise ValueError("Not enough history to compute explanation features")
-
-    feature_means = feat[feature_cols].mean()
-    coefs = list(getattr(trained.model, "coef_", []))
-    if len(coefs) != len(feature_cols):
-        raise ValueError("Model coefficients do not match expected feature set")
-    intercept = float(getattr(trained.model, "intercept_", 0.0))
-
-    expected_value = intercept
-    raw_prediction = intercept
-    contributions: List[Dict[str, Any]] = []
-
-    abs_coef_total = sum(abs(float(c)) for c in coefs) or 1.0
-    feature_importance: List[Dict[str, Any]] = []
-
-    for idx, feature in enumerate(feature_cols):
-        coef = float(coefs[idx])
-        mean_val = float(feature_means.get(feature, 0.0))
-        feature_val = float(next_feature_map.get(feature, 0.0))
-        shap_value = coef * (feature_val - mean_val)
-        expected_value += coef * mean_val
-        raw_prediction += coef * feature_val
-        contributions.append(
-            {
-                "feature": feature,
-                "feature_value": round(feature_val, 5),
-                "mean_value": round(mean_val, 5),
-                "coefficient": round(coef, 8),
-                "shap_value": round(shap_value, 5),
-                "direction": "increase" if shap_value >= 0 else "decrease",
-            }
-        )
-        feature_importance.append(
-            {
-                "feature": feature,
-                "importance_pct": round((abs(coef) / abs_coef_total) * 100.0, 2),
-                "abs_coefficient": round(abs(coef), 8),
-            }
-        )
-
-    contributions = sorted(contributions, key=lambda x: abs(float(x["shap_value"])), reverse=True)
-    feature_importance = sorted(feature_importance, key=lambda x: float(x["importance_pct"]), reverse=True)
-
-    next_day_forecast_df = forecast_next_days(trained, horizon=1, anchor_date=anchor_date)
-    served_forecast = (
-        float(next_day_forecast_df.iloc[0]["forecast_units_sold"])
-        if not next_day_forecast_df.empty
-        else max(0.0, raw_prediction)
-    )
-
-    top_positive = next((item for item in contributions if float(item["shap_value"]) > 0), None)
-    top_negative = next((item for item in contributions if float(item["shap_value"]) < 0), None)
-    summary_parts = [f"Next-day forecast for {resolved_category} is {served_forecast:.2f} units."]
-    if top_positive:
-        summary_parts.append(
-            f"Strongest upward driver: {top_positive['feature']} ({float(top_positive['shap_value']):+.2f})."
-        )
-    if top_negative:
-        summary_parts.append(
-            f"Strongest downward driver: {top_negative['feature']} ({float(top_negative['shap_value']):+.2f})."
-        )
-
-    return {
-        "category": resolved_category,
-        "forecast_date": forecast_date.date().isoformat(),
-        "model_info": MODEL_INFO,
-        "xai_techniques": [
-            "SHAP values (linear exact decomposition)",
-            "Feature importance (absolute coefficients)",
-            "Forecast explanation dashboard",
-        ],
-        "summary": " ".join(summary_parts),
-        "predictions": {
-            "served_forecast_units": round(served_forecast, 3),
-            "linear_raw_prediction_units": round(float(raw_prediction), 3),
-            "expected_value_units": round(float(expected_value), 3),
-        },
-        "top_contributions": contributions[:8],
-        "feature_importance": feature_importance[:10],
-    }
 
 
 def _fallback_forecast_for_category(
@@ -2114,37 +2160,6 @@ def get_forecast(
     }
 
 
-@app.get("/forecast/{category}/explain")
-def get_forecast_explanation(
-    request: Request,
-    category: str,
-    anchor_date: Optional[str] = None,
-) -> Dict[str, Any]:
-    _require_roles(request, ALLOWED_LOGIN_ROLES)
-
-    parsed_anchor: Optional[pd.Timestamp] = None
-    if anchor_date:
-        parsed_anchor = pd.to_datetime(anchor_date, errors="coerce")
-        if pd.isna(parsed_anchor):
-            raise HTTPException(status_code=400, detail="anchor_date must be a valid date")
-        parsed_anchor = parsed_anchor.normalize()
-
-    with _engine_lock:
-        df = _get_cached_df()
-        try:
-            explanation = _explain_forecast_for_category(
-                df,
-                category=category,
-                anchor_date=parsed_anchor,
-            )
-        except ValueError as exc:
-            msg = str(exc)
-            if "No rows found for category" in msg:
-                raise HTTPException(status_code=404, detail=msg) from exc
-            raise HTTPException(status_code=400, detail=msg) from exc
-    return explanation
-
-
 @app.get("/forecast-history")
 def get_forecast_history(
     request: Request,
@@ -2156,6 +2171,258 @@ def get_forecast_history(
     return {
         "count": len(items),
         "items": items,
+    }
+
+
+@app.get("/dynamic-data/options")
+def dynamic_data_options(request: Request) -> Dict[str, Any]:
+    _require_roles(request, ALLOWED_LOGIN_ROLES)
+    with _engine_lock:
+        df = _load_dynamic_dataset()
+        min_date = ""
+        max_date = ""
+        date_col = _dynamic_find_col(df, "date")
+        if date_col:
+            dates = parse_date_series(_dynamic_get_series(df, date_col)).dropna()
+            if not dates.empty:
+                min_date = dates.min().strftime("%Y-%m-%d")
+                max_date = dates.max().strftime("%Y-%m-%d")
+
+        products: set[str] = set()
+        for key in ("category", "product_id"):
+            col = _dynamic_find_col(df, key)
+            if not col:
+                continue
+            values = _dynamic_get_series(df, col).astype("string").str.strip().dropna()
+            products.update({str(v) for v in values if str(v).strip() and str(v).lower() != "nan"})
+
+    return {
+        "products": sorted(products),
+        "min_date": min_date,
+        "max_date": max_date,
+    }
+
+
+@app.get("/dynamic-data/records")
+def dynamic_data_records(
+    request: Request,
+    product: str = "",
+    from_date: str = "",
+    to_date: str = "",
+    limit: int = 200,
+) -> Dict[str, Any]:
+    _require_roles(request, ALLOWED_LOGIN_ROLES)
+    safe_limit = max(1, min(int(limit), 1000))
+    try:
+        with _engine_lock:
+            df = _load_dynamic_dataset()
+            df = _filter_dynamic_product(df, product)
+            if from_date and to_date:
+                df = _date_filtered(df, from_date, to_date)
+            date_col = _dynamic_find_col(df, "date")
+            if date_col:
+                date_sort = parse_date_series(_dynamic_get_series(df, date_col))
+                df = df.assign(__sort_date__=date_sort).sort_values("__sort_date__", ascending=False).drop(
+                    columns=["__sort_date__"], errors="ignore"
+                )
+
+            col_map = {k: _dynamic_find_col(df, k) for k in _dynamic_alias_map().keys()}
+            items: List[Dict[str, Any]] = []
+            for _, row in df.head(safe_limit).iterrows():
+                try:
+                    items.append(_dynamic_item_from_row(row, col_map))
+                except Exception:
+                    # Skip malformed rows instead of failing the entire endpoint.
+                    continue
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Dynamic records failed: {exc}") from exc
+
+    return {
+        "count": len(items),
+        "items": items,
+    }
+
+
+@app.post("/dynamic-data/records/add")
+def dynamic_data_add_record(payload: DynamicAddRecordRequest, request: Request) -> Dict[str, Any]:
+    _require_roles(request, {ROLE_ADMIN, ROLE_INVENTORY_MANAGER})
+    normalized = _canonical_dynamic_payload(payload.record)
+    date_val = str(normalized.get("date") or "").strip()
+    product_val = str(normalized.get("product_id") or normalized.get("category") or "").strip()
+    units_val = normalized.get("units_sold", None)
+    if not date_val:
+        raise HTTPException(status_code=400, detail="record.date is required")
+    if not product_val:
+        raise HTTPException(status_code=400, detail="record.product_id/category is required")
+    if units_val is None:
+        raise HTTPException(status_code=400, detail="record.units_sold is required")
+    parsed_date = pd.to_datetime(date_val, errors="coerce")
+    if pd.isna(parsed_date):
+        raise HTTPException(status_code=400, detail="record.date must be a valid date")
+    try:
+        units_num = float(units_val)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="record.units_sold must be numeric")
+
+    with _engine_lock:
+        df = _load_dynamic_dataset()
+        rid_col = _dynamic_ensure_record_ids(df)
+        row_data: Dict[str, Any] = {}
+
+        row_data[_dynamic_ensure_col(df, "record_id")] = f"rec-{len(df.index) + 1:06d}"
+        row_data[_dynamic_ensure_col(df, "date")] = parsed_date.strftime("%Y-%m-%d")
+        row_data[_dynamic_ensure_col(df, "product_id")] = product_val
+        row_data[_dynamic_ensure_col(df, "category")] = str(normalized.get("category") or product_val)
+        row_data[_dynamic_ensure_col(df, "units_sold")] = units_num
+
+        for key in ("price", "discount", "inventory_level", "units_ordered", "demand_forecast"):
+            if key in normalized:
+                col = _dynamic_ensure_col(df, key)
+                value = normalized.get(key)
+                if value is None or str(value).strip() == "":
+                    row_data[col] = pd.NA
+                else:
+                    try:
+                        row_data[col] = float(value)
+                    except (TypeError, ValueError):
+                        raise HTTPException(status_code=400, detail=f"record.{key} must be numeric")
+
+        for col in df.columns:
+            if col not in row_data:
+                row_data[col] = pd.NA
+        df = pd.concat([df, pd.DataFrame([row_data])], ignore_index=True)
+        _dynamic_ensure_record_ids(df)
+        _save_dynamic_dataset(df)
+        new_record_id = str(df.iloc[-1][rid_col])
+
+    return {"ok": True, "message": "Record added", "record_id": new_record_id}
+
+
+@app.post("/dynamic-data/records/edit")
+def dynamic_data_edit_record(payload: DynamicEditRecordRequest, request: Request) -> Dict[str, Any]:
+    _require_roles(request, {ROLE_ADMIN, ROLE_INVENTORY_MANAGER})
+    record_id = str(payload.record_id or "").strip()
+    if not record_id:
+        raise HTTPException(status_code=400, detail="record_id is required")
+    updates = _canonical_dynamic_payload(payload.updates)
+    if not updates:
+        raise HTTPException(status_code=400, detail="updates cannot be empty")
+
+    with _engine_lock:
+        df = _load_dynamic_dataset()
+        rid_col = _dynamic_ensure_record_ids(df)
+        mask = df[rid_col].astype("string").str.strip() == record_id
+        if not bool(mask.any()):
+            raise HTTPException(status_code=404, detail="record_id not found")
+        row_idx = df.index[mask][0]
+
+        for key, value in updates.items():
+            if key == "record_id":
+                continue
+            if key == "date":
+                parsed = pd.to_datetime(value, errors="coerce")
+                if pd.isna(parsed):
+                    raise HTTPException(status_code=400, detail="updates.date must be a valid date")
+                col = _dynamic_ensure_col(df, "date")
+                df.at[row_idx, col] = parsed.strftime("%Y-%m-%d")
+                continue
+
+            col = _dynamic_ensure_col(df, key)
+            if key in {"units_sold", "price", "discount", "inventory_level", "units_ordered", "demand_forecast"}:
+                if value is None or str(value).strip() == "":
+                    df.at[row_idx, col] = pd.NA
+                else:
+                    try:
+                        df.at[row_idx, col] = float(value)
+                    except (TypeError, ValueError):
+                        raise HTTPException(status_code=400, detail=f"updates.{key} must be numeric")
+            else:
+                df.at[row_idx, col] = str(value).strip()
+
+        _save_dynamic_dataset(df)
+    return {"ok": True, "message": "Record updated", "record_id": record_id}
+
+
+@app.post("/dynamic-data/records/delete")
+def dynamic_data_delete_record(payload: DynamicDeleteRecordRequest, request: Request) -> Dict[str, Any]:
+    _require_roles(request, {ROLE_ADMIN, ROLE_INVENTORY_MANAGER})
+    record_id = str(payload.record_id or "").strip()
+    if not record_id:
+        raise HTTPException(status_code=400, detail="record_id is required")
+
+    with _engine_lock:
+        df = _load_dynamic_dataset()
+        rid_col = _dynamic_ensure_record_ids(df)
+        mask = df[rid_col].astype("string").str.strip() == record_id
+        if not bool(mask.any()):
+            raise HTTPException(status_code=404, detail="record_id not found")
+        deleted_count = int(mask.sum())
+        df = df.loc[~mask].copy()
+        _save_dynamic_dataset(df)
+
+    return {"ok": True, "message": "Record deleted", "record_id": record_id, "deleted_count": deleted_count}
+
+
+@app.post("/dynamic-data/compare")
+def dynamic_data_compare(payload: DynamicCompareRequest, request: Request) -> Dict[str, Any]:
+    _require_roles(request, ALLOWED_LOGIN_ROLES)
+    if not all(
+        [
+            str(payload.left_product).strip(),
+            str(payload.right_product).strip(),
+            str(payload.left_from).strip(),
+            str(payload.left_to).strip(),
+            str(payload.right_from).strip(),
+            str(payload.right_to).strip(),
+        ]
+    ):
+        raise HTTPException(status_code=400, detail="All compare fields are required")
+
+    try:
+        with _engine_lock:
+            df = _load_dynamic_dataset()
+            left_df = _date_filtered(_filter_dynamic_product(df, payload.left_product), payload.left_from, payload.left_to)
+            right_df = _date_filtered(_filter_dynamic_product(df, payload.right_product), payload.right_from, payload.right_to)
+            left_metrics = _compare_metrics(left_df)
+            right_metrics = _compare_metrics(right_df)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Dynamic compare failed: {exc}") from exc
+
+    metric_keys = sorted(set(left_metrics.keys()) | set(right_metrics.keys()))
+    rows: List[Dict[str, Any]] = []
+    for key in metric_keys:
+        left_val = float(left_metrics.get(key, 0.0))
+        right_val = float(right_metrics.get(key, 0.0))
+        delta = right_val - left_val
+        pct_change = (delta / left_val * 100.0) if abs(left_val) > 1e-12 else (100.0 if abs(right_val) > 1e-12 else 0.0)
+        rows.append(
+            {
+                "metric": key,
+                "left_value": left_val,
+                "right_value": right_val,
+                "delta": delta,
+                "pct_change": pct_change,
+            }
+        )
+
+    return {
+        "left": {
+            "product": payload.left_product,
+            "from": payload.left_from,
+            "to": payload.left_to,
+            "rows": int(len(left_df.index)),
+        },
+        "right": {
+            "product": payload.right_product,
+            "from": payload.right_from,
+            "to": payload.right_to,
+            "rows": int(len(right_df.index)),
+        },
+        "metrics": rows,
     }
 
 

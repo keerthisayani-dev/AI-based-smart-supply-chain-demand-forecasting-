@@ -841,6 +841,85 @@
     }
     .xai-impact-up { color: #34d399; }
     .xai-impact-down { color: #fca5a5; }
+    .dynamic-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .dynamic-card {
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .dynamic-title {
+      margin: 0;
+      font-size: 14px;
+      color: #e7efff;
+      font-weight: 700;
+    }
+    .dynamic-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .dynamic-row-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .dynamic-card input,
+    .dynamic-card select {
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--line-soft);
+      background: rgba(18, 30, 53, 0.95);
+      color: #e7edf8;
+      padding: 0 10px;
+      font-size: 12px;
+      font-family: inherit;
+    }
+    .dynamic-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .dynamic-note {
+      color: #9fb5df;
+      font-size: 12px;
+      margin: 0;
+    }
+    .dynamic-editor-table-wrap,
+    .dynamic-compare-table-wrap {
+      max-height: 260px;
+      overflow: auto;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 10px;
+      background: rgba(12, 20, 36, 0.55);
+    }
+    .dynamic-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .dynamic-table th,
+    .dynamic-table td {
+      padding: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      text-align: left;
+      white-space: nowrap;
+    }
+    .dynamic-table th {
+      color: #9fb2d6;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .delta-pos { color: #34d399; }
+    .delta-neg { color: #fca5a5; }
 
     .control-row {
       display: flex;
@@ -1202,7 +1281,8 @@
       .metrics,
       .data-grid,
       .insight-grid,
-      .xai-grid {
+      .xai-grid,
+      .dynamic-grid {
         grid-template-columns: 1fr;
       }
       .top-nav {
@@ -1483,7 +1563,87 @@
         </article>
       </div>
     </section>
-
+    <section class="glass-card" id="dynamicCompareSection">
+      <div class="chart-head">
+        <h3>Dynamic Dataset Editor and Product Comparison</h3>
+      </div>
+      <div class="dynamic-grid">
+        <article class="dynamic-card" id="dynamicEditorCard">
+          <h4 class="dynamic-title">Edit Dynamic Records</h4>
+          <div class="dynamic-row">
+            <select id="dynFilterProduct"></select>
+            <button class="btn" id="dynLoadRecordsBtn" type="button">Load Records</button>
+          </div>
+          <div class="dynamic-row">
+            <input id="dynFilterFromDate" type="date" />
+            <input id="dynFilterToDate" type="date" />
+          </div>
+          <p class="dynamic-note" id="dynEditorStatus">Load records to edit or delete existing entries.</p>
+          <div class="dynamic-editor-table-wrap">
+            <table class="dynamic-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Product</th>
+                  <th>Units</th>
+                  <th>Price</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="dynEditorBody">
+                <tr><td colspan="5">No records loaded.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="dynamic-row-3">
+            <input id="dynAddDate" type="date" />
+            <select id="dynAddProduct"></select>
+            <input id="dynAddUnits" type="number" step="0.01" placeholder="Units sold" />
+          </div>
+          <div class="dynamic-row-3">
+            <input id="dynAddPrice" type="number" step="0.01" placeholder="Price (optional)" />
+            <input id="dynAddDiscount" type="number" step="0.01" placeholder="Discount (optional)" />
+            <button class="btn" id="dynAddRecordBtn" type="button">Add Record</button>
+          </div>
+        </article>
+        <article class="dynamic-card" id="dynamicCompareCard">
+          <h4 class="dynamic-title">Compare Two Products or Two Time Windows</h4>
+          <div class="dynamic-row">
+            <select id="cmpLeftProduct"></select>
+            <select id="cmpRightProduct"></select>
+          </div>
+          <div class="dynamic-row">
+            <input id="cmpLeftFrom" type="date" />
+            <input id="cmpLeftTo" type="date" />
+          </div>
+          <div class="dynamic-row">
+            <input id="cmpRightFrom" type="date" />
+            <input id="cmpRightTo" type="date" />
+          </div>
+          <div class="dynamic-actions">
+            <button class="btn" id="cmpRunBtn" type="button">Compare</button>
+            <button class="btn btn-secondary" id="cmpSameProductBtn" type="button">Use Same Product</button>
+          </div>
+          <p class="dynamic-note" id="cmpStatus">Select products and date ranges, then click Compare.</p>
+          <div class="dynamic-compare-table-wrap">
+            <table class="dynamic-table">
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>Left</th>
+                  <th>Right</th>
+                  <th>Delta</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody id="cmpTableBody">
+                <tr><td colspan="5">No comparison run yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </section>
     <section class="data-grid">
       <article class="glass-card">
         <h3 class="table-title" id="historyTitle">Recent History</h3>
@@ -1564,9 +1724,19 @@
     let currentUserName = "";
     let roleAccessNote = "Viewer access: read-only forecast dashboard. Export and inventory insights are restricted.";
     const SIDEBAR_COLLAPSED_KEY = "results_sidebar_collapsed_v1";
+    let dynamicProductOptions = [];
+    let dynamicRecordsCache = [];
 
     function apiBase() {
       return window.location.origin;
+    }
+
+    async function authFetch(url, options = {}) {
+      const resp = await fetch(url, { credentials: "same-origin", ...options });
+      if (resp.status === 401) {
+        window.location.href = "/login";
+      }
+      return resp;
     }
 
     function toNum(v) {
@@ -1614,6 +1784,7 @@
       const inventoryInsightsSection = document.getElementById("inventoryInsightsSection");
       const profitabilitySection = document.getElementById("profitabilitySection");
       const adminControlsSection = document.getElementById("adminControlsSection");
+      const dynamicEditorCard = document.getElementById("dynamicEditorCard");
       const downloadDropdownEl = document.getElementById("downloadDropdown");
       const downloadPdfItem = document.getElementById("downloadPdfItem");
       const chartDownloadBtn = document.getElementById("chartDownloadBtn");
@@ -1623,6 +1794,7 @@
       if (inventoryInsightsSection) inventoryInsightsSection.style.display = (isAdmin || isInventoryManager) ? "" : "none";
       if (profitabilitySection) profitabilitySection.style.display = isAdmin ? "" : "none";
       if (adminControlsSection) adminControlsSection.style.display = isAdmin ? "" : "none";
+      if (dynamicEditorCard) dynamicEditorCard.style.display = (isAdmin || isInventoryManager) ? "" : "none";
       if (downloadDropdownEl) downloadDropdownEl.style.display = isViewer ? "none" : "";
       if (downloadPdfItem) downloadPdfItem.style.display = isInventoryManager ? "none" : "";
       if (chartDownloadBtn) chartDownloadBtn.style.display = isViewer ? "none" : "";
@@ -1737,6 +1909,291 @@
         throw new Error(detail);
       }
       return resp.json();
+    }
+
+    function formatMetricLabel(metricKey) {
+      const mapping = {
+        rows: "Rows",
+        total_units_sold: "Total Units Sold",
+        avg_units_sold: "Avg Units Sold",
+        avg_price: "Avg Price",
+        avg_discount: "Avg Discount",
+        avg_inventory_level: "Avg Inventory Level",
+        avg_units_ordered: "Avg Units Ordered",
+        avg_demand_forecast: "Avg Demand Forecast",
+      };
+      return mapping[String(metricKey || "")] || String(metricKey || "");
+    }
+
+    function setDynamicEditorStatus(msg) {
+      const el = document.getElementById("dynEditorStatus");
+      if (el) el.textContent = String(msg || "");
+    }
+
+    function setCompareStatus(msg) {
+      const el = document.getElementById("cmpStatus");
+      if (el) el.textContent = String(msg || "");
+    }
+
+    function populateProductSelect(selectId, includeAll = false) {
+      const el = document.getElementById(selectId);
+      if (!el) return;
+      const current = String(el.value || "");
+      const options = includeAll
+        ? ['<option value="">All Products</option>']
+        : ['<option value="" disabled selected>Select Product</option>'];
+      dynamicProductOptions.forEach((p) => {
+        options.push(`<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`);
+      });
+      el.innerHTML = options.join("");
+      if (current && dynamicProductOptions.includes(current)) {
+        el.value = current;
+      } else if (!includeAll && dynamicProductOptions.length) {
+        el.value = dynamicProductOptions[0];
+      }
+    }
+
+    function renderDynamicRecords(items) {
+      const body = document.getElementById("dynEditorBody");
+      if (!body) return;
+      dynamicRecordsCache = Array.isArray(items) ? items : [];
+      if (!dynamicRecordsCache.length) {
+        body.innerHTML = "<tr><td colspan='5'>No records found for selected filter.</td></tr>";
+        return;
+      }
+      const viewerMode = currentUserRole === "viewer";
+      body.innerHTML = dynamicRecordsCache.map((r) => `
+        <tr>
+          <td>${escapeHtml(r.date || "-")}</td>
+          <td>${escapeHtml(r.product_id || r.category || "-")}</td>
+          <td>${Number(r.units_sold || 0).toFixed(2)}</td>
+          <td>${r.price == null ? "-" : Number(r.price).toFixed(2)}</td>
+          <td>
+            ${viewerMode ? "-" : `
+              <button class="mini-btn" type="button" data-dyn-edit="${escapeHtml(r.record_id || "")}">Edit</button>
+              <button class="mini-btn" type="button" data-dyn-delete="${escapeHtml(r.record_id || "")}">Delete</button>
+            `}
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    async function loadDynamicOptions() {
+      let payload = {};
+      try {
+        const resp = await authFetch(`${apiBase()}/dynamic-data/options`, { cache: "no-store" });
+        if (resp.ok) {
+          payload = await resp.json();
+        }
+      } catch (_) {
+        // Fall through to categories fallback.
+      }
+
+      dynamicProductOptions = Array.isArray(payload.products) ? payload.products : [];
+      if (!dynamicProductOptions.length) {
+        try {
+          const catResp = await authFetch(`${apiBase()}/categories`, { cache: "no-store" });
+          if (catResp.ok) {
+            const catPayload = await catResp.json();
+            const categories = Array.isArray(catPayload?.categories) ? catPayload.categories : [];
+            const productIds = Array.isArray(catPayload?.product_ids) ? catPayload.product_ids : [];
+            dynamicProductOptions = [...new Set([...categories, ...productIds].map((v) => String(v || "").trim()).filter(Boolean))];
+          }
+        } catch (_) {
+          // Keep empty options and surface message below.
+        }
+      }
+      populateProductSelect("dynFilterProduct", true);
+      populateProductSelect("dynAddProduct", false);
+      populateProductSelect("cmpLeftProduct", false);
+      populateProductSelect("cmpRightProduct", false);
+
+      const fromEl = document.getElementById("dynFilterFromDate");
+      const toEl = document.getElementById("dynFilterToDate");
+      const addDateEl = document.getElementById("dynAddDate");
+      const leftFromEl = document.getElementById("cmpLeftFrom");
+      const leftToEl = document.getElementById("cmpLeftTo");
+      const rightFromEl = document.getElementById("cmpRightFrom");
+      const rightToEl = document.getElementById("cmpRightTo");
+      const minDate = String(payload.min_date || "");
+      const maxDate = String(payload.max_date || "");
+      [fromEl, toEl, addDateEl, leftFromEl, leftToEl, rightFromEl, rightToEl].forEach((el) => {
+        if (!el) return;
+        if (minDate) el.min = minDate;
+        if (maxDate) el.max = maxDate;
+      });
+      if (fromEl && !fromEl.value && minDate) fromEl.value = minDate;
+      if (toEl && !toEl.value && maxDate) toEl.value = maxDate;
+      if (addDateEl && !addDateEl.value && maxDate) addDateEl.value = maxDate;
+      if (leftFromEl && !leftFromEl.value && minDate) leftFromEl.value = minDate;
+      if (leftToEl && !leftToEl.value && maxDate) leftToEl.value = maxDate;
+      if (rightFromEl && !rightFromEl.value && minDate) rightFromEl.value = minDate;
+      if (rightToEl && !rightToEl.value && maxDate) rightToEl.value = maxDate;
+      if (dynamicProductOptions.length) {
+        const rightSel = document.getElementById("cmpRightProduct");
+        if (rightSel && !rightSel.value) rightSel.value = dynamicProductOptions[Math.min(1, dynamicProductOptions.length - 1)];
+      } else {
+        setDynamicEditorStatus("No products found. Check dataset columns and API auth/session.");
+        setCompareStatus("No products found. Try reloading the page after login.");
+      }
+    }
+
+    async function loadDynamicRecords() {
+      const product = String(document.getElementById("dynFilterProduct")?.value || "");
+      const fromDate = String(document.getElementById("dynFilterFromDate")?.value || "");
+      const toDate = String(document.getElementById("dynFilterToDate")?.value || "");
+      const qs = new URLSearchParams();
+      if (product) qs.set("product", product);
+      if (fromDate && toDate) {
+        qs.set("from_date", fromDate);
+        qs.set("to_date", toDate);
+      }
+      qs.set("limit", "300");
+      setDynamicEditorStatus("Loading records...");
+      const resp = await authFetch(`${apiBase()}/dynamic-data/records?${qs.toString()}`, { cache: "no-store" });
+      if (!resp.ok) throw new Error(`Load failed (${resp.status})`);
+      const payload = await resp.json();
+      renderDynamicRecords(payload.items || []);
+      setDynamicEditorStatus(`Loaded ${Number(payload.count || 0)} records.`);
+    }
+
+    async function addDynamicRecord() {
+      const product = String(document.getElementById("dynAddProduct")?.value || "").trim();
+      const date = String(document.getElementById("dynAddDate")?.value || "").trim();
+      const units = String(document.getElementById("dynAddUnits")?.value || "").trim();
+      const price = String(document.getElementById("dynAddPrice")?.value || "").trim();
+      const discount = String(document.getElementById("dynAddDiscount")?.value || "").trim();
+      if (!product || !date || !units) {
+        setDynamicEditorStatus("Product, date, and units sold are required.");
+        return;
+      }
+      setDynamicEditorStatus("Adding record...");
+      const body = {
+        record: {
+          date,
+          product_id: product,
+          category: product,
+          units_sold: Number(units),
+          ...(price ? { price: Number(price) } : {}),
+          ...(discount ? { discount: Number(discount) } : {}),
+        },
+      };
+      const resp = await authFetch(`${apiBase()}/dynamic-data/records/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const payload = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(String(payload?.detail || `Add failed (${resp.status})`));
+      }
+      document.getElementById("dynAddUnits").value = "";
+      document.getElementById("dynAddPrice").value = "";
+      document.getElementById("dynAddDiscount").value = "";
+      setDynamicEditorStatus("Record added successfully.");
+      await loadDynamicRecords();
+      await loadDynamicOptions();
+      await loadResults();
+    }
+
+    async function editDynamicRecordById(recordId) {
+      const row = dynamicRecordsCache.find((r) => String(r.record_id) === String(recordId));
+      if (!row) return;
+      const units = window.prompt("Edit units sold", String(row.units_sold ?? ""));
+      if (units === null) return;
+      const price = window.prompt("Edit price (leave blank to clear)", row.price == null ? "" : String(row.price));
+      if (price === null) return;
+      const discount = window.prompt("Edit discount (leave blank to clear)", row.discount == null ? "" : String(row.discount));
+      if (discount === null) return;
+
+      setDynamicEditorStatus("Saving changes...");
+      const updates = {
+        units_sold: units === "" ? row.units_sold : Number(units),
+        price: price === "" ? null : Number(price),
+        discount: discount === "" ? null : Number(discount),
+      };
+      const resp = await authFetch(`${apiBase()}/dynamic-data/records/edit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ record_id: recordId, updates }),
+      });
+      const payload = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(String(payload?.detail || `Edit failed (${resp.status})`));
+      }
+      setDynamicEditorStatus("Record updated.");
+      await loadDynamicRecords();
+      await loadResults();
+    }
+
+    async function deleteDynamicRecordById(recordId) {
+      const ok = window.confirm("Delete this record?");
+      if (!ok) return;
+      setDynamicEditorStatus("Deleting record...");
+      const resp = await authFetch(`${apiBase()}/dynamic-data/records/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ record_id: recordId }),
+      });
+      const payload = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(String(payload?.detail || `Delete failed (${resp.status})`));
+      }
+      setDynamicEditorStatus("Record deleted.");
+      await loadDynamicRecords();
+      await loadDynamicOptions();
+      await loadResults();
+    }
+
+    async function runDynamicComparison() {
+      const leftProduct = String(document.getElementById("cmpLeftProduct")?.value || "").trim();
+      const rightProduct = String(document.getElementById("cmpRightProduct")?.value || "").trim();
+      const leftFrom = String(document.getElementById("cmpLeftFrom")?.value || "").trim();
+      const leftTo = String(document.getElementById("cmpLeftTo")?.value || "").trim();
+      const rightFrom = String(document.getElementById("cmpRightFrom")?.value || "").trim();
+      const rightTo = String(document.getElementById("cmpRightTo")?.value || "").trim();
+      const bodyEl = document.getElementById("cmpTableBody");
+      if (!leftProduct || !rightProduct || !leftFrom || !leftTo || !rightFrom || !rightTo) {
+        setCompareStatus("Select both products and both date windows.");
+        return;
+      }
+      setCompareStatus("Running comparison...");
+      const resp = await authFetch(`${apiBase()}/dynamic-data/compare`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          left_product: leftProduct,
+          right_product: rightProduct,
+          left_from: leftFrom,
+          left_to: leftTo,
+          right_from: rightFrom,
+          right_to: rightTo,
+        }),
+      });
+      const payload = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(String(payload?.detail || `Compare failed (${resp.status})`));
+      }
+      const rows = Array.isArray(payload.metrics) ? payload.metrics : [];
+      if (!rows.length) {
+        bodyEl.innerHTML = "<tr><td colspan='5'>No metrics returned.</td></tr>";
+      } else {
+        bodyEl.innerHTML = rows.map((r) => {
+          const delta = Number(r.delta || 0);
+          const deltaCls = delta >= 0 ? "delta-pos" : "delta-neg";
+          const pct = Number(r.pct_change || 0);
+          return `
+            <tr>
+              <td>${escapeHtml(formatMetricLabel(r.metric))}</td>
+              <td>${Number(r.left_value || 0).toFixed(2)}</td>
+              <td>${Number(r.right_value || 0).toFixed(2)}</td>
+              <td class="${deltaCls}">${delta >= 0 ? "+" : ""}${delta.toFixed(2)}</td>
+              <td class="${deltaCls}">${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%</td>
+            </tr>
+          `;
+        }).join("");
+      }
+      setCompareStatus(`Compared ${payload.left?.product || leftProduct} (${payload.left?.from || leftFrom} to ${payload.left?.to || leftTo}) vs ${payload.right?.product || rightProduct} (${payload.right?.from || rightFrom} to ${payload.right?.to || rightTo}).`);
     }
 
     async function applyRoleUi() {
@@ -3169,6 +3626,64 @@
       }
     });
 
+    const dynLoadRecordsBtn = document.getElementById("dynLoadRecordsBtn");
+    const dynAddRecordBtn = document.getElementById("dynAddRecordBtn");
+    const cmpRunBtn = document.getElementById("cmpRunBtn");
+    const cmpSameProductBtn = document.getElementById("cmpSameProductBtn");
+    const dynEditorBody = document.getElementById("dynEditorBody");
+
+    if (dynLoadRecordsBtn) {
+      dynLoadRecordsBtn.addEventListener("click", async () => {
+        try {
+          await loadDynamicRecords();
+        } catch (err) {
+          setDynamicEditorStatus(String(err?.message || "Failed to load records."));
+        }
+      });
+    }
+    if (dynAddRecordBtn) {
+      dynAddRecordBtn.addEventListener("click", async () => {
+        try {
+          await addDynamicRecord();
+        } catch (err) {
+          setDynamicEditorStatus(String(err?.message || "Failed to add record."));
+        }
+      });
+    }
+    if (cmpRunBtn) {
+      cmpRunBtn.addEventListener("click", async () => {
+        try {
+          await runDynamicComparison();
+        } catch (err) {
+          setCompareStatus(String(err?.message || "Comparison failed."));
+        }
+      });
+    }
+    if (cmpSameProductBtn) {
+      cmpSameProductBtn.addEventListener("click", () => {
+        const left = document.getElementById("cmpLeftProduct");
+        const right = document.getElementById("cmpRightProduct");
+        if (left && right) right.value = left.value || "";
+      });
+    }
+    if (dynEditorBody) {
+      dynEditorBody.addEventListener("click", async (e) => {
+        const editBtn = e.target.closest("[data-dyn-edit]");
+        const delBtn = e.target.closest("[data-dyn-delete]");
+        try {
+          if (editBtn) {
+            await editDynamicRecordById(editBtn.getAttribute("data-dyn-edit"));
+            return;
+          }
+          if (delBtn) {
+            await deleteDynamicRecordById(delBtn.getAttribute("data-dyn-delete"));
+          }
+        } catch (err) {
+          setDynamicEditorStatus(String(err?.message || "Record action failed."));
+        }
+      });
+    }
+
     function loadScript(url) {
       return new Promise((resolve, reject) => {
         const s = document.createElement("script");
@@ -3211,6 +3726,13 @@
         }
       }
       await applyRoleUi();
+      try {
+        await loadDynamicOptions();
+        await loadDynamicRecords();
+      } catch (err) {
+        setDynamicEditorStatus(`Dynamic data unavailable: ${String(err?.message || "Unknown error")}`);
+        setCompareStatus(`Dynamic compare unavailable: ${String(err?.message || "Unknown error")}`);
+      }
       await loadResults();
       const shell = document.querySelector(".page-shell");
       if (shell) {
