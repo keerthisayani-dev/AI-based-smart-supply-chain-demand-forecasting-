@@ -2147,16 +2147,42 @@
 
     async function runDynamicComparison() {
       const leftProduct = String(document.getElementById("cmpLeftProduct")?.value || "").trim();
-      const rightProduct = String(document.getElementById("cmpRightProduct")?.value || "").trim();
+      let rightProduct = String(document.getElementById("cmpRightProduct")?.value || "").trim();
       const leftFrom = String(document.getElementById("cmpLeftFrom")?.value || "").trim();
       const leftTo = String(document.getElementById("cmpLeftTo")?.value || "").trim();
-      const rightFrom = String(document.getElementById("cmpRightFrom")?.value || "").trim();
-      const rightTo = String(document.getElementById("cmpRightTo")?.value || "").trim();
+      let rightFrom = String(document.getElementById("cmpRightFrom")?.value || "").trim();
+      let rightTo = String(document.getElementById("cmpRightTo")?.value || "").trim();
       const bodyEl = document.getElementById("cmpTableBody");
       if (!leftProduct || !rightProduct || !leftFrom || !leftTo || !rightFrom || !rightTo) {
         setCompareStatus("Select both products and both date windows.");
         return;
       }
+
+      // If both sides are identical, auto-shift right window backward by the same duration
+      // so comparison shows meaningful differences instead of all zeros.
+      const identicalSelection =
+        leftProduct === rightProduct &&
+        leftFrom === rightFrom &&
+        leftTo === rightTo;
+      if (identicalSelection) {
+        const lf = new Date(`${leftFrom}T00:00:00`);
+        const lt = new Date(`${leftTo}T00:00:00`);
+        if (!Number.isNaN(lf.getTime()) && !Number.isNaN(lt.getTime()) && lt >= lf) {
+          const oneDayMs = 24 * 60 * 60 * 1000;
+          const durationDays = Math.floor((lt.getTime() - lf.getTime()) / oneDayMs) + 1;
+          const shiftedTo = new Date(lf.getTime() - oneDayMs);
+          const shiftedFrom = new Date(shiftedTo.getTime() - ((durationDays - 1) * oneDayMs));
+          const toIso = (d) => d.toISOString().slice(0, 10);
+          rightFrom = toIso(shiftedFrom);
+          rightTo = toIso(shiftedTo);
+          const rightFromEl = document.getElementById("cmpRightFrom");
+          const rightToEl = document.getElementById("cmpRightTo");
+          if (rightFromEl) rightFromEl.value = rightFrom;
+          if (rightToEl) rightToEl.value = rightTo;
+          setCompareStatus(`Same selection detected. Auto-adjusted right window to ${rightFrom} to ${rightTo}.`);
+        }
+      }
+
       setCompareStatus("Running comparison...");
       const resp = await authFetch(`${apiBase()}/dynamic-data/compare`, {
         method: "POST",
