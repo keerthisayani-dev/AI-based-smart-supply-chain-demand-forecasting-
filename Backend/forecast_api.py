@@ -1445,13 +1445,49 @@ def _platform_compare_metrics(df: pd.DataFrame) -> Dict[str, float]:
 
 
 def _better_platform(metric: str, v1: float, v2: float, p1: str, p2: str) -> str:
-    if abs(v1 - v2) < 1e-12:
+    abs_diff = abs(v1 - v2)
+    max_base = max(abs(v1), abs(v2), 1e-9)
+    rel_diff = abs_diff / max_base
+    # Treat tiny movements as ties so "better" is not noisy.
+    if rel_diff < 0.005:  # 0.5%
         return "Tie"
     # For price lower is better; for demand metrics higher is better.
     lower_better = {"price"}
     if metric in lower_better:
         return p1 if v1 < v2 else p2
     return p1 if v1 > v2 else p2
+
+
+def _infer_platform_partition(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, str]:
+    if df.empty:
+        return df.copy(), df.copy(), "none"
+
+    price_col = _dynamic_find_col(df, "price")
+    if price_col:
+        price_vals = pd.to_numeric(_dynamic_get_series(df, price_col), errors="coerce")
+        valid_mask = price_vals.notna()
+        if int(valid_mask.sum()) >= 2:
+            median_price = float(price_vals[valid_mask].median())
+            low_price = df.loc[valid_mask & (price_vals <= median_price)].copy()
+            high_price = df.loc[valid_mask & (price_vals > median_price)].copy()
+            if not low_price.empty and not high_price.empty:
+                return low_price, high_price, "price_median_split"
+
+    ordered = df.copy()
+    date_col = _dynamic_find_col(ordered, "date")
+    if date_col:
+        sort_dates = parse_date_series(_dynamic_get_series(ordered, date_col))
+        ordered = ordered.assign(__sort_date__=sort_dates).sort_values("__sort_date__").drop(columns=["__sort_date__"], errors="ignore")
+    left_rows: List[int] = []
+    right_rows: List[int] = []
+    for idx, row_index in enumerate(ordered.index.tolist()):
+        if idx % 2 == 0:
+            left_rows.append(row_index)
+        else:
+            right_rows.append(row_index)
+    left_df = ordered.loc[left_rows].copy() if left_rows else ordered.iloc[0:0].copy()
+    right_df = ordered.loc[right_rows].copy() if right_rows else ordered.iloc[0:0].copy()
+    return left_df, right_df, "alternating_rows"
 
 
 def _looks_like_product_id(value: str) -> bool:
@@ -2449,8 +2485,71 @@ def dynamic_data_compare(payload: DynamicCompareRequest, request: Request) -> Di
         with _engine_lock:
             df = _load_dynamic_dataset()
             base_df = _date_filtered(_filter_dynamic_product(df, payload.product), payload.from_date, payload.to_date)
+            same_platform_mode = str(payload.platform_1).strip().lower() == str(payload.platform_2).strip().lower()
+            compare_from = payload.from_date
+            compare_to = payload.to_date
             left_df = _filter_dynamic_platform(base_df, payload.platform_1)
             right_df = _filter_dynamic_platform(base_df, payload.platform_2)
+            inference_mode = "exact_platform"
+            # Many historical rows may not yet have platform populated.
+            # If both selected platforms are empty, infer two non-overlapping slices.
+            fallback_used = False
+            if same_platform_mode:
+                start_ts = pd.to_datetime(payload.from_date, errors="coerce")
+                end_ts = pd.to_datetime(payload.to_date, errors="coerce")
+                if pd.isna(start_ts) or pd.isna(end_ts) or end_ts < start_ts:
+                    raise HTTPException(status_code=400, detail="Invalid compare date range")
+                days = int((end_ts - start_ts).days) + 1
+                prev_to = start_ts - pd.Timedelta(days=1)
+                prev_from = prev_to - pd.Timedelta(days=max(0, days - 1))
+                compare_from = prev_from.strftime("%Y-%m-%d")
+                compare_to = prev_to.strftime("%Y-%m-%d")
+                prev_base = _date_filtered(_filter_dynamic_product(df, payload.product), compare_from, compare_to)
+                right_df = _filter_dynamic_platform(prev_base, payload.platform_2)
+                inference_mode = "same_platform_previous_period"
+                if right_df.empty and not left_df.empty:
+                    date_col = _dynamic_find_col(left_df, "date")
+                    if date_col:
+                        sort_dates = parse_date_series(_dynamic_get_series(left_df, date_col))
+                        ordered = left_df.assign(__sort_date__=sort_dates).sort_values("__sort_date__").drop(columns=["__sort_date__"], errors="ignore")
+                    else:
+                        ordered = left_df.copy()
+                    split = max(1, len(ordered.index) // 2)
+                    left_split = ordered.iloc[:split].copy()
+                    right_split = ordered.iloc[split:].copy()
+                    if not right_split.empty:
+                        left_df = left_split
+                        right_df = right_split
+                        inference_mode = "same_platform_split_current_range"
+                        fallback_used = True
+            if left_df.empty and right_df.empty and not base_df.empty:
+                left_df, right_df, inference_mode = _infer_platform_partition(base_df)
+                fallback_used = True
+            else:
+                if left_df.empty and not base_df.empty:
+                    left_df = base_df.drop(index=right_df.index, errors="ignore").copy()
+                    if left_df.empty:
+                        # Ensure non-overlapping fallback groups instead of copying all rows.
+                        inferred_left, inferred_right, inferred_mode = _infer_platform_partition(base_df)
+                        left_df = inferred_left
+                        if right_df.empty:
+                            right_df = inferred_right
+                        inference_mode = f"left_inferred_{inferred_mode}"
+                    else:
+                        inference_mode = "left_complement_fallback"
+                    fallback_used = True
+                if right_df.empty and not base_df.empty:
+                    right_df = base_df.drop(index=left_df.index, errors="ignore").copy()
+                    if right_df.empty:
+                        # Ensure non-overlapping fallback groups instead of copying all rows.
+                        inferred_left, inferred_right, inferred_mode = _infer_platform_partition(base_df)
+                        if left_df.empty:
+                            left_df = inferred_left
+                        right_df = inferred_right
+                        inference_mode = f"right_inferred_{inferred_mode}"
+                    else:
+                        inference_mode = "right_complement_fallback"
+                    fallback_used = True
             left_metrics = _platform_compare_metrics(left_df)
             right_metrics = _platform_compare_metrics(right_df)
     except HTTPException:
@@ -2479,8 +2578,13 @@ def dynamic_data_compare(payload: DynamicCompareRequest, request: Request) -> Di
         "to": payload.to_date,
         "platform_1": payload.platform_1,
         "platform_2": payload.platform_2,
+        "same_platform_mode": bool(same_platform_mode),
+        "compare_from": compare_from,
+        "compare_to": compare_to,
         "rows_platform_1": int(len(left_df.index)),
         "rows_platform_2": int(len(right_df.index)),
+        "fallback_used": bool(fallback_used),
+        "inference_mode": inference_mode,
         "metrics": rows,
     }
 

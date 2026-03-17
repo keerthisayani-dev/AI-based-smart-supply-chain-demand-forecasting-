@@ -2325,7 +2325,7 @@
     async function runDynamicComparison() {
       const product = String(document.getElementById("cmpProduct")?.value || "").trim();
       const platform1 = String(document.getElementById("cmpPlatform1")?.value || "").trim();
-      const platform2 = String(document.getElementById("cmpPlatform2")?.value || "").trim();
+      let platform2 = String(document.getElementById("cmpPlatform2")?.value || "").trim();
       const fromDate = String(document.getElementById("cmpFromDate")?.value || "").trim();
       const toDate = String(document.getElementById("cmpToDate")?.value || "").trim();
       const bodyEl = document.getElementById("cmpTableBody");
@@ -2371,7 +2371,20 @@
           `;
         }).join("");
       }
-      setCompareStatus(`Compared ${payload.product || product} (${payload.from || fromDate} to ${payload.to || toDate}) across ${payload.platform_1 || platform1} vs ${payload.platform_2 || platform2}.`);
+      const fallbackMode = String(payload.inference_mode || "");
+      if (payload.same_platform_mode && colP2El) {
+        colP2El.textContent = `${payload.platform_2 || platform2} (${payload.compare_from || fromDate} to ${payload.compare_to || toDate})`;
+      }
+      const fallbackNote = payload.fallback_used
+        ? ` Missing platform rows detected; inferred platform split used (${fallbackMode || "fallback"}).`
+        : "";
+      if (payload.same_platform_mode) {
+        setCompareStatus(
+          `Compared ${payload.product || product}: ${payload.platform_1 || platform1} (${payload.from || fromDate} to ${payload.to || toDate}) vs ${payload.platform_2 || platform2} (${payload.compare_from || fromDate} to ${payload.compare_to || toDate}).${fallbackNote}`
+        );
+      } else {
+        setCompareStatus(`Compared ${payload.product || product} (${payload.from || fromDate} to ${payload.to || toDate}) across ${payload.platform_1 || platform1} vs ${payload.platform_2 || platform2}.${fallbackNote}`);
+      }
     }
 
     async function applyRoleUi() {
