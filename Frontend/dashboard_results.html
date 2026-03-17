@@ -1710,59 +1710,58 @@
                 <tr>
                   <th>Date</th>
                   <th>Product</th>
+                  <th>Platform</th>
                   <th>Units</th>
                   <th>Price</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="dynEditorBody">
-                <tr><td colspan="5">No records loaded.</td></tr>
+                <tr><td colspan="6">No records loaded.</td></tr>
               </tbody>
             </table>
           </div>
           <div class="dynamic-row-3">
             <input id="dynAddDate" type="text" placeholder="YYYY-MM-DD" />
             <select id="dynAddProduct"></select>
-            <input id="dynAddUnits" type="number" step="0.01" placeholder="Units sold" />
+            <select id="dynAddPlatform"></select>
           </div>
           <div class="dynamic-row-3">
+            <input id="dynAddUnits" type="number" step="0.01" placeholder="Units sold" />
             <input id="dynAddPrice" type="number" step="0.01" placeholder="Price (optional)" />
             <input id="dynAddDiscount" type="number" step="0.01" placeholder="Discount (optional)" />
+          </div>
+          <div class="dynamic-row">
             <button class="btn" id="dynAddRecordBtn" type="button">Add Record</button>
           </div>
         </article>
         <article class="dynamic-card" id="dynamicCompareCard">
-          <h4 class="dynamic-title">Compare Two Products or Two Time Windows</h4>
+          <h4 class="dynamic-title">Compare Product Across Platforms</h4>
           <div class="dynamic-row">
-            <select id="cmpLeftProduct"></select>
-            <select id="cmpRightProduct"></select>
+            <select id="cmpProduct"></select>
+            <select id="cmpPlatform1"></select>
           </div>
           <div class="dynamic-row">
-            <input id="cmpLeftFrom" type="text" placeholder="YYYY-MM-DD" />
-            <input id="cmpLeftTo" type="text" placeholder="YYYY-MM-DD" />
-          </div>
-          <div class="dynamic-row">
-            <input id="cmpRightFrom" type="text" placeholder="YYYY-MM-DD" />
-            <input id="cmpRightTo" type="text" placeholder="YYYY-MM-DD" />
-          </div>
-          <div class="dynamic-actions">
+            <select id="cmpPlatform2"></select>
             <button class="btn" id="cmpRunBtn" type="button">Compare</button>
-            <button class="btn btn-secondary" id="cmpSameProductBtn" type="button">Use Same Product</button>
           </div>
-          <p class="dynamic-note" id="cmpStatus">Select products and date ranges, then click Compare.</p>
+          <div class="dynamic-row">
+            <input id="cmpFromDate" type="text" placeholder="YYYY-MM-DD" />
+            <input id="cmpToDate" type="text" placeholder="YYYY-MM-DD" />
+          </div>
+          <p class="dynamic-note" id="cmpStatus">Select product, platforms, and date range, then click Compare.</p>
           <div class="dynamic-compare-table-wrap">
             <table class="dynamic-table">
               <thead>
                 <tr>
                   <th>Metric</th>
-                  <th>Left</th>
-                  <th>Right</th>
-                  <th>Delta</th>
-                  <th>%</th>
+                  <th id="cmpColP1">Platform 1</th>
+                  <th id="cmpColP2">Platform 2</th>
+                  <th>Better</th>
                 </tr>
               </thead>
               <tbody id="cmpTableBody">
-                <tr><td colspan="5">No comparison run yet.</td></tr>
+                <tr><td colspan="4">No comparison run yet.</td></tr>
               </tbody>
             </table>
           </div>
@@ -1850,6 +1849,7 @@
     let roleAccessNote = "Viewer access: read-only forecast dashboard. Export and inventory insights are restricted.";
     const SIDEBAR_COLLAPSED_KEY = "results_sidebar_collapsed_v1";
     let dynamicProductOptions = [];
+    let dynamicPlatformOptions = [];
     let dynamicRecordsCache = [];
     let dynamicDatePickers = [];
 
@@ -2039,14 +2039,10 @@
 
     function formatMetricLabel(metricKey) {
       const mapping = {
-        rows: "Rows",
-        total_units_sold: "Total Units Sold",
-        avg_units_sold: "Avg Units Sold",
-        avg_price: "Avg Price",
-        avg_discount: "Avg Discount",
-        avg_inventory_level: "Avg Inventory Level",
-        avg_units_ordered: "Avg Units Ordered",
-        avg_demand_forecast: "Avg Demand Forecast",
+        avg_demand: "Avg Demand",
+        max_demand: "Max Demand",
+        price: "Price",
+        forecast_demand: "Forecast Demand",
       };
       return mapping[String(metricKey || "")] || String(metricKey || "");
     }
@@ -2079,6 +2075,22 @@
       }
     }
 
+    function populatePlatformSelect(selectId) {
+      const el = document.getElementById(selectId);
+      if (!el) return;
+      const current = String(el.value || "");
+      const options = ['<option value="" disabled selected>Select Platform</option>'];
+      dynamicPlatformOptions.forEach((p) => {
+        options.push(`<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`);
+      });
+      el.innerHTML = options.join("");
+      if (current && dynamicPlatformOptions.includes(current)) {
+        el.value = current;
+      } else if (dynamicPlatformOptions.length) {
+        el.value = dynamicPlatformOptions[0];
+      }
+    }
+
     function initDynamicDatePickers(minDate = "", maxDate = "") {
       if (!window.flatpickr) return;
       dynamicDatePickers.forEach((picker) => {
@@ -2093,10 +2105,8 @@
         "dynFilterFromDate",
         "dynFilterToDate",
         "dynAddDate",
-        "cmpLeftFrom",
-        "cmpLeftTo",
-        "cmpRightFrom",
-        "cmpRightTo",
+        "cmpFromDate",
+        "cmpToDate",
       ];
       ids.forEach((id) => {
         const el = document.getElementById(id);
@@ -2118,7 +2128,7 @@
       if (!body) return;
       dynamicRecordsCache = Array.isArray(items) ? items : [];
       if (!dynamicRecordsCache.length) {
-        body.innerHTML = "<tr><td colspan='5'>No records found for selected filter.</td></tr>";
+        body.innerHTML = "<tr><td colspan='6'>No records found for selected filter.</td></tr>";
         return;
       }
       const viewerMode = currentUserRole === "viewer";
@@ -2126,6 +2136,7 @@
         <tr>
           <td>${escapeHtml(r.date || "-")}</td>
           <td>${escapeHtml(r.product_id || r.category || "-")}</td>
+          <td>${escapeHtml(r.platform || "-")}</td>
           <td>${Number(r.units_sold || 0).toFixed(2)}</td>
           <td>${r.price == null ? "-" : Number(r.price).toFixed(2)}</td>
           <td>
@@ -2150,14 +2161,18 @@
       }
 
       dynamicProductOptions = Array.isArray(payload.products) ? payload.products : [];
+      dynamicPlatformOptions = Array.isArray(payload.platforms) ? payload.platforms : [];
       if (!dynamicProductOptions.length) {
         try {
           const catResp = await authFetch(`${apiBase()}/categories`, { cache: "no-store" });
           if (catResp.ok) {
             const catPayload = await catResp.json();
             const categories = Array.isArray(catPayload?.categories) ? catPayload.categories : [];
-            const productIds = Array.isArray(catPayload?.product_ids) ? catPayload.product_ids : [];
-            dynamicProductOptions = [...new Set([...categories, ...productIds].map((v) => String(v || "").trim()).filter(Boolean))];
+            dynamicProductOptions = [...new Set(categories.map((v) => String(v || "").trim()).filter(Boolean))];
+            if (!dynamicProductOptions.length) {
+              const productIds = Array.isArray(catPayload?.product_ids) ? catPayload.product_ids : [];
+              dynamicProductOptions = [...new Set(productIds.map((v) => String(v || "").trim()).filter(Boolean))];
+            }
           }
         } catch (_) {
           // Keep empty options and surface message below.
@@ -2165,19 +2180,19 @@
       }
       populateProductSelect("dynFilterProduct", true);
       populateProductSelect("dynAddProduct", false);
-      populateProductSelect("cmpLeftProduct", false);
-      populateProductSelect("cmpRightProduct", false);
+      populateProductSelect("cmpProduct", false);
+      populatePlatformSelect("dynAddPlatform");
+      populatePlatformSelect("cmpPlatform1");
+      populatePlatformSelect("cmpPlatform2");
 
       const fromEl = document.getElementById("dynFilterFromDate");
       const toEl = document.getElementById("dynFilterToDate");
       const addDateEl = document.getElementById("dynAddDate");
-      const leftFromEl = document.getElementById("cmpLeftFrom");
-      const leftToEl = document.getElementById("cmpLeftTo");
-      const rightFromEl = document.getElementById("cmpRightFrom");
-      const rightToEl = document.getElementById("cmpRightTo");
+      const cmpFromEl = document.getElementById("cmpFromDate");
+      const cmpToEl = document.getElementById("cmpToDate");
       const minDate = String(payload.min_date || "");
       const maxDate = String(payload.max_date || "");
-      [fromEl, toEl, addDateEl, leftFromEl, leftToEl, rightFromEl, rightToEl].forEach((el) => {
+      [fromEl, toEl, addDateEl, cmpFromEl, cmpToEl].forEach((el) => {
         if (!el) return;
         if (minDate) el.min = minDate;
         if (maxDate) el.max = maxDate;
@@ -2185,17 +2200,16 @@
       if (fromEl && !fromEl.value && minDate) fromEl.value = minDate;
       if (toEl && !toEl.value && maxDate) toEl.value = maxDate;
       if (addDateEl && !addDateEl.value && maxDate) addDateEl.value = maxDate;
-      if (leftFromEl && !leftFromEl.value && minDate) leftFromEl.value = minDate;
-      if (leftToEl && !leftToEl.value && maxDate) leftToEl.value = maxDate;
-      if (rightFromEl && !rightFromEl.value && minDate) rightFromEl.value = minDate;
-      if (rightToEl && !rightToEl.value && maxDate) rightToEl.value = maxDate;
+      if (cmpFromEl && !cmpFromEl.value && minDate) cmpFromEl.value = minDate;
+      if (cmpToEl && !cmpToEl.value && maxDate) cmpToEl.value = maxDate;
       initDynamicDatePickers(minDate, maxDate);
-      if (dynamicProductOptions.length) {
-        const rightSel = document.getElementById("cmpRightProduct");
-        if (rightSel && !rightSel.value) rightSel.value = dynamicProductOptions[Math.min(1, dynamicProductOptions.length - 1)];
-      } else {
+      if (!dynamicProductOptions.length) {
         setDynamicEditorStatus("No products found. Check dataset columns and API auth/session.");
         setCompareStatus("No products found. Try reloading the page after login.");
+      }
+      if (dynamicPlatformOptions.length) {
+        const p2 = document.getElementById("cmpPlatform2");
+        if (p2 && !p2.value) p2.value = dynamicPlatformOptions[Math.min(1, dynamicPlatformOptions.length - 1)];
       }
     }
 
@@ -2220,6 +2234,7 @@
 
     async function addDynamicRecord() {
       const product = String(document.getElementById("dynAddProduct")?.value || "").trim();
+      const platform = String(document.getElementById("dynAddPlatform")?.value || "").trim();
       const date = String(document.getElementById("dynAddDate")?.value || "").trim();
       const units = String(document.getElementById("dynAddUnits")?.value || "").trim();
       const price = String(document.getElementById("dynAddPrice")?.value || "").trim();
@@ -2234,6 +2249,7 @@
           date,
           product_id: product,
           category: product,
+          platform: platform || "Amazon",
           units_sold: Number(units),
           ...(price ? { price: Number(price) } : {}),
           ...(discount ? { discount: Number(discount) } : {}),
@@ -2307,54 +2323,31 @@
     }
 
     async function runDynamicComparison() {
-      const leftProduct = String(document.getElementById("cmpLeftProduct")?.value || "").trim();
-      let rightProduct = String(document.getElementById("cmpRightProduct")?.value || "").trim();
-      const leftFrom = String(document.getElementById("cmpLeftFrom")?.value || "").trim();
-      const leftTo = String(document.getElementById("cmpLeftTo")?.value || "").trim();
-      let rightFrom = String(document.getElementById("cmpRightFrom")?.value || "").trim();
-      let rightTo = String(document.getElementById("cmpRightTo")?.value || "").trim();
+      const product = String(document.getElementById("cmpProduct")?.value || "").trim();
+      const platform1 = String(document.getElementById("cmpPlatform1")?.value || "").trim();
+      const platform2 = String(document.getElementById("cmpPlatform2")?.value || "").trim();
+      const fromDate = String(document.getElementById("cmpFromDate")?.value || "").trim();
+      const toDate = String(document.getElementById("cmpToDate")?.value || "").trim();
       const bodyEl = document.getElementById("cmpTableBody");
-      if (!leftProduct || !rightProduct || !leftFrom || !leftTo || !rightFrom || !rightTo) {
-        setCompareStatus("Select both products and both date windows.");
+      const colP1El = document.getElementById("cmpColP1");
+      const colP2El = document.getElementById("cmpColP2");
+      if (!product || !platform1 || !platform2 || !fromDate || !toDate) {
+        setCompareStatus("Select product, platforms, and date range.");
         return;
       }
-
-      // If both sides are identical, auto-shift right window backward by the same duration
-      // so comparison shows meaningful differences instead of all zeros.
-      const identicalSelection =
-        leftProduct === rightProduct &&
-        leftFrom === rightFrom &&
-        leftTo === rightTo;
-      if (identicalSelection) {
-        const lf = new Date(`${leftFrom}T00:00:00`);
-        const lt = new Date(`${leftTo}T00:00:00`);
-        if (!Number.isNaN(lf.getTime()) && !Number.isNaN(lt.getTime()) && lt >= lf) {
-          const oneDayMs = 24 * 60 * 60 * 1000;
-          const durationDays = Math.floor((lt.getTime() - lf.getTime()) / oneDayMs) + 1;
-          const shiftedTo = new Date(lf.getTime() - oneDayMs);
-          const shiftedFrom = new Date(shiftedTo.getTime() - ((durationDays - 1) * oneDayMs));
-          const toIso = (d) => d.toISOString().slice(0, 10);
-          rightFrom = toIso(shiftedFrom);
-          rightTo = toIso(shiftedTo);
-          const rightFromEl = document.getElementById("cmpRightFrom");
-          const rightToEl = document.getElementById("cmpRightTo");
-          if (rightFromEl) rightFromEl.value = rightFrom;
-          if (rightToEl) rightToEl.value = rightTo;
-          setCompareStatus(`Same selection detected. Auto-adjusted right window to ${rightFrom} to ${rightTo}.`);
-        }
-      }
+      if (colP1El) colP1El.textContent = platform1;
+      if (colP2El) colP2El.textContent = platform2;
 
       setCompareStatus("Running comparison...");
       const resp = await authFetch(`${apiBase()}/dynamic-data/compare`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          left_product: leftProduct,
-          right_product: rightProduct,
-          left_from: leftFrom,
-          left_to: leftTo,
-          right_from: rightFrom,
-          right_to: rightTo,
+          product: product,
+          platform_1: platform1,
+          platform_2: platform2,
+          from_date: fromDate,
+          to_date: toDate,
         }),
       });
       const payload = await resp.json().catch(() => ({}));
@@ -2363,24 +2356,22 @@
       }
       const rows = Array.isArray(payload.metrics) ? payload.metrics : [];
       if (!rows.length) {
-        bodyEl.innerHTML = "<tr><td colspan='5'>No metrics returned.</td></tr>";
+        bodyEl.innerHTML = "<tr><td colspan='4'>No metrics returned.</td></tr>";
       } else {
         bodyEl.innerHTML = rows.map((r) => {
-          const delta = Number(r.delta || 0);
-          const deltaCls = delta >= 0 ? "delta-pos" : "delta-neg";
-          const pct = Number(r.pct_change || 0);
+          const better = String(r.better || "-");
+          const betterCls = better === platform1 || better === platform2 ? "delta-pos" : "";
           return `
             <tr>
               <td>${escapeHtml(formatMetricLabel(r.metric))}</td>
-              <td>${Number(r.left_value || 0).toFixed(2)}</td>
-              <td>${Number(r.right_value || 0).toFixed(2)}</td>
-              <td class="${deltaCls}">${delta >= 0 ? "+" : ""}${delta.toFixed(2)}</td>
-              <td class="${deltaCls}">${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%</td>
+              <td>${Number(r.platform_1_value || 0).toFixed(2)}</td>
+              <td>${Number(r.platform_2_value || 0).toFixed(2)}</td>
+              <td class="${betterCls}">${escapeHtml(better)}</td>
             </tr>
           `;
         }).join("");
       }
-      setCompareStatus(`Compared ${payload.left?.product || leftProduct} (${payload.left?.from || leftFrom} to ${payload.left?.to || leftTo}) vs ${payload.right?.product || rightProduct} (${payload.right?.from || rightFrom} to ${payload.right?.to || rightTo}).`);
+      setCompareStatus(`Compared ${payload.product || product} (${payload.from || fromDate} to ${payload.to || toDate}) across ${payload.platform_1 || platform1} vs ${payload.platform_2 || platform2}.`);
     }
 
     async function applyRoleUi() {
@@ -3840,7 +3831,6 @@
     const dynLoadRecordsBtn = document.getElementById("dynLoadRecordsBtn");
     const dynAddRecordBtn = document.getElementById("dynAddRecordBtn");
     const cmpRunBtn = document.getElementById("cmpRunBtn");
-    const cmpSameProductBtn = document.getElementById("cmpSameProductBtn");
     const dynEditorBody = document.getElementById("dynEditorBody");
 
     if (dynLoadRecordsBtn) {
@@ -3868,13 +3858,6 @@
         } catch (err) {
           setCompareStatus(String(err?.message || "Comparison failed."));
         }
-      });
-    }
-    if (cmpSameProductBtn) {
-      cmpSameProductBtn.addEventListener("click", () => {
-        const left = document.getElementById("cmpLeftProduct");
-        const right = document.getElementById("cmpRightProduct");
-        if (left && right) right.value = left.value || "";
       });
     }
     if (dynEditorBody) {

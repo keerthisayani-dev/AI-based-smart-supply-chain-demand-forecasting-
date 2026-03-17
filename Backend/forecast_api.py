@@ -1150,12 +1150,11 @@ class DynamicDeleteRecordRequest(BaseModel):
 
 
 class DynamicCompareRequest(BaseModel):
-    left_product: str
-    right_product: str
-    left_from: str
-    left_to: str
-    right_from: str
-    right_to: str
+    product: str
+    platform_1: str
+    platform_2: str
+    from_date: str
+    to_date: str
 
 
 def _norm_text(value: Any) -> str:
@@ -1172,6 +1171,7 @@ def _dynamic_alias_map() -> Dict[str, set[str]]:
         "date": {"order_date", "sales_date", "transaction_date"},
         "product_id": {"product id", "product", "sku", "item_id", "item id"},
         "category": {"product_category", "item_category"},
+        "platform": {"marketplace", "channel", "source", "platform_name"},
         "units_sold": {"units sold", "qty_sold", "quantity_sold"},
         "price": {"unit_price", "selling_price"},
         "discount": {"discount_pct", "discount_percentage"},
@@ -1187,6 +1187,7 @@ def _dynamic_output_col(canonical: str) -> str:
         "date": "date",
         "product_id": "product id",
         "category": "category",
+        "platform": "platform",
         "units_sold": "units sold",
         "price": "price",
         "discount": "discount",
@@ -1331,6 +1332,7 @@ def _dynamic_item_from_row(row: pd.Series, col_map: Dict[str, Optional[str]]) ->
         "date": date_iso,
         "product_id": str(_grab("product_id") or "").strip(),
         "category": str(_grab("category") or "").strip(),
+        "platform": str(_grab("platform") or "").strip(),
         "units_sold": float(pd.to_numeric(_grab("units_sold"), errors="coerce") or 0.0),
         "price": None if _grab("price") is None else float(pd.to_numeric(_grab("price"), errors="coerce") or 0.0),
         "discount": None if _grab("discount") is None else float(pd.to_numeric(_grab("discount"), errors="coerce") or 0.0),
@@ -1354,6 +1356,18 @@ def _filter_dynamic_product(df: pd.DataFrame, product_value: str) -> pd.DataFram
         prod_values = _dynamic_get_series(df, prod_col).astype("string").fillna("").str.strip().str.lower()
         mask = mask | (prod_values == requested)
     mask = mask.fillna(False).astype(bool)
+    return df.loc[mask].copy()
+
+
+def _filter_dynamic_platform(df: pd.DataFrame, platform_value: str) -> pd.DataFrame:
+    if not platform_value:
+        return df
+    requested = str(platform_value).strip().lower()
+    platform_col = _dynamic_find_col(df, "platform")
+    if not platform_col:
+        return df.iloc[0:0].copy()
+    platform_values = _dynamic_get_series(df, platform_col).astype("string").fillna("").str.strip().str.lower()
+    mask = (platform_values == requested).fillna(False).astype(bool)
     return df.loc[mask].copy()
 
 
@@ -1399,6 +1413,45 @@ def _compare_metrics(df: pd.DataFrame) -> Dict[str, float]:
         "avg_units_ordered": _avg("units_ordered"),
         "avg_demand_forecast": _avg("demand_forecast"),
     }
+
+
+def _platform_compare_metrics(df: pd.DataFrame) -> Dict[str, float]:
+    rows = float(len(df.index))
+
+    def _avg(canonical: str) -> float:
+        col = _dynamic_find_col(df, canonical)
+        if not col or rows <= 0:
+            return 0.0
+        vals = pd.to_numeric(_dynamic_get_series(df, col), errors="coerce")
+        return float(vals.mean()) if vals.notna().any() else 0.0
+
+    def _max(canonical: str) -> float:
+        col = _dynamic_find_col(df, canonical)
+        if not col:
+            return 0.0
+        vals = pd.to_numeric(_dynamic_get_series(df, col), errors="coerce")
+        return float(vals.max()) if vals.notna().any() else 0.0
+
+    avg_demand = _avg("units_sold")
+    forecast_demand = _avg("demand_forecast")
+    if forecast_demand == 0.0:
+        forecast_demand = avg_demand
+    return {
+        "avg_demand": avg_demand,
+        "max_demand": _max("units_sold"),
+        "price": _avg("price"),
+        "forecast_demand": forecast_demand,
+    }
+
+
+def _better_platform(metric: str, v1: float, v2: float, p1: str, p2: str) -> str:
+    if abs(v1 - v2) < 1e-12:
+        return "Tie"
+    # For price lower is better; for demand metrics higher is better.
+    lower_better = {"price"}
+    if metric in lower_better:
+        return p1 if v1 < v2 else p2
+    return p1 if v1 > v2 else p2
 
 
 def _looks_like_product_id(value: str) -> bool:
@@ -2189,15 +2242,26 @@ def dynamic_data_options(request: Request) -> Dict[str, Any]:
                 max_date = dates.max().strftime("%Y-%m-%d")
 
         products: set[str] = set()
-        for key in ("category", "product_id"):
-            col = _dynamic_find_col(df, key)
-            if not col:
-                continue
-            values = _dynamic_get_series(df, col).astype("string").str.strip().dropna()
+        platforms: set[str] = set()
+        category_col = _dynamic_find_col(df, "category")
+        if category_col:
+            values = _dynamic_get_series(df, category_col).astype("string").str.strip().dropna()
             products.update({str(v) for v in values if str(v).strip() and str(v).lower() != "nan"})
+        if not products:
+            product_id_col = _dynamic_find_col(df, "product_id")
+            if product_id_col:
+                values = _dynamic_get_series(df, product_id_col).astype("string").str.strip().dropna()
+                products.update({str(v) for v in values if str(v).strip() and str(v).lower() != "nan"})
+        platform_col = _dynamic_find_col(df, "platform")
+        if platform_col:
+            pvals = _dynamic_get_series(df, platform_col).astype("string").str.strip().dropna()
+            platforms.update({str(v) for v in pvals if str(v).strip() and str(v).lower() != "nan"})
+        if not platforms:
+            platforms = {"Amazon", "Flipkart"}
 
     return {
         "products": sorted(products),
+        "platforms": sorted(platforms),
         "min_date": min_date,
         "max_date": max_date,
     }
@@ -2251,6 +2315,7 @@ def dynamic_data_add_record(payload: DynamicAddRecordRequest, request: Request) 
     normalized = _canonical_dynamic_payload(payload.record)
     date_val = str(normalized.get("date") or "").strip()
     product_val = str(normalized.get("product_id") or normalized.get("category") or "").strip()
+    platform_val = str(normalized.get("platform") or "").strip()
     units_val = normalized.get("units_sold", None)
     if not date_val:
         raise HTTPException(status_code=400, detail="record.date is required")
@@ -2275,6 +2340,7 @@ def dynamic_data_add_record(payload: DynamicAddRecordRequest, request: Request) 
         row_data[_dynamic_ensure_col(df, "date")] = parsed_date.strftime("%Y-%m-%d")
         row_data[_dynamic_ensure_col(df, "product_id")] = product_val
         row_data[_dynamic_ensure_col(df, "category")] = str(normalized.get("category") or product_val)
+        row_data[_dynamic_ensure_col(df, "platform")] = platform_val or "Amazon"
         row_data[_dynamic_ensure_col(df, "units_sold")] = units_num
 
         for key in ("price", "discount", "inventory_level", "units_ordered", "demand_forecast"):
@@ -2370,58 +2436,51 @@ def dynamic_data_compare(payload: DynamicCompareRequest, request: Request) -> Di
     _require_roles(request, ALLOWED_LOGIN_ROLES)
     if not all(
         [
-            str(payload.left_product).strip(),
-            str(payload.right_product).strip(),
-            str(payload.left_from).strip(),
-            str(payload.left_to).strip(),
-            str(payload.right_from).strip(),
-            str(payload.right_to).strip(),
+            str(payload.product).strip(),
+            str(payload.platform_1).strip(),
+            str(payload.platform_2).strip(),
+            str(payload.from_date).strip(),
+            str(payload.to_date).strip(),
         ]
     ):
-        raise HTTPException(status_code=400, detail="All compare fields are required")
+        raise HTTPException(status_code=400, detail="product, platform_1, platform_2, from_date, to_date are required")
 
     try:
         with _engine_lock:
             df = _load_dynamic_dataset()
-            left_df = _date_filtered(_filter_dynamic_product(df, payload.left_product), payload.left_from, payload.left_to)
-            right_df = _date_filtered(_filter_dynamic_product(df, payload.right_product), payload.right_from, payload.right_to)
-            left_metrics = _compare_metrics(left_df)
-            right_metrics = _compare_metrics(right_df)
+            base_df = _date_filtered(_filter_dynamic_product(df, payload.product), payload.from_date, payload.to_date)
+            left_df = _filter_dynamic_platform(base_df, payload.platform_1)
+            right_df = _filter_dynamic_platform(base_df, payload.platform_2)
+            left_metrics = _platform_compare_metrics(left_df)
+            right_metrics = _platform_compare_metrics(right_df)
     except HTTPException:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Dynamic compare failed: {exc}") from exc
 
-    metric_keys = sorted(set(left_metrics.keys()) | set(right_metrics.keys()))
+    metric_keys = ["avg_demand", "max_demand", "price", "forecast_demand"]
     rows: List[Dict[str, Any]] = []
     for key in metric_keys:
         left_val = float(left_metrics.get(key, 0.0))
         right_val = float(right_metrics.get(key, 0.0))
-        delta = right_val - left_val
-        pct_change = (delta / left_val * 100.0) if abs(left_val) > 1e-12 else (100.0 if abs(right_val) > 1e-12 else 0.0)
+        better = _better_platform(key, left_val, right_val, payload.platform_1, payload.platform_2)
         rows.append(
             {
                 "metric": key,
-                "left_value": left_val,
-                "right_value": right_val,
-                "delta": delta,
-                "pct_change": pct_change,
+                "platform_1_value": left_val,
+                "platform_2_value": right_val,
+                "better": better,
             }
         )
 
     return {
-        "left": {
-            "product": payload.left_product,
-            "from": payload.left_from,
-            "to": payload.left_to,
-            "rows": int(len(left_df.index)),
-        },
-        "right": {
-            "product": payload.right_product,
-            "from": payload.right_from,
-            "to": payload.right_to,
-            "rows": int(len(right_df.index)),
-        },
+        "product": payload.product,
+        "from": payload.from_date,
+        "to": payload.to_date,
+        "platform_1": payload.platform_1,
+        "platform_2": payload.platform_2,
+        "rows_platform_1": int(len(left_df.index)),
+        "rows_platform_2": int(len(right_df.index)),
         "metrics": rows,
     }
 
