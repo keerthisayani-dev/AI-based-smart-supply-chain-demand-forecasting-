@@ -1707,8 +1707,8 @@
             <input id="strategyToDate" type="text" placeholder="YYYY-MM-DD" />
           </div>
           <div class="dynamic-row">
-            <input id="strategyPriceChange" type="number" step="0.1" value="0" placeholder="Price change (%)" />
-            <input id="strategyDiscount" type="number" step="0.1" value="0" placeholder="Discount (%)" />
+            <input id="strategyPriceChange" type="number" step="0.1" placeholder="Price change (%)" />
+            <input id="strategyDiscount" type="number" step="0.1" placeholder="Discount (%)" />
           </div>
           <div class="dynamic-row">
             <button class="btn" id="strategyRunBtn" type="button">Run Simulation</button>
@@ -1904,6 +1904,7 @@
     let dynamicDatePickers = [];
     let strategyFromPicker = null;
     let strategyToPicker = null;
+    let strategyAutoRunTimer = null;
 
     function apiBase() {
       return window.location.origin;
@@ -2136,8 +2137,10 @@
       const platform = String(document.getElementById("strategyPlatform")?.value || "").trim();
       const fromDate = String(document.getElementById("strategyFromDate")?.value || "").trim();
       const toDate = String(document.getElementById("strategyToDate")?.value || "").trim();
-      const priceChangePct = toNum(document.getElementById("strategyPriceChange")?.value || 0);
-      const discountPct = Math.max(0, toNum(document.getElementById("strategyDiscount")?.value || 0));
+      const priceInputEl = document.getElementById("strategyPriceChange");
+      const discountInputEl = document.getElementById("strategyDiscount");
+      let priceChangePct = toNum(priceInputEl?.value || 0);
+      let discountPct = Math.max(0, toNum(discountInputEl?.value || 0));
       if (!product || !platform || !fromDate || !toDate) {
         setStrategyStatus("Select product, platform, and date range.");
         return;
@@ -2227,6 +2230,55 @@
         discountPct
       );
       setStrategyStatus(`Simulation completed using ${result.rows} records.${fallbackNote}`);
+    }
+
+    function queueStrategyAutoRun(delayMs = 120) {
+      if (strategyAutoRunTimer) {
+        clearTimeout(strategyAutoRunTimer);
+      }
+      strategyAutoRunTimer = setTimeout(() => {
+        runStrategySimulation().catch((err) => {
+          setStrategyStatus(String(err?.message || "Simulation failed."));
+        });
+      }, delayMs);
+    }
+
+    async function syncStrategyInputsForProductChange() {
+      const productEl = document.getElementById("strategyProduct");
+      const platformEl = document.getElementById("strategyPlatform");
+      const fromEl = document.getElementById("strategyFromDate");
+      const toEl = document.getElementById("strategyToDate");
+      const product = String(productEl?.value || "").trim();
+      if (!product || !fromEl || !toEl) return;
+
+      const rows = await fetchStrategyRows(product, "", "");
+      if (!rows.length) return;
+
+      const dates = rows
+        .map((r) => String(r?.date || "").trim())
+        .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+        .sort();
+      if (dates.length) {
+        fromEl.value = dates[0];
+        toEl.value = dates[dates.length - 1];
+      }
+
+      // Pick platform with max rows for selected product so simulation is data-rich.
+      const platformCounts = rows.reduce((acc, r) => {
+        const p = String(r?.platform || "").trim();
+        if (!p) return acc;
+        acc[p] = (acc[p] || 0) + 1;
+        return acc;
+      }, {});
+      const bestPlatform = Object.entries(platformCounts)
+        .sort((a, b) => Number(b[1]) - Number(a[1]))[0]?.[0] || "";
+      if (platformEl && bestPlatform) {
+        const validPlatforms = Array.isArray(dynamicPlatformOptions) ? dynamicPlatformOptions : [];
+        if (!validPlatforms.length || validPlatforms.includes(bestPlatform)) {
+          platformEl.value = bestPlatform;
+        }
+      }
+
     }
 
     function formatMetricLabel(metricKey) {
@@ -3180,11 +3232,20 @@
       const strategyProductEl = document.getElementById("strategyProduct");
       const strategyFromEl = document.getElementById("strategyFromDate");
       const strategyToEl = document.getElementById("strategyToDate");
+      let strategyProductChanged = false;
       if (strategyProductEl && category && Array.isArray(dynamicProductOptions) && dynamicProductOptions.includes(category)) {
+        strategyProductChanged = String(strategyProductEl.value || "") !== category;
         strategyProductEl.value = category;
       }
       if (strategyFromEl && fromIso) strategyFromEl.value = fromIso;
       if (strategyToEl && toIso) strategyToEl.value = toIso;
+      if (strategyProductChanged) {
+        try {
+          await syncStrategyInputsForProductChange();
+        } catch (_) {
+          // Non-fatal: simulator fallback logic still handles missing sync data.
+        }
+      }
       if (!fromIso || !toIso) {
         contextEl.textContent = "Invalid date range selected.";
         resetXaiPanel("Invalid date range for forecast request.");
@@ -4056,6 +4117,12 @@
     const dynAddRecordBtn = document.getElementById("dynAddRecordBtn");
     const cmpRunBtn = document.getElementById("cmpRunBtn");
     const strategyRunBtn = document.getElementById("strategyRunBtn");
+    const strategyProductEl = document.getElementById("strategyProduct");
+    const strategyPlatformEl = document.getElementById("strategyPlatform");
+    const strategyFromEl = document.getElementById("strategyFromDate");
+    const strategyToEl = document.getElementById("strategyToDate");
+    const strategyPriceEl = document.getElementById("strategyPriceChange");
+    const strategyDiscountEl = document.getElementById("strategyDiscount");
     const dynEditorBody = document.getElementById("dynEditorBody");
 
     if (dynLoadRecordsBtn) {
@@ -4094,6 +4161,25 @@
         }
       });
     }
+    if (strategyProductEl) {
+      strategyProductEl.addEventListener("change", async () => {
+        try {
+          await syncStrategyInputsForProductChange();
+          queueStrategyAutoRun(80);
+        } catch (err) {
+          setStrategyStatus(String(err?.message || "Failed to sync category inputs."));
+        }
+      });
+    }
+    [strategyPlatformEl, strategyFromEl, strategyToEl].forEach((el) => {
+      if (!el) return;
+      el.addEventListener("change", () => queueStrategyAutoRun(80));
+    });
+    [strategyPriceEl, strategyDiscountEl].forEach((el) => {
+      if (!el) return;
+      el.addEventListener("input", () => queueStrategyAutoRun(140));
+      el.addEventListener("change", () => queueStrategyAutoRun(80));
+    });
     const cmpPlatform1El = document.getElementById("cmpPlatform1");
     const cmpPlatform2El = document.getElementById("cmpPlatform2");
     function enforceDifferentPlatforms(changed) {
@@ -4180,6 +4266,7 @@
       loadDynamicOptions()
         .then(async () => {
           await loadDynamicRecords();
+          await syncStrategyInputsForProductChange();
           await runStrategySimulation();
         })
         .catch((err) => {
