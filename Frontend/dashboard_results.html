@@ -1895,8 +1895,8 @@
     let currentUserRole = "viewer";
     let currentUserName = "";
     let roleAccessNote = "Viewer access: read-only forecast dashboard. Export and inventory insights are restricted.";
-    const STRATEGY_ALLOWED_MIN_DATE = "2025-01-01";
-    const STRATEGY_ALLOWED_MAX_DATE = "2031-12-31";
+    const STRATEGY_ALLOWED_MIN_DATE = "";
+    const STRATEGY_ALLOWED_MAX_DATE = "";
     const SIDEBAR_COLLAPSED_KEY = "results_sidebar_collapsed_v1";
     let dynamicProductOptions = [];
     let dynamicPlatformOptions = [];
@@ -2040,6 +2040,25 @@
       setStrategyStatus("Set inputs and click Run Simulation.");
     }
 
+    function markStrategyPending() {
+      const product = String(document.getElementById("strategyProduct")?.value || "-").trim() || "-";
+      const platform = String(document.getElementById("strategyPlatform")?.value || "-").trim() || "-";
+      const fromDate = String(document.getElementById("strategyFromDate")?.value || "-").trim() || "-";
+      const toDate = String(document.getElementById("strategyToDate")?.value || "-").trim() || "-";
+      const summaryEl = document.getElementById("strategySummaryText");
+      const baseEl = document.getElementById("strategyBaseDemand");
+      const simEl = document.getElementById("strategySimDemand");
+      const revEl = document.getElementById("strategyRevenueImpact");
+      const tableEl = document.getElementById("strategyTableBody");
+      const recEl = document.getElementById("strategyRecommendation");
+      if (summaryEl) summaryEl.textContent = `Simulation for ${product} on ${platform} from ${fromDate} to ${toDate}.`;
+      if (baseEl) baseEl.textContent = "Baseline Demand: -";
+      if (simEl) simEl.textContent = "Predicted Demand: -";
+      if (revEl) revEl.textContent = "Revenue Impact: -";
+      if (tableEl) tableEl.innerHTML = "<tr><td colspan='4'>Recalculating with current values...</td></tr>";
+      if (recEl) recEl.textContent = "Recommendation will update after simulation.";
+    }
+
     function normalizePlatformName(rawValue) {
       const raw = String(rawValue || "").trim();
       if (!raw || raw === "-") return "";
@@ -2089,12 +2108,42 @@
       const avgDemand = validRows.reduce((s, r) => s + r.units, 0) / n;
       const avgPrice = validRows.reduce((s, r) => s + (r.price > 0 ? r.price : 0), 0) / n;
       const baselineRevenue = avgDemand * avgPrice;
+
+      const dated = validRows
+        .map((r) => ({ ...r, ts: Date.parse(String(r.date || "")) }))
+        .filter((r) => Number.isFinite(r.ts))
+        .sort((a, b) => a.ts - b.ts);
+      const windowSize = Math.max(5, Math.floor(dated.length * 0.2));
+      const recent = dated.slice(-windowSize);
+      const prior = dated.slice(Math.max(0, dated.length - 2 * windowSize), Math.max(0, dated.length - windowSize));
+      const recentAvgDemand = recent.length ? recent.reduce((s, r) => s + toNum(r.units), 0) / recent.length : avgDemand;
+      const priorAvgDemand = prior.length ? prior.reduce((s, r) => s + toNum(r.units), 0) / prior.length : avgDemand;
+      const recentAvgPrice = recent.length ? recent.reduce((s, r) => s + Math.max(0, toNum(r.price)), 0) / recent.length : avgPrice;
+      const priorAvgPrice = prior.length ? prior.reduce((s, r) => s + Math.max(0, toNum(r.price)), 0) / prior.length : avgPrice;
+
+      const rawDemandTrend = priorAvgDemand > 0 ? (recentAvgDemand - priorAvgDemand) / priorAvgDemand : 0;
+      const rawPriceTrend = priorAvgPrice > 0 ? (recentAvgPrice - priorAvgPrice) / priorAvgPrice : 0;
+      const demandTrend = Math.max(-0.25, Math.min(0.25, rawDemandTrend));
+      const priceTrend = Math.max(-0.25, Math.min(0.25, rawPriceTrend));
+
+      const platformCounts = validRows.reduce((acc, r) => {
+        const p = String(r.platform || "").toLowerCase();
+        if (!p) return acc;
+        acc[p] = (acc[p] || 0) + 1;
+        return acc;
+      }, {});
+      const dominantPlatform = Object.entries(platformCounts).sort((a, b) => Number(b[1]) - Number(a[1]))[0]?.[0] || "";
+      const platformBias = dominantPlatform.includes("amazon")
+        ? 0.01
+        : (dominantPlatform.includes("flipkart") ? 0.015 : 0.0);
+
       const priceFactor = Math.max(0.05, 1 + (priceChangePct / 100));
       const discountFactor = Math.max(0.05, 1 - (discountPct / 100));
-      const demandLift = ((-1.2 * priceChangePct) + (0.8 * discountPct)) / 100;
+      const manualLift = ((-1.2 * priceChangePct) + (0.8 * discountPct)) / 100;
+      const demandLift = manualLift + (0.35 * demandTrend) + platformBias;
       const demandFactor = Math.max(0.05, 1 + demandLift);
       const simDemand = avgDemand * demandFactor;
-      const simPrice = avgPrice * priceFactor * discountFactor;
+      const simPrice = avgPrice * priceFactor * discountFactor * (1 + (0.15 * priceTrend));
       const simRevenue = simDemand * simPrice;
       const demandChangePct = avgDemand > 0 ? ((simDemand - avgDemand) / avgDemand) * 100 : 0;
       const revenueChangePct = baselineRevenue > 0 ? ((simRevenue - baselineRevenue) / baselineRevenue) * 100 : 0;
@@ -2141,16 +2190,9 @@
       const discountInputEl = document.getElementById("strategyDiscount");
       let priceChangePct = toNum(priceInputEl?.value || 0);
       let discountPct = Math.max(0, toNum(discountInputEl?.value || 0));
+      document.getElementById("strategySummaryText").textContent = `Simulation for ${product || "-"} on ${platform || "-"} from ${fromDate || "-"} to ${toDate || "-"}.`;
       if (!product || !platform || !fromDate || !toDate) {
         setStrategyStatus("Select product, platform, and date range.");
-        return;
-      }
-      if (fromDate < STRATEGY_ALLOWED_MIN_DATE || fromDate > STRATEGY_ALLOWED_MAX_DATE) {
-        setStrategyStatus(`Use From date between ${STRATEGY_ALLOWED_MIN_DATE} and ${STRATEGY_ALLOWED_MAX_DATE}.`);
-        return;
-      }
-      if (toDate < STRATEGY_ALLOWED_MIN_DATE || toDate > STRATEGY_ALLOWED_MAX_DATE) {
-        setStrategyStatus(`Use To date between ${STRATEGY_ALLOWED_MIN_DATE} and ${STRATEGY_ALLOWED_MAX_DATE}.`);
         return;
       }
       if (fromDate > toDate) {
@@ -2365,10 +2407,6 @@
           monthSelectorType: "static",
           ...(el.value ? { defaultDate: el.value } : {}),
         };
-        if (id === "strategyFromDate" || id === "strategyToDate") {
-          pickerConfig.minDate = STRATEGY_ALLOWED_MIN_DATE;
-          pickerConfig.maxDate = STRATEGY_ALLOWED_MAX_DATE;
-        }
         const picker = window.flatpickr(el, pickerConfig);
         dynamicDatePickers.push(picker);
         if (id === "strategyFromDate") strategyFromPicker = picker;
@@ -4164,6 +4202,7 @@
     if (strategyProductEl) {
       strategyProductEl.addEventListener("change", async () => {
         try {
+          markStrategyPending();
           await syncStrategyInputsForProductChange();
           queueStrategyAutoRun(80);
         } catch (err) {
@@ -4173,12 +4212,21 @@
     }
     [strategyPlatformEl, strategyFromEl, strategyToEl].forEach((el) => {
       if (!el) return;
-      el.addEventListener("change", () => queueStrategyAutoRun(80));
+      el.addEventListener("change", () => {
+        markStrategyPending();
+        queueStrategyAutoRun(80);
+      });
     });
     [strategyPriceEl, strategyDiscountEl].forEach((el) => {
       if (!el) return;
-      el.addEventListener("input", () => queueStrategyAutoRun(140));
-      el.addEventListener("change", () => queueStrategyAutoRun(80));
+      el.addEventListener("input", () => {
+        markStrategyPending();
+        queueStrategyAutoRun(140);
+      });
+      el.addEventListener("change", () => {
+        markStrategyPending();
+        queueStrategyAutoRun(80);
+      });
     });
     const cmpPlatform1El = document.getElementById("cmpPlatform1");
     const cmpPlatform2El = document.getElementById("cmpPlatform2");
