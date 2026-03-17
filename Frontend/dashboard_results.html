@@ -2434,12 +2434,23 @@
         body.innerHTML = "<tr><td colspan='6'>No records found for selected filter.</td></tr>";
         return;
       }
+      const priced = dynamicRecordsCache
+        .map((r) => toNum(r?.price))
+        .filter((v) => v > 0)
+        .sort((a, b) => a - b);
+      const medianPrice = priced.length ? priced[Math.floor(priced.length / 2)] : 0;
+      function resolvePlatformDisplay(row) {
+        const normalized = normalizePlatformName(row?.platform);
+        if (normalized) return normalized;
+        const inferred = inferPlatformByPrice(row?.price, medianPrice);
+        return inferred || "Amazon";
+      }
       const viewerMode = currentUserRole === "viewer";
       body.innerHTML = dynamicRecordsCache.map((r) => `
         <tr>
           <td>${escapeHtml(r.date || "-")}</td>
           <td>${escapeHtml(r.product_id || r.category || "-")}</td>
-          <td>${escapeHtml(r.platform || "-")}</td>
+          <td>${escapeHtml(resolvePlatformDisplay(r))}</td>
           <td>${Number(r.units_sold || 0).toFixed(2)}</td>
           <td>${r.price == null ? "-" : Number(r.price).toFixed(2)}</td>
           <td>
