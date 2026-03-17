@@ -924,6 +924,29 @@
       box-shadow: none;
       border-color: var(--line-soft);
     }
+    #xaiSection .dynamic-row input,
+    #xaiSection .dynamic-row select {
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--line-soft);
+      background: rgba(18, 30, 53, 0.95);
+      color: #e7edf8;
+      padding: 0 10px;
+      font-size: 12px;
+      font-family: inherit;
+      color-scheme: dark;
+      transition: none;
+      box-shadow: none;
+      outline: none;
+    }
+    #xaiSection .dynamic-row input:focus,
+    #xaiSection .dynamic-row select:focus,
+    #xaiSection .dynamic-row input:focus-visible,
+    #xaiSection .dynamic-row select:focus-visible {
+      outline: none;
+      box-shadow: none;
+      border-color: var(--line-soft);
+    }
     .dynamic-card select option {
       background: #16233a;
       color: #e6edf7;
@@ -1033,6 +1056,27 @@
     .flatpickr-day:hover {
       background: rgba(59, 130, 246, 0.25);
       border-color: rgba(59, 130, 246, 0.45);
+    }
+    .flatpickr-day {
+      color: #e6edf7 !important;
+      opacity: 1 !important;
+      -webkit-text-fill-color: #e6edf7 !important;
+    }
+    .flatpickr-day.prevMonthDay,
+    .flatpickr-day.nextMonthDay {
+      color: #8e9bb0 !important;
+      -webkit-text-fill-color: #8e9bb0 !important;
+      opacity: 1 !important;
+      pointer-events: none;
+      cursor: not-allowed;
+    }
+    .flatpickr-day.flatpickr-disabled,
+    .flatpickr-day.notAllowed,
+    .flatpickr-day.prevMonthDay.flatpickr-disabled,
+    .flatpickr-day.nextMonthDay.flatpickr-disabled {
+      color: #8e9bb0 !important;
+      opacity: 1 !important;
+      -webkit-text-fill-color: #8e9bb0 !important;
     }
     .flatpickr-day.selected,
     .flatpickr-day.startRange,
@@ -1643,48 +1687,52 @@
     </section>
     <section class="glass-card" id="xaiSection">
       <div class="chart-head">
-        <h3>Explainable AI (XAI) Module</h3>
+        <h3>Demand Strategy Simulator</h3>
       </div>
-      <p class="xai-summary" id="xaiSummaryText">Generate a forecast to view SHAP values and feature importance.</p>
+      <p class="xai-summary" id="strategySummaryText">Simulate pricing and discount decisions to estimate demand and revenue impact.</p>
       <div class="xai-meta-row">
-        <span class="xai-pill" id="xaiForecastDate">Forecast Date: -</span>
-        <span class="xai-pill" id="xaiServedForecast">Predicted Units: -</span>
-        <span class="xai-pill" id="xaiExpectedValue">Baseline (Expected): -</span>
+        <span class="xai-pill" id="strategyBaseDemand">Baseline Demand: -</span>
+        <span class="xai-pill" id="strategySimDemand">Predicted Demand: -</span>
+        <span class="xai-pill" id="strategyRevenueImpact">Revenue Impact: -</span>
       </div>
       <div class="xai-grid">
         <article class="xai-subcard">
-          <h4 class="xai-subtitle">SHAP Values (Top Drivers)</h4>
-          <div class="xai-table-wrap">
-            <table class="xai-table">
-              <thead>
-                <tr>
-                  <th>Feature</th>
-                  <th>Contribution</th>
-                  <th>Direction</th>
-                </tr>
-              </thead>
-              <tbody id="xaiContribBody">
-                <tr><td colspan="3">No explanation available.</td></tr>
-              </tbody>
-            </table>
+          <h4 class="xai-subtitle">Strategy Inputs</h4>
+          <div class="dynamic-row">
+            <select id="strategyProduct"></select>
+            <select id="strategyPlatform"></select>
           </div>
+          <div class="dynamic-row">
+            <input id="strategyFromDate" type="text" placeholder="YYYY-MM-DD" />
+            <input id="strategyToDate" type="text" placeholder="YYYY-MM-DD" />
+          </div>
+          <div class="dynamic-row">
+            <input id="strategyPriceChange" type="number" step="0.1" value="0" placeholder="Price change (%)" />
+            <input id="strategyDiscount" type="number" step="0.1" value="0" placeholder="Discount (%)" />
+          </div>
+          <div class="dynamic-row">
+            <button class="btn" id="strategyRunBtn" type="button">Run Simulation</button>
+          </div>
+          <p class="xai-summary" id="strategyStatus">Set inputs and click Run Simulation.</p>
         </article>
         <article class="xai-subcard">
-          <h4 class="xai-subtitle">Feature Importance</h4>
+          <h4 class="xai-subtitle">Simulation Output</h4>
           <div class="xai-table-wrap">
             <table class="xai-table">
               <thead>
                 <tr>
-                  <th>Feature</th>
-                  <th>Importance %</th>
-                  <th>|Coefficient|</th>
+                  <th>Metric</th>
+                  <th>Baseline</th>
+                  <th>Simulated</th>
+                  <th>Change</th>
                 </tr>
               </thead>
-              <tbody id="xaiImportanceBody">
-                <tr><td colspan="3">No explanation available.</td></tr>
+              <tbody id="strategyTableBody">
+                <tr><td colspan="4">No simulation run yet.</td></tr>
               </tbody>
             </table>
           </div>
+          <p class="xai-summary" id="strategyRecommendation">Recommendation will appear here.</p>
         </article>
       </div>
     </section>
@@ -1847,11 +1895,15 @@
     let currentUserRole = "viewer";
     let currentUserName = "";
     let roleAccessNote = "Viewer access: read-only forecast dashboard. Export and inventory insights are restricted.";
+    const STRATEGY_ALLOWED_MIN_DATE = "2025-01-01";
+    const STRATEGY_ALLOWED_MAX_DATE = "2031-12-31";
     const SIDEBAR_COLLAPSED_KEY = "results_sidebar_collapsed_v1";
     let dynamicProductOptions = [];
     let dynamicPlatformOptions = [];
     let dynamicRecordsCache = [];
     let dynamicDatePickers = [];
+    let strategyFromPicker = null;
+    let strategyToPicker = null;
 
     function apiBase() {
       return window.location.origin;
@@ -1966,75 +2018,215 @@
       document.getElementById("marginValue").textContent = `${marginPct.toFixed(2)}%`;
     }
 
+    function setStrategyStatus(message) {
+      const el = document.getElementById("strategyStatus");
+      if (el) el.textContent = String(message || "");
+    }
+
     function resetXaiPanel(message) {
-      document.getElementById("xaiSummaryText").textContent = String(message || "No explanation available.");
-      document.getElementById("xaiForecastDate").textContent = "Forecast Date: -";
-      document.getElementById("xaiServedForecast").textContent = "Predicted Units: -";
-      document.getElementById("xaiExpectedValue").textContent = "Baseline (Expected): -";
-      document.getElementById("xaiContribBody").innerHTML = "<tr><td colspan='3'>No explanation available.</td></tr>";
-      document.getElementById("xaiImportanceBody").innerHTML = "<tr><td colspan='3'>No explanation available.</td></tr>";
+      const summaryEl = document.getElementById("strategySummaryText");
+      const baseDemandEl = document.getElementById("strategyBaseDemand");
+      const simDemandEl = document.getElementById("strategySimDemand");
+      const impactEl = document.getElementById("strategyRevenueImpact");
+      const tableBody = document.getElementById("strategyTableBody");
+      const recEl = document.getElementById("strategyRecommendation");
+      if (summaryEl) summaryEl.textContent = String(message || "Simulate pricing and discount decisions to estimate demand and revenue impact.");
+      if (baseDemandEl) baseDemandEl.textContent = "Baseline Demand: -";
+      if (simDemandEl) simDemandEl.textContent = "Predicted Demand: -";
+      if (impactEl) impactEl.textContent = "Revenue Impact: -";
+      if (tableBody) tableBody.innerHTML = "<tr><td colspan='4'>No simulation run yet.</td></tr>";
+      if (recEl) recEl.textContent = "Recommendation will appear here.";
+      setStrategyStatus("Set inputs and click Run Simulation.");
     }
 
-    function renderXaiPanel(explainPayload) {
-      const summary = String(explainPayload?.summary || "No explanation available.");
-      const forecastDate = String(explainPayload?.forecast_date || "-");
-      const servedUnits = toNum(explainPayload?.predictions?.served_forecast_units);
-      const expectedUnits = toNum(explainPayload?.predictions?.expected_value_units);
-      const contributions = Array.isArray(explainPayload?.top_contributions) ? explainPayload.top_contributions : [];
-      const importance = Array.isArray(explainPayload?.feature_importance) ? explainPayload.feature_importance : [];
-
-      document.getElementById("xaiSummaryText").textContent = summary;
-      document.getElementById("xaiForecastDate").textContent = `Forecast Date: ${forecastDate}`;
-      document.getElementById("xaiServedForecast").textContent = `Predicted Units: ${servedUnits.toFixed(2)}`;
-      document.getElementById("xaiExpectedValue").textContent = `Baseline (Expected): ${expectedUnits.toFixed(2)}`;
-
-      if (!contributions.length) {
-        document.getElementById("xaiContribBody").innerHTML = "<tr><td colspan='3'>No SHAP contributions returned.</td></tr>";
-      } else {
-        document.getElementById("xaiContribBody").innerHTML = contributions.map((row) => {
-          const feature = escapeHtml(row?.feature || "");
-          const shapValue = toNum(row?.shap_value);
-          const direction = String(row?.direction || (shapValue >= 0 ? "increase" : "decrease"));
-          const cls = shapValue >= 0 ? "xai-impact-up" : "xai-impact-down";
-          return `
-            <tr>
-              <td>${feature}</td>
-              <td class="${cls}">${shapValue >= 0 ? "+" : ""}${shapValue.toFixed(3)}</td>
-              <td>${escapeHtml(direction)}</td>
-            </tr>
-          `;
-        }).join("");
-      }
-
-      if (!importance.length) {
-        document.getElementById("xaiImportanceBody").innerHTML = "<tr><td colspan='3'>No feature importance returned.</td></tr>";
-      } else {
-        document.getElementById("xaiImportanceBody").innerHTML = importance.map((row) => `
-          <tr>
-            <td>${escapeHtml(row?.feature || "")}</td>
-            <td>${toNum(row?.importance_pct).toFixed(2)}%</td>
-            <td>${toNum(row?.abs_coefficient).toFixed(5)}</td>
-          </tr>
-        `).join("");
-      }
+    function normalizePlatformName(rawValue) {
+      const raw = String(rawValue || "").trim();
+      if (!raw || raw === "-") return "";
+      const lower = raw.toLowerCase();
+      if (lower.includes("amazon")) return "Amazon";
+      if (lower.includes("flipkart")) return "Flipkart";
+      return raw;
     }
 
-    async function fetchXaiPayload(category, anchorDate) {
-      const url = `${apiBase()}/forecast/${encodeURIComponent(category)}/explain?anchor_date=${encodeURIComponent(anchorDate)}`;
-      const resp = await fetch(url);
+    function inferPlatformByPrice(price, medianPrice) {
+      const p = toNum(price);
+      if (p <= 0 || medianPrice <= 0) return "";
+      return p <= medianPrice ? "Amazon" : "Flipkart";
+    }
+
+    async function fetchStrategyRows(product, fromDate, toDate) {
+      const qs = new URLSearchParams();
+      if (product) qs.set("product", product);
+      if (fromDate) qs.set("from_date", fromDate);
+      if (toDate) qs.set("to_date", toDate);
+      qs.set("limit", "5000");
+      const resp = await authFetch(`${apiBase()}/dynamic-data/records?${qs.toString()}`, { cache: "no-store" });
       if (!resp.ok) {
-        let detail = `HTTP ${resp.status}`;
-        try {
-          const err = await resp.json();
-          if (err && typeof err.detail === "string" && err.detail.trim()) {
-            detail = err.detail;
-          }
-        } catch (_) {
-          // Keep fallback status message.
-        }
-        throw new Error(detail);
+        throw new Error(`Load failed (${resp.status})`);
       }
-      return resp.json();
+      const payload = await resp.json();
+      const rows = Array.isArray(payload?.items) ? payload.items : [];
+      const priced = rows.map((r) => toNum(r?.price)).filter((v) => v > 0).sort((a, b) => a - b);
+      const medianPrice = priced.length ? priced[Math.floor(priced.length / 2)] : 0;
+      return rows.map((r) => {
+        const normalized = normalizePlatformName(r?.platform);
+        const inferred = normalized || inferPlatformByPrice(r?.price, medianPrice);
+        return {
+          date: String(r?.date || ""),
+          product: String(r?.product_id || r?.category || ""),
+          platform: inferred || "Unknown",
+          units: toNum(r?.units_sold),
+          price: toNum(r?.price),
+          discount: toNum(r?.discount),
+        };
+      });
+    }
+
+    function simulateStrategyForRows(rows, priceChangePct, discountPct) {
+      const validRows = rows.filter((r) => r.units > 0);
+      const n = Math.max(1, validRows.length);
+      const avgDemand = validRows.reduce((s, r) => s + r.units, 0) / n;
+      const avgPrice = validRows.reduce((s, r) => s + (r.price > 0 ? r.price : 0), 0) / n;
+      const baselineRevenue = avgDemand * avgPrice;
+      const priceFactor = Math.max(0.05, 1 + (priceChangePct / 100));
+      const discountFactor = Math.max(0.05, 1 - (discountPct / 100));
+      const demandLift = ((-1.2 * priceChangePct) + (0.8 * discountPct)) / 100;
+      const demandFactor = Math.max(0.05, 1 + demandLift);
+      const simDemand = avgDemand * demandFactor;
+      const simPrice = avgPrice * priceFactor * discountFactor;
+      const simRevenue = simDemand * simPrice;
+      const demandChangePct = avgDemand > 0 ? ((simDemand - avgDemand) / avgDemand) * 100 : 0;
+      const revenueChangePct = baselineRevenue > 0 ? ((simRevenue - baselineRevenue) / baselineRevenue) * 100 : 0;
+      return {
+        avgDemand,
+        avgPrice,
+        baselineRevenue,
+        simDemand,
+        simPrice,
+        simRevenue,
+        demandChangePct,
+        revenueChangePct,
+        rows: validRows.length,
+      };
+    }
+
+    function buildStrategyRecommendation(selectedPlatform, result, allPlatformRows, priceChangePct, discountPct) {
+      if (result.rows <= 0) {
+        return "No rows available for selected product/platform/date range.";
+      }
+      const candidates = Object.entries(allPlatformRows)
+        .map(([platform, rows]) => ({ platform, sim: simulateStrategyForRows(rows, priceChangePct, discountPct) }))
+        .filter((x) => x.sim.rows > 0)
+        .sort((a, b) => b.sim.simRevenue - a.sim.simRevenue);
+      const bestPlatform = candidates.length ? candidates[0].platform : selectedPlatform;
+      if (result.demandChangePct >= 8 && result.revenueChangePct >= 0) {
+        return `Recommended: apply this strategy on ${bestPlatform}. Demand increases by ${result.demandChangePct.toFixed(1)}% with non-negative revenue impact.`;
+      }
+      if (result.demandChangePct > 0 && result.revenueChangePct < 0) {
+        return `Demand increases, but revenue drops by ${Math.abs(result.revenueChangePct).toFixed(1)}%. Reduce discount or use a smaller price cut.`;
+      }
+      if (result.demandChangePct <= 0 && result.revenueChangePct >= 0) {
+        return `Revenue improves but demand softens. Use this only if margin optimization is your goal. Best platform: ${bestPlatform}.`;
+      }
+      return "Current simulation hurts both demand and revenue. Try a lower discount and smaller price change.";
+    }
+
+    async function runStrategySimulation() {
+      const product = String(document.getElementById("strategyProduct")?.value || "").trim();
+      const platform = String(document.getElementById("strategyPlatform")?.value || "").trim();
+      const fromDate = String(document.getElementById("strategyFromDate")?.value || "").trim();
+      const toDate = String(document.getElementById("strategyToDate")?.value || "").trim();
+      const priceChangePct = toNum(document.getElementById("strategyPriceChange")?.value || 0);
+      const discountPct = Math.max(0, toNum(document.getElementById("strategyDiscount")?.value || 0));
+      if (!product || !platform || !fromDate || !toDate) {
+        setStrategyStatus("Select product, platform, and date range.");
+        return;
+      }
+      if (fromDate < STRATEGY_ALLOWED_MIN_DATE || fromDate > STRATEGY_ALLOWED_MAX_DATE) {
+        setStrategyStatus(`Use From date between ${STRATEGY_ALLOWED_MIN_DATE} and ${STRATEGY_ALLOWED_MAX_DATE}.`);
+        return;
+      }
+      if (toDate < STRATEGY_ALLOWED_MIN_DATE || toDate > STRATEGY_ALLOWED_MAX_DATE) {
+        setStrategyStatus(`Use To date between ${STRATEGY_ALLOWED_MIN_DATE} and ${STRATEGY_ALLOWED_MAX_DATE}.`);
+        return;
+      }
+      if (fromDate > toDate) {
+        setStrategyStatus("From date must be earlier than or equal to To date.");
+        return;
+      }
+      setStrategyStatus("Running simulation...");
+      let rows = await fetchStrategyRows(product, fromDate, toDate);
+      let fallbackNote = "";
+      if (!rows.length) {
+        rows = await fetchStrategyRows(product, "", "");
+        if (rows.length) {
+          fallbackNote = " No rows in selected period; used full product history.";
+        }
+      }
+      const byPlatform = rows.reduce((acc, row) => {
+        if (!acc[row.platform]) acc[row.platform] = [];
+        acc[row.platform].push(row);
+        return acc;
+      }, {});
+      let selectedRows = byPlatform[platform] || [];
+      if (!selectedRows.length) {
+        const unknownRows = byPlatform.Unknown || [];
+        if (unknownRows.length) {
+          selectedRows = unknownRows;
+          fallbackNote += " Platform values were missing; used inferred/unknown rows.";
+        }
+      }
+      if (!selectedRows.length && rows.length) {
+        selectedRows = rows;
+        fallbackNote += " Selected platform had no rows; used all available platform rows.";
+      }
+      const result = simulateStrategyForRows(selectedRows, priceChangePct, discountPct);
+      const demandDelta = result.simDemand - result.avgDemand;
+      const priceDelta = result.simPrice - result.avgPrice;
+      const priceChangePctComputed = result.avgPrice > 0 ? (priceDelta / result.avgPrice) * 100 : 0;
+      const revenueDelta = result.simRevenue - result.baselineRevenue;
+      const demandDeltaCls = demandDelta > 0 ? "delta-pos" : (demandDelta < 0 ? "delta-neg" : "");
+      const priceDeltaCls = priceDelta > 0 ? "delta-pos" : (priceDelta < 0 ? "delta-neg" : "");
+      const revenueDeltaCls = revenueDelta > 0 ? "delta-pos" : (revenueDelta < 0 ? "delta-neg" : "");
+
+      document.getElementById("strategyBaseDemand").textContent = `Baseline Demand: ${result.avgDemand.toFixed(2)} units/day`;
+      document.getElementById("strategySimDemand").textContent = `Predicted Demand: ${result.simDemand.toFixed(2)} units/day`;
+      document.getElementById("strategyRevenueImpact").textContent = `Revenue Impact: ${result.revenueChangePct >= 0 ? "+" : ""}${result.revenueChangePct.toFixed(2)}%`;
+      document.getElementById("strategySummaryText").textContent = `Simulation for ${product} on ${platform} from ${fromDate} to ${toDate}.`;
+      document.getElementById("strategyTableBody").innerHTML = `
+        <tr>
+          <td>Avg Demand</td>
+          <td>${result.avgDemand.toFixed(2)}</td>
+          <td>${result.simDemand.toFixed(2)}</td>
+          <td class="${demandDeltaCls}">
+            ${demandDelta >= 0 ? "+" : ""}${demandDelta.toFixed(2)} (${result.demandChangePct >= 0 ? "+" : ""}${result.demandChangePct.toFixed(2)}%)
+          </td>
+        </tr>
+        <tr>
+          <td>Avg Price</td>
+          <td>${result.avgPrice.toFixed(2)}</td>
+          <td>${result.simPrice.toFixed(2)}</td>
+          <td class="${priceDeltaCls}">
+            ${priceDelta >= 0 ? "+" : ""}${priceDelta.toFixed(2)} (${priceChangePctComputed >= 0 ? "+" : ""}${priceChangePctComputed.toFixed(2)}%)
+          </td>
+        </tr>
+        <tr>
+          <td>Avg Revenue</td>
+          <td>${result.baselineRevenue.toFixed(2)}</td>
+          <td>${result.simRevenue.toFixed(2)}</td>
+          <td class="${revenueDeltaCls}">
+            ${revenueDelta >= 0 ? "+" : ""}${revenueDelta.toFixed(2)} (${result.revenueChangePct >= 0 ? "+" : ""}${result.revenueChangePct.toFixed(2)}%)
+          </td>
+        </tr>
+      `;
+      document.getElementById("strategyRecommendation").textContent = buildStrategyRecommendation(
+        platform,
+        result,
+        byPlatform,
+        priceChangePct,
+        discountPct
+      );
+      setStrategyStatus(`Simulation completed using ${result.rows} records.${fallbackNote}`);
     }
 
     function formatMetricLabel(metricKey) {
@@ -2091,7 +2283,7 @@
       }
     }
 
-    function initDynamicDatePickers(minDate = "", maxDate = "") {
+    function initDynamicDatePickers() {
       if (!window.flatpickr) return;
       dynamicDatePickers.forEach((picker) => {
         try {
@@ -2101,26 +2293,37 @@
         }
       });
       dynamicDatePickers = [];
+      strategyFromPicker = null;
+      strategyToPicker = null;
       const ids = [
         "dynFilterFromDate",
         "dynFilterToDate",
         "dynAddDate",
         "cmpFromDate",
         "cmpToDate",
+        "strategyFromDate",
+        "strategyToDate",
       ];
       ids.forEach((id) => {
         const el = document.getElementById(id);
         if (!el) return;
-        const picker = window.flatpickr(el, {
+        const pickerConfig = {
           dateFormat: "Y-m-d",
           allowInput: false,
           monthSelectorType: "static",
-          ...(minDate ? { minDate } : {}),
-          ...(maxDate ? { maxDate } : {}),
           ...(el.value ? { defaultDate: el.value } : {}),
-        });
+        };
+        if (id === "strategyFromDate" || id === "strategyToDate") {
+          pickerConfig.minDate = STRATEGY_ALLOWED_MIN_DATE;
+          pickerConfig.maxDate = STRATEGY_ALLOWED_MAX_DATE;
+        }
+        const picker = window.flatpickr(el, pickerConfig);
         dynamicDatePickers.push(picker);
+        if (id === "strategyFromDate") strategyFromPicker = picker;
+        if (id === "strategyToDate") strategyToPicker = picker;
       });
+
+      // Strategy date pickers use the same independent month behavior as dashboard.
     }
 
     function renderDynamicRecords(items) {
@@ -2181,28 +2384,29 @@
       populateProductSelect("dynFilterProduct", true);
       populateProductSelect("dynAddProduct", false);
       populateProductSelect("cmpProduct", false);
+      populateProductSelect("strategyProduct", false);
       populatePlatformSelect("dynAddPlatform");
       populatePlatformSelect("cmpPlatform1");
       populatePlatformSelect("cmpPlatform2");
+      populatePlatformSelect("strategyPlatform");
 
       const fromEl = document.getElementById("dynFilterFromDate");
       const toEl = document.getElementById("dynFilterToDate");
       const addDateEl = document.getElementById("dynAddDate");
       const cmpFromEl = document.getElementById("cmpFromDate");
       const cmpToEl = document.getElementById("cmpToDate");
+      const strategyFromEl = document.getElementById("strategyFromDate");
+      const strategyToEl = document.getElementById("strategyToDate");
       const minDate = String(payload.min_date || "");
       const maxDate = String(payload.max_date || "");
-      [fromEl, toEl, addDateEl, cmpFromEl, cmpToEl].forEach((el) => {
-        if (!el) return;
-        if (minDate) el.min = minDate;
-        if (maxDate) el.max = maxDate;
-      });
       if (fromEl && !fromEl.value && minDate) fromEl.value = minDate;
       if (toEl && !toEl.value && maxDate) toEl.value = maxDate;
       if (addDateEl && !addDateEl.value && maxDate) addDateEl.value = maxDate;
       if (cmpFromEl && !cmpFromEl.value && minDate) cmpFromEl.value = minDate;
       if (cmpToEl && !cmpToEl.value && maxDate) cmpToEl.value = maxDate;
-      initDynamicDatePickers(minDate, maxDate);
+      if (strategyFromEl && !strategyFromEl.value && minDate) strategyFromEl.value = minDate;
+      if (strategyToEl && !strategyToEl.value && maxDate) strategyToEl.value = maxDate;
+      initDynamicDatePickers();
       if (!dynamicProductOptions.length) {
         setDynamicEditorStatus("No products found. Check dataset columns and API auth/session.");
         setCompareStatus("No products found. Try reloading the page after login.");
@@ -2333,6 +2537,10 @@
       const colP2El = document.getElementById("cmpColP2");
       if (!product || !platform1 || !platform2 || !fromDate || !toDate) {
         setCompareStatus("Select product, platforms, and date range.");
+        return;
+      }
+      if (platform1 === platform2) {
+        setCompareStatus("Choose two different platforms to compare (Amazon vs Flipkart).");
         return;
       }
       if (colP1El) colP1El.textContent = platform1;
@@ -2956,7 +3164,7 @@
         contextEl.textContent = "Category: Missing";
         periodTextEl.textContent = "Period: Missing";
         roleTextEl.textContent = roleAccessNote;
-        resetXaiPanel("Select category and date range to view model explanations.");
+        resetXaiPanel("Select category and date range to run strategy simulation.");
         return;
       }
 
@@ -2969,6 +3177,14 @@
 
       const fromIso = normalizeToIsoDate(fromDate);
       const toIso = normalizeToIsoDate(toDate);
+      const strategyProductEl = document.getElementById("strategyProduct");
+      const strategyFromEl = document.getElementById("strategyFromDate");
+      const strategyToEl = document.getElementById("strategyToDate");
+      if (strategyProductEl && category && Array.isArray(dynamicProductOptions) && dynamicProductOptions.includes(category)) {
+        strategyProductEl.value = category;
+      }
+      if (strategyFromEl && fromIso) strategyFromEl.value = fromIso;
+      if (strategyToEl && toIso) strategyToEl.value = toIso;
       if (!fromIso || !toIso) {
         contextEl.textContent = "Invalid date range selected.";
         resetXaiPanel("Invalid date range for forecast request.");
@@ -2983,7 +3199,7 @@
       const forecastAnchorDate = anchorForForecast.toISOString().slice(0, 10);
 
       try {
-        resetXaiPanel("Loading SHAP values and feature importance...");
+        resetXaiPanel("Demand Strategy Simulator is ready. Set strategy inputs and run.");
         async function fetchForecastPayload(anchorDate, horizonDays) {
           const url = `${apiBase()}/forecast/${encodeURIComponent(category)}?horizon=${horizonDays}&history_lookback_days=${lookback}&anchor_date=${anchorDate}`;
           const resp = await fetch(url);
@@ -3005,16 +3221,6 @@
         const requestAnchor = currentMode === "forecast" ? forecastAnchorDate : toDate;
         const data = await fetchForecastPayload(requestAnchor, periodDays);
         if (requestId !== latestLoadRequestId) return;
-        fetchXaiPayload(category, requestAnchor)
-          .then((payload) => {
-            if (requestId !== latestLoadRequestId) return;
-            renderXaiPanel(payload);
-          })
-          .catch((err) => {
-            if (requestId !== latestLoadRequestId) return;
-            const explainMsg = String(err?.message || "Could not load explanation.");
-            resetXaiPanel(`XAI unavailable: ${explainMsg}`);
-          });
 
         const history = Array.isArray(data.history) ? data.history : [];
         const forecast = Array.isArray(data.forecast) ? data.forecast : [];
@@ -3262,11 +3468,16 @@
           exportState.forecastRows,
           exportState.forecastCols
         );
+        try {
+          await runStrategySimulation();
+        } catch (strategyErr) {
+          setStrategyStatus(`Simulation unavailable: ${String(strategyErr?.message || "Unknown error")}`);
+        }
 
       } catch (err) {
         if (requestId !== latestLoadRequestId) return;
         contextEl.textContent = `Failed to fetch forecast: ${err.message}`;
-        resetXaiPanel(`XAI unavailable: ${err.message}`);
+        resetXaiPanel(`Simulator unavailable: ${err.message}`);
       }
     }
 
@@ -3844,6 +4055,7 @@
     const dynLoadRecordsBtn = document.getElementById("dynLoadRecordsBtn");
     const dynAddRecordBtn = document.getElementById("dynAddRecordBtn");
     const cmpRunBtn = document.getElementById("cmpRunBtn");
+    const strategyRunBtn = document.getElementById("strategyRunBtn");
     const dynEditorBody = document.getElementById("dynEditorBody");
 
     if (dynLoadRecordsBtn) {
@@ -3872,6 +4084,36 @@
           setCompareStatus(String(err?.message || "Comparison failed."));
         }
       });
+    }
+    if (strategyRunBtn) {
+      strategyRunBtn.addEventListener("click", async () => {
+        try {
+          await runStrategySimulation();
+        } catch (err) {
+          setStrategyStatus(String(err?.message || "Simulation failed."));
+        }
+      });
+    }
+    const cmpPlatform1El = document.getElementById("cmpPlatform1");
+    const cmpPlatform2El = document.getElementById("cmpPlatform2");
+    function enforceDifferentPlatforms(changed) {
+      const p1 = String(cmpPlatform1El?.value || "").trim();
+      const p2 = String(cmpPlatform2El?.value || "").trim();
+      if (!p1 || !p2 || p1 !== p2) return;
+      const alternative = dynamicPlatformOptions.find((p) => p !== p1);
+      if (alternative) {
+        if (changed === "p1" && cmpPlatform2El) cmpPlatform2El.value = alternative;
+        if (changed === "p2" && cmpPlatform1El) cmpPlatform1El.value = alternative;
+        setCompareStatus(`Platforms must be different. Auto-switched to ${alternative}.`);
+      } else {
+        setCompareStatus("Need two distinct platforms (e.g., Amazon and Flipkart).");
+      }
+    }
+    if (cmpPlatform1El) {
+      cmpPlatform1El.addEventListener("change", () => enforceDifferentPlatforms("p1"));
+    }
+    if (cmpPlatform2El) {
+      cmpPlatform2El.addEventListener("change", () => enforceDifferentPlatforms("p2"));
     }
     if (dynEditorBody) {
       dynEditorBody.addEventListener("click", async (e) => {
@@ -3936,10 +4178,14 @@
       await loadResults();
       // Load dynamic editor data in background so forecast results render immediately.
       loadDynamicOptions()
-        .then(() => loadDynamicRecords())
+        .then(async () => {
+          await loadDynamicRecords();
+          await runStrategySimulation();
+        })
         .catch((err) => {
           setDynamicEditorStatus(`Dynamic data unavailable: ${String(err?.message || "Unknown error")}`);
           setCompareStatus(`Dynamic compare unavailable: ${String(err?.message || "Unknown error")}`);
+          setStrategyStatus(`Strategy simulator unavailable: ${String(err?.message || "Unknown error")}`);
         });
       const shell = document.querySelector(".page-shell");
       if (shell) {
