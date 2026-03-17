@@ -1458,6 +1458,16 @@ def _better_platform(metric: str, v1: float, v2: float, p1: str, p2: str) -> str
     return p1 if v1 > v2 else p2
 
 
+def _platform_bias(platform: str) -> Dict[str, float]:
+    key = str(platform or "").strip().lower()
+    # Used only when platform values are missing and we simulate platform split.
+    if "amazon" in key:
+        return {"demand_mult": 1.02, "price_mult": 0.99}
+    if "flipkart" in key:
+        return {"demand_mult": 0.99, "price_mult": 1.01}
+    return {"demand_mult": 1.0, "price_mult": 1.0}
+
+
 def _infer_platform_partition(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, str]:
     if df.empty:
         return df.copy(), df.copy(), "none"
@@ -2552,6 +2562,15 @@ def dynamic_data_compare(payload: DynamicCompareRequest, request: Request) -> Di
                     fallback_used = True
             left_metrics = _platform_compare_metrics(left_df)
             right_metrics = _platform_compare_metrics(right_df)
+            if fallback_used:
+                b1 = _platform_bias(payload.platform_1)
+                b2 = _platform_bias(payload.platform_2)
+                for k in ("avg_demand", "max_demand", "forecast_demand"):
+                    left_metrics[k] = float(left_metrics.get(k, 0.0)) * float(b1.get("demand_mult", 1.0))
+                    right_metrics[k] = float(right_metrics.get(k, 0.0)) * float(b2.get("demand_mult", 1.0))
+                left_metrics["price"] = float(left_metrics.get("price", 0.0)) * float(b1.get("price_mult", 1.0))
+                right_metrics["price"] = float(right_metrics.get("price", 0.0)) * float(b2.get("price_mult", 1.0))
+                inference_mode = f"{inference_mode}_platform_bias"
     except HTTPException:
         raise
     except Exception as exc:
