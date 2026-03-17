@@ -494,6 +494,14 @@
       border-color: rgba(150, 183, 240, 0.24);
       box-shadow: 0 20px 42px rgba(2, 6, 18, 0.45);
     }
+    #dynamicCompareSection {
+      transition: none;
+    }
+    #dynamicCompareSection:hover {
+      transform: none;
+      border-color: var(--glass-border);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    }
 
     .header-card {
       display: flex;
@@ -905,6 +913,33 @@
       padding: 0 10px;
       font-size: 12px;
       font-family: inherit;
+      color-scheme: dark;
+      transition: none;
+      box-shadow: none;
+      outline: none;
+    }
+    .dynamic-card select:focus,
+    .dynamic-card select:focus-visible {
+      outline: none;
+      box-shadow: none;
+      border-color: var(--line-soft);
+    }
+    .dynamic-card select option {
+      background: #16233a;
+      color: #e6edf7;
+    }
+    .dynamic-card select option:checked {
+      background: #0b111d !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 0 9999px #0b111d inset;
+      -webkit-text-fill-color: #ffffff;
+    }
+    .dynamic-card select option:hover,
+    .dynamic-card select option:focus {
+      background: #0b111d !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 0 9999px #0b111d inset;
+      -webkit-text-fill-color: #ffffff;
     }
     .dynamic-actions {
       display: flex;
