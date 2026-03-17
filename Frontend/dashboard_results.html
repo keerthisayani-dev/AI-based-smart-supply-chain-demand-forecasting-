@@ -1905,6 +1905,8 @@
     let strategyFromPicker = null;
     let strategyToPicker = null;
     let strategyAutoRunTimer = null;
+    const strategyRowsCache = new Map();
+    const STRATEGY_CACHE_TTL_MS = 30000;
 
     function apiBase() {
       return window.location.origin;
@@ -2074,7 +2076,13 @@
       return p <= medianPrice ? "Amazon" : "Flipkart";
     }
 
-    async function fetchStrategyRows(product, fromDate, toDate) {
+    async function fetchStrategyRows(product, fromDate, toDate, forceRefresh = false) {
+      const key = `${String(product || "").trim()}|${String(fromDate || "").trim()}|${String(toDate || "").trim()}`;
+      const now = Date.now();
+      const cached = strategyRowsCache.get(key);
+      if (!forceRefresh && cached && (now - cached.ts) < STRATEGY_CACHE_TTL_MS) {
+        return cached.rows;
+      }
       const qs = new URLSearchParams();
       if (product) qs.set("product", product);
       if (fromDate) qs.set("from_date", fromDate);
@@ -2088,7 +2096,7 @@
       const rows = Array.isArray(payload?.items) ? payload.items : [];
       const priced = rows.map((r) => toNum(r?.price)).filter((v) => v > 0).sort((a, b) => a - b);
       const medianPrice = priced.length ? priced[Math.floor(priced.length / 2)] : 0;
-      return rows.map((r) => {
+      const normalizedRows = rows.map((r) => {
         const normalized = normalizePlatformName(r?.platform);
         const inferred = normalized || inferPlatformByPrice(r?.price, medianPrice);
         return {
@@ -2100,6 +2108,8 @@
           discount: toNum(r?.discount),
         };
       });
+      strategyRowsCache.set(key, { ts: now, rows: normalizedRows });
+      return normalizedRows;
     }
 
     function simulateStrategyForRows(rows, priceChangePct, discountPct) {
@@ -2274,7 +2284,7 @@
       setStrategyStatus(`Simulation completed using ${result.rows} records.${fallbackNote}`);
     }
 
-    function queueStrategyAutoRun(delayMs = 120) {
+    function queueStrategyAutoRun(delayMs = 60) {
       if (strategyAutoRunTimer) {
         clearTimeout(strategyAutoRunTimer);
       }
@@ -2562,6 +2572,7 @@
       document.getElementById("dynAddPrice").value = "";
       document.getElementById("dynAddDiscount").value = "";
       setDynamicEditorStatus("Record added successfully.");
+      strategyRowsCache.clear();
       await loadDynamicRecords();
       await loadDynamicOptions();
       await loadResults();
@@ -2593,6 +2604,7 @@
         throw new Error(String(payload?.detail || `Edit failed (${resp.status})`));
       }
       setDynamicEditorStatus("Record updated.");
+      strategyRowsCache.clear();
       await loadDynamicRecords();
       await loadResults();
     }
@@ -2611,6 +2623,7 @@
         throw new Error(String(payload?.detail || `Delete failed (${resp.status})`));
       }
       setDynamicEditorStatus("Record deleted.");
+      strategyRowsCache.clear();
       await loadDynamicRecords();
       await loadDynamicOptions();
       await loadResults();
@@ -3567,11 +3580,6 @@
           exportState.forecastRows,
           exportState.forecastCols
         );
-        try {
-          await runStrategySimulation();
-        } catch (strategyErr) {
-          setStrategyStatus(`Simulation unavailable: ${String(strategyErr?.message || "Unknown error")}`);
-        }
 
       } catch (err) {
         if (requestId !== latestLoadRequestId) return;
@@ -4214,18 +4222,18 @@
       if (!el) return;
       el.addEventListener("change", () => {
         markStrategyPending();
-        queueStrategyAutoRun(80);
+        queueStrategyAutoRun(40);
       });
     });
     [strategyPriceEl, strategyDiscountEl].forEach((el) => {
       if (!el) return;
       el.addEventListener("input", () => {
         markStrategyPending();
-        queueStrategyAutoRun(140);
+        queueStrategyAutoRun(50);
       });
       el.addEventListener("change", () => {
         markStrategyPending();
-        queueStrategyAutoRun(80);
+        queueStrategyAutoRun(40);
       });
     });
     const cmpPlatform1El = document.getElementById("cmpPlatform1");
@@ -4313,8 +4321,10 @@
       // Load dynamic editor data in background so forecast results render immediately.
       loadDynamicOptions()
         .then(async () => {
-          await loadDynamicRecords();
-          await syncStrategyInputsForProductChange();
+          await Promise.all([
+            loadDynamicRecords(),
+            syncStrategyInputsForProductChange(),
+          ]);
           await runStrategySimulation();
         })
         .catch((err) => {
