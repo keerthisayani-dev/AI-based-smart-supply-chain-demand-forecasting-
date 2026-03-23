@@ -2048,17 +2048,8 @@
       const fromDate = String(document.getElementById("strategyFromDate")?.value || "-").trim() || "-";
       const toDate = String(document.getElementById("strategyToDate")?.value || "-").trim() || "-";
       const summaryEl = document.getElementById("strategySummaryText");
-      const baseEl = document.getElementById("strategyBaseDemand");
-      const simEl = document.getElementById("strategySimDemand");
-      const revEl = document.getElementById("strategyRevenueImpact");
-      const tableEl = document.getElementById("strategyTableBody");
-      const recEl = document.getElementById("strategyRecommendation");
       if (summaryEl) summaryEl.textContent = `Simulation for ${product} on ${platform} from ${fromDate} to ${toDate}.`;
-      if (baseEl) baseEl.textContent = "Baseline Demand: -";
-      if (simEl) simEl.textContent = "Predicted Demand: -";
-      if (revEl) revEl.textContent = "Revenue Impact: -";
-      if (tableEl) tableEl.innerHTML = "<tr><td colspan='4'>Recalculating with current values...</td></tr>";
-      if (recEl) recEl.textContent = "Recommendation will update after simulation.";
+      setStrategyStatus("Inputs changed. Click Run Simulation to update values.");
     }
 
     function normalizePlatformName(rawValue) {
@@ -2393,17 +2384,6 @@
         discountPct
       );
       setStrategyStatus(`Simulation completed using ${result.rows} records.${fallbackNote}`);
-    }
-
-    function queueStrategyAutoRun(delayMs = 60) {
-      if (strategyAutoRunTimer) {
-        clearTimeout(strategyAutoRunTimer);
-      }
-      strategyAutoRunTimer = setTimeout(() => {
-        runStrategySimulation().catch((err) => {
-          setStrategyStatus(String(err?.message || "Simulation failed."));
-        });
-      }, delayMs);
     }
 
     async function syncStrategyInputsForProductChange() {
@@ -4334,7 +4314,6 @@
         try {
           markStrategyPending();
           await syncStrategyInputsForProductChange();
-          queueStrategyAutoRun(80);
         } catch (err) {
           setStrategyStatus(String(err?.message || "Failed to sync category inputs."));
         }
@@ -4344,18 +4323,15 @@
       if (!el) return;
       el.addEventListener("change", () => {
         markStrategyPending();
-        queueStrategyAutoRun(40);
       });
     });
     [strategyPriceEl, strategyDiscountEl].forEach((el) => {
       if (!el) return;
       el.addEventListener("input", () => {
         markStrategyPending();
-        queueStrategyAutoRun(50);
       });
       el.addEventListener("change", () => {
         markStrategyPending();
-        queueStrategyAutoRun(40);
       });
     });
     const cmpPlatform1El = document.getElementById("cmpPlatform1");
@@ -4447,7 +4423,6 @@
             loadDynamicRecords(),
             syncStrategyInputsForProductChange(),
           ]);
-          await runStrategySimulation();
         })
         .catch((err) => {
           setDynamicEditorStatus(`Dynamic data unavailable: ${String(err?.message || "Unknown error")}`);
