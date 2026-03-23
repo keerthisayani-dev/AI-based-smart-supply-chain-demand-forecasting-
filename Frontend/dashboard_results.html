@@ -2112,6 +2112,111 @@
       return normalizedRows;
     }
 
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, toNum(value)));
+    }
+
+    function estimateStrategyElasticities(rows) {
+      const demandRows = rows.filter((r) => toNum(r.units) > 0);
+      if (demandRows.length < 12) {
+        return {
+          priceElasticity: -1.2,
+          discountElasticity: 0.8,
+        };
+      }
+
+      const byDay = demandRows.reduce((acc, row) => {
+        const key = String(row.date || "").trim();
+        if (!key) return acc;
+        if (!acc[key]) {
+          acc[key] = {
+            units: 0,
+            priceWeightedUnits: 0,
+            pricedUnits: 0,
+            discountSum: 0,
+            discountCount: 0,
+          };
+        }
+        const bucket = acc[key];
+        const units = Math.max(0, toNum(row.units));
+        const price = Math.max(0, toNum(row.price));
+        const discount = Math.max(0, toNum(row.discount));
+        bucket.units += units;
+        if (price > 0) {
+          bucket.priceWeightedUnits += price * Math.max(units, 1);
+          bucket.pricedUnits += Math.max(units, 1);
+        }
+        bucket.discountSum += discount;
+        bucket.discountCount += 1;
+        return acc;
+      }, {});
+
+      const daily = Object.entries(byDay)
+        .map(([date, values]) => ({
+          date,
+          units: toNum(values.units),
+          price: values.pricedUnits > 0 ? (values.priceWeightedUnits / values.pricedUnits) : 0,
+          discount: values.discountCount > 0 ? (values.discountSum / values.discountCount) : 0,
+        }))
+        .filter((row) => row.units > 0)
+        .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+      const sample = daily.length >= 10 ? daily : demandRows.map((row) => ({
+        date: String(row.date || ""),
+        units: Math.max(0, toNum(row.units)),
+        price: Math.max(0, toNum(row.price)),
+        discount: Math.max(0, toNum(row.discount)),
+      }));
+
+      const avgDemand = sample.reduce((s, r) => s + toNum(r.units), 0) / Math.max(1, sample.length);
+      const pricedRows = sample.filter((r) => toNum(r.price) > 0);
+      const avgPrice = pricedRows.length
+        ? (pricedRows.reduce((s, r) => s + toNum(r.price), 0) / pricedRows.length)
+        : 0;
+      const avgDiscount = sample.reduce((s, r) => s + Math.max(0, toNum(r.discount)), 0) / Math.max(1, sample.length);
+
+      let priceVar = 0;
+      let discountVar = 0;
+      let priceDemandCov = 0;
+      let discountDemandCov = 0;
+
+      sample.forEach((row) => {
+        const demandRel = avgDemand > 0 ? (toNum(row.units) - avgDemand) / avgDemand : 0;
+        if (avgPrice > 0 && toNum(row.price) > 0) {
+          const priceRel = (toNum(row.price) - avgPrice) / avgPrice;
+          priceVar += priceRel * priceRel;
+          priceDemandCov += priceRel * demandRel;
+        }
+        const discountRel = (Math.max(0, toNum(row.discount)) - avgDiscount) / 100;
+        discountVar += discountRel * discountRel;
+        discountDemandCov += discountRel * demandRel;
+      });
+
+      const demandStd = Math.sqrt(
+        sample.reduce((s, r) => s + Math.pow(toNum(r.units) - avgDemand, 2), 0) / Math.max(1, sample.length)
+      );
+      const priceStd = Math.sqrt(
+        pricedRows.reduce((s, r) => s + Math.pow(toNum(r.price) - avgPrice, 2), 0) / Math.max(1, pricedRows.length || 1)
+      );
+      const discountStd = Math.sqrt(
+        sample.reduce((s, r) => s + Math.pow(Math.max(0, toNum(r.discount)) - avgDiscount, 2), 0) / Math.max(1, sample.length)
+      );
+
+      const demandCv = avgDemand > 0 ? (demandStd / avgDemand) : 0;
+      const priceCv = avgPrice > 0 ? (priceStd / avgPrice) : 0;
+      const discountCv = avgDiscount > 0 ? (discountStd / Math.max(avgDiscount, 1)) : (discountStd / 10);
+
+      const fittedPriceElasticity = priceVar > 1e-9 ? (priceDemandCov / priceVar) : -0.8;
+      const fittedDiscountElasticity = discountVar > 1e-9 ? (discountDemandCov / discountVar) : 0.6;
+      const profilePriceElasticity = -0.35 - (3.2 * priceCv) - (1.8 * demandCv);
+      const profileDiscountElasticity = 0.18 + (2.4 * discountCv) + (0.9 * demandCv);
+
+      return {
+        priceElasticity: clamp((0.65 * fittedPriceElasticity) + (0.35 * profilePriceElasticity), -3.5, -0.1),
+        discountElasticity: clamp((0.65 * fittedDiscountElasticity) + (0.35 * profileDiscountElasticity), 0.05, 3.0),
+      };
+    }
+
     function simulateStrategyForRows(rows, priceChangePct, discountPct) {
       const validRows = rows.filter((r) => r.units > 0);
       const n = Math.max(1, validRows.length);
@@ -2146,10 +2251,14 @@
       const platformBias = dominantPlatform.includes("amazon")
         ? 0.01
         : (dominantPlatform.includes("flipkart") ? 0.015 : 0.0);
+      const elasticities = estimateStrategyElasticities(validRows);
 
       const priceFactor = Math.max(0.05, 1 + (priceChangePct / 100));
       const discountFactor = Math.max(0.05, 1 - (discountPct / 100));
-      const manualLift = ((-1.2 * priceChangePct) + (0.8 * discountPct)) / 100;
+      const manualLift = (
+        (elasticities.priceElasticity * priceChangePct) +
+        (elasticities.discountElasticity * discountPct)
+      ) / 100;
       const demandLift = manualLift + (0.35 * demandTrend) + platformBias;
       const demandFactor = Math.max(0.05, 1 + demandLift);
       const simDemand = avgDemand * demandFactor;
@@ -2167,6 +2276,8 @@
         demandChangePct,
         revenueChangePct,
         rows: validRows.length,
+        priceElasticity: elasticities.priceElasticity,
+        discountElasticity: elasticities.discountElasticity,
       };
     }
 
