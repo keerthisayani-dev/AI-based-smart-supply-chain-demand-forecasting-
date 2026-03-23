@@ -1904,9 +1904,10 @@
     let dynamicDatePickers = [];
     let strategyFromPicker = null;
     let strategyToPicker = null;
-    let strategyAutoRunTimer = null;
     const strategyRowsCache = new Map();
-    const STRATEGY_CACHE_TTL_MS = 30000;
+    const strategyRowsInflight = new Map();
+    const STRATEGY_CACHE_TTL_MS = 10 * 60 * 1000;
+    let strategyCacheWarmStarted = false;
 
     function apiBase() {
       return window.location.origin;
@@ -2067,6 +2068,16 @@
       return p <= medianPrice ? "Amazon" : "Flipkart";
     }
 
+    function filterStrategyRowsByDate(rows, fromDate, toDate) {
+      const from = String(fromDate || "").trim();
+      const to = String(toDate || "").trim();
+      if (!from || !to) return Array.isArray(rows) ? rows.slice() : [];
+      return (Array.isArray(rows) ? rows : []).filter((row) => {
+        const date = String(row?.date || "").trim();
+        return !!date && date >= from && date <= to;
+      });
+    }
+
     async function fetchStrategyRows(product, fromDate, toDate, forceRefresh = false) {
       const key = `${String(product || "").trim()}|${String(fromDate || "").trim()}|${String(toDate || "").trim()}`;
       const now = Date.now();
@@ -2074,33 +2085,74 @@
       if (!forceRefresh && cached && (now - cached.ts) < STRATEGY_CACHE_TTL_MS) {
         return cached.rows;
       }
-      const qs = new URLSearchParams();
-      if (product) qs.set("product", product);
-      if (fromDate) qs.set("from_date", fromDate);
-      if (toDate) qs.set("to_date", toDate);
-      qs.set("limit", "5000");
-      const resp = await authFetch(`${apiBase()}/dynamic-data/records?${qs.toString()}`, { cache: "no-store" });
-      if (!resp.ok) {
-        throw new Error(`Load failed (${resp.status})`);
+      if (!forceRefresh && strategyRowsInflight.has(key)) {
+        return strategyRowsInflight.get(key);
       }
-      const payload = await resp.json();
-      const rows = Array.isArray(payload?.items) ? payload.items : [];
-      const priced = rows.map((r) => toNum(r?.price)).filter((v) => v > 0).sort((a, b) => a - b);
-      const medianPrice = priced.length ? priced[Math.floor(priced.length / 2)] : 0;
-      const normalizedRows = rows.map((r) => {
-        const normalized = normalizePlatformName(r?.platform);
-        const inferred = normalized || inferPlatformByPrice(r?.price, medianPrice);
-        return {
-          date: String(r?.date || ""),
-          product: String(r?.product_id || r?.category || ""),
-          platform: inferred || "Unknown",
-          units: toNum(r?.units_sold),
-          price: toNum(r?.price),
-          discount: toNum(r?.discount),
-        };
-      });
-      strategyRowsCache.set(key, { ts: now, rows: normalizedRows });
-      return normalizedRows;
+      const fullKey = `${String(product || "").trim()}||`;
+      const fullCached = strategyRowsCache.get(fullKey);
+      const hasDateFilter = Boolean(String(fromDate || "").trim() && String(toDate || "").trim());
+      if (!forceRefresh && hasDateFilter && fullCached && (now - fullCached.ts) < STRATEGY_CACHE_TTL_MS) {
+        const filteredRows = filterStrategyRowsByDate(fullCached.rows, fromDate, toDate);
+        strategyRowsCache.set(key, { ts: now, rows: filteredRows });
+        return filteredRows;
+      }
+      const requestPromise = (async () => {
+        const qs = new URLSearchParams();
+        if (product) qs.set("product", product);
+        if (fromDate) qs.set("from_date", fromDate);
+        if (toDate) qs.set("to_date", toDate);
+        qs.set("limit", "5000");
+        const resp = await authFetch(`${apiBase()}/dynamic-data/records?${qs.toString()}`, { cache: "no-store" });
+        if (!resp.ok) {
+          throw new Error(`Load failed (${resp.status})`);
+        }
+        const payload = await resp.json();
+        const rows = Array.isArray(payload?.items) ? payload.items : [];
+        const priced = rows.map((r) => toNum(r?.price)).filter((v) => v > 0).sort((a, b) => a - b);
+        const medianPrice = priced.length ? priced[Math.floor(priced.length / 2)] : 0;
+        const normalizedRows = rows.map((r) => {
+          const normalized = normalizePlatformName(r?.platform);
+          const inferred = normalized || inferPlatformByPrice(r?.price, medianPrice);
+          return {
+            date: String(r?.date || ""),
+            product: String(r?.product_id || r?.category || ""),
+            platform: inferred || "Unknown",
+            units: toNum(r?.units_sold),
+            price: toNum(r?.price),
+            discount: toNum(r?.discount),
+          };
+        });
+        strategyRowsCache.set(key, { ts: Date.now(), rows: normalizedRows });
+        return normalizedRows;
+      })();
+      strategyRowsInflight.set(key, requestPromise);
+      try {
+        return await requestPromise;
+      } finally {
+        strategyRowsInflight.delete(key);
+      }
+    }
+
+    function warmStrategyCacheForProducts(products) {
+      if (strategyCacheWarmStarted) return;
+      strategyCacheWarmStarted = true;
+      const queue = (Array.isArray(products) ? products : [])
+        .map((p) => String(p || "").trim())
+        .filter(Boolean);
+      if (!queue.length) return;
+
+      setTimeout(async () => {
+        for (const product of queue) {
+          const key = `${product}||`;
+          const cached = strategyRowsCache.get(key);
+          if (cached) continue;
+          try {
+            await fetchStrategyRows(product, "", "");
+          } catch (_) {
+            // Keep warming best-effort; a later button click can retry normally.
+          }
+        }
+      }, 0);
     }
 
     function clamp(value, min, max) {
@@ -4310,13 +4362,11 @@
       });
     }
     if (strategyProductEl) {
-      strategyProductEl.addEventListener("change", async () => {
-        try {
-          markStrategyPending();
-          await syncStrategyInputsForProductChange();
-        } catch (err) {
+      strategyProductEl.addEventListener("change", () => {
+        markStrategyPending();
+        syncStrategyInputsForProductChange().catch((err) => {
           setStrategyStatus(String(err?.message || "Failed to sync category inputs."));
-        }
+        });
       });
     }
     [strategyPlatformEl, strategyFromEl, strategyToEl].forEach((el) => {
@@ -4423,6 +4473,7 @@
             loadDynamicRecords(),
             syncStrategyInputsForProductChange(),
           ]);
+          warmStrategyCacheForProducts(dynamicProductOptions);
         })
         .catch((err) => {
           setDynamicEditorStatus(`Dynamic data unavailable: ${String(err?.message || "Unknown error")}`);
