@@ -8,6 +8,8 @@ import json
 import shutil
 import base64
 import re
+import urllib.error
+import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -59,6 +61,7 @@ FRONTEND_HTML_PATH = PROJECT_DIR / "Frontend" / "dashboard.html"
 FRONTEND_RESULTS_HTML_PATH = PROJECT_DIR / "Frontend" / "dashboard_results.html"
 FRONTEND_ADMIN_HTML_PATH = PROJECT_DIR / "Frontend" / "admin_dashboard.html"
 FRONTEND_ABOUT_HTML_PATH = PROJECT_DIR / "Frontend" / "about_project.html"
+FRONTEND_AI_CHAT_HTML_PATH = PROJECT_DIR / "Frontend" / "ai_chat.html"
 HISTORY_DB_PATH = PROJECT_DIR / "Backend" / "forecast_history.db"
 AUTH_DB_PATH = PROJECT_DIR / "Backend" / "auth.db"
 UPLOADS_ROOT = PROJECT_DIR / "uploads"
@@ -81,6 +84,7 @@ PASSWORD_POLICY_MESSAGE = (
 ROLE_ADMIN = "admin"
 ROLE_INVENTORY_MANAGER = "inventory_manager"
 ROLE_VIEWER = "viewer"
+AI_CHAT_MODEL = "gpt-4o-mini"
 
 ROLE_ALIASES: Dict[str, str] = {
     "admin": ROLE_ADMIN,
@@ -1150,11 +1154,17 @@ class DynamicDeleteRecordRequest(BaseModel):
 
 
 class DynamicCompareRequest(BaseModel):
-    product: str
-    platform_1: str
-    platform_2: str
-    from_date: str
-    to_date: str
+    left_product: str
+    right_product: str
+    left_from: str
+    left_to: str
+    right_from: str
+    right_to: str
+
+
+class AIChatMessageRequest(BaseModel):
+    product: str = ""
+    message: str
 
 
 def _norm_text(value: Any) -> str:
@@ -1171,7 +1181,6 @@ def _dynamic_alias_map() -> Dict[str, set[str]]:
         "date": {"order_date", "sales_date", "transaction_date"},
         "product_id": {"product id", "product", "sku", "item_id", "item id"},
         "category": {"product_category", "item_category"},
-        "platform": {"marketplace", "channel", "source", "platform_name"},
         "units_sold": {"units sold", "qty_sold", "quantity_sold"},
         "price": {"unit_price", "selling_price"},
         "discount": {"discount_pct", "discount_percentage"},
@@ -1187,7 +1196,6 @@ def _dynamic_output_col(canonical: str) -> str:
         "date": "date",
         "product_id": "product id",
         "category": "category",
-        "platform": "platform",
         "units_sold": "units sold",
         "price": "price",
         "discount": "discount",
@@ -1332,7 +1340,6 @@ def _dynamic_item_from_row(row: pd.Series, col_map: Dict[str, Optional[str]]) ->
         "date": date_iso,
         "product_id": str(_grab("product_id") or "").strip(),
         "category": str(_grab("category") or "").strip(),
-        "platform": str(_grab("platform") or "").strip(),
         "units_sold": float(pd.to_numeric(_grab("units_sold"), errors="coerce") or 0.0),
         "price": None if _grab("price") is None else float(pd.to_numeric(_grab("price"), errors="coerce") or 0.0),
         "discount": None if _grab("discount") is None else float(pd.to_numeric(_grab("discount"), errors="coerce") or 0.0),
@@ -1356,18 +1363,6 @@ def _filter_dynamic_product(df: pd.DataFrame, product_value: str) -> pd.DataFram
         prod_values = _dynamic_get_series(df, prod_col).astype("string").fillna("").str.strip().str.lower()
         mask = mask | (prod_values == requested)
     mask = mask.fillna(False).astype(bool)
-    return df.loc[mask].copy()
-
-
-def _filter_dynamic_platform(df: pd.DataFrame, platform_value: str) -> pd.DataFrame:
-    if not platform_value:
-        return df
-    requested = str(platform_value).strip().lower()
-    platform_col = _dynamic_find_col(df, "platform")
-    if not platform_col:
-        return df.iloc[0:0].copy()
-    platform_values = _dynamic_get_series(df, platform_col).astype("string").fillna("").str.strip().str.lower()
-    mask = (platform_values == requested).fillna(False).astype(bool)
     return df.loc[mask].copy()
 
 
@@ -1415,89 +1410,184 @@ def _compare_metrics(df: pd.DataFrame) -> Dict[str, float]:
     }
 
 
-def _platform_compare_metrics(df: pd.DataFrame) -> Dict[str, float]:
-    rows = float(len(df.index))
+def _safe_mean_text(df: pd.DataFrame, canonical: str, label: str) -> Optional[str]:
+    col = _dynamic_find_col(df, canonical)
+    if not col:
+        return None
+    vals = pd.to_numeric(_dynamic_get_series(df, col), errors="coerce").dropna()
+    if vals.empty:
+        return None
+    return f"{label}: {vals.mean():.2f}"
 
-    def _avg(canonical: str) -> float:
-        col = _dynamic_find_col(df, canonical)
-        if not col or rows <= 0:
-            return 0.0
-        vals = pd.to_numeric(_dynamic_get_series(df, col), errors="coerce")
-        return float(vals.mean()) if vals.notna().any() else 0.0
 
-    def _max(canonical: str) -> float:
-        col = _dynamic_find_col(df, canonical)
-        if not col:
-            return 0.0
-        vals = pd.to_numeric(_dynamic_get_series(df, col), errors="coerce")
-        return float(vals.max()) if vals.notna().any() else 0.0
+def _dataset_context_for_chat(product: str) -> Dict[str, Any]:
+    with _engine_lock:
+        df = _load_dynamic_dataset()
+        scoped_df = _filter_dynamic_product(df, product) if product else df.copy()
+        if scoped_df.empty:
+            raise HTTPException(status_code=404, detail=f"No dataset rows found for '{product}'")
 
-    avg_demand = _avg("units_sold")
-    forecast_demand = _avg("demand_forecast")
-    if forecast_demand == 0.0:
-        forecast_demand = avg_demand
+        date_col = _dynamic_find_col(scoped_df, "date")
+        parsed_dates = parse_date_series(_dynamic_get_series(scoped_df, date_col)).dropna() if date_col else pd.Series(dtype="datetime64[ns]")
+        if date_col and parsed_dates.notna().any():
+            scoped_df = scoped_df.assign(__sort_date__=parse_date_series(_dynamic_get_series(scoped_df, date_col)))
+            scoped_df = scoped_df.sort_values("__sort_date__", ascending=False).drop(columns=["__sort_date__"], errors="ignore")
+
+        stats = _compare_metrics(scoped_df)
+        recent_rows = []
+        col_map = {k: _dynamic_find_col(scoped_df, k) for k in _dynamic_alias_map().keys()}
+        for _, row in scoped_df.head(8).iterrows():
+            recent_rows.append(_dynamic_item_from_row(row, col_map))
+
+    scope_name = product.strip() if product.strip() else "the full dataset"
+    details: List[str] = [
+        f"Scope: {scope_name}",
+        f"Rows: {int(stats['rows'])}",
+        f"Total units sold: {stats['total_units_sold']:.2f}",
+        f"Average units sold: {stats['avg_units_sold']:.2f}",
+    ]
+    if not parsed_dates.empty:
+        details.append(f"Date range: {parsed_dates.min().strftime('%Y-%m-%d')} to {parsed_dates.max().strftime('%Y-%m-%d')}")
+    for line in (
+        _safe_mean_text(scoped_df, "price", "Average price"),
+        _safe_mean_text(scoped_df, "discount", "Average discount"),
+        _safe_mean_text(scoped_df, "inventory_level", "Average inventory level"),
+        _safe_mean_text(scoped_df, "units_ordered", "Average units ordered"),
+        _safe_mean_text(scoped_df, "demand_forecast", "Average demand forecast"),
+    ):
+        if line:
+            details.append(line)
+
     return {
-        "avg_demand": avg_demand,
-        "max_demand": _max("units_sold"),
-        "price": _avg("price"),
-        "forecast_demand": forecast_demand,
+        "scope_name": scope_name,
+        "summary_text": "\n".join(details),
+        "recent_rows": recent_rows,
+        "row_count": int(stats["rows"]),
     }
 
 
-def _better_platform(metric: str, v1: float, v2: float, p1: str, p2: str) -> str:
-    abs_diff = abs(v1 - v2)
-    max_base = max(abs(v1), abs(v2), 1e-9)
-    rel_diff = abs_diff / max_base
-    # Treat tiny movements as ties so "better" is not noisy.
-    if rel_diff < 0.005:  # 0.5%
-        return "Tie"
-    # For price lower is better; for demand metrics higher is better.
-    lower_better = {"price"}
-    if metric in lower_better:
-        return p1 if v1 < v2 else p2
-    return p1 if v1 > v2 else p2
+def _basic_chat_answer(message: str) -> str:
+    text = str(message or "").strip()
+    lowered = text.lower()
+    normalized = re.sub(r"[^a-z0-9\s]", " ", lowered)
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+
+    if normalized in {"hi", "hello", "hey", "hii", "good morning", "good afternoon", "good evening"}:
+        return "Hello! I can help with product demand, price, discount, inventory, forecast questions, and general supply-chain basics."
+    if "how are you" in normalized:
+        return "I am ready to help. You can ask about your dataset, product performance, forecasts, or basic supply-chain questions."
+    if any(phrase in normalized for phrase in {"what can you do", "help", "how can you help", "what all can you do"}):
+        return (
+            "I can answer product and category questions from your dataset, summarize demand and pricing patterns, "
+            "explain forecast-related concepts, and handle simple general questions."
+        )
+    if any(phrase in normalized for phrase in {"who are you", "what are you"}):
+        return "I am the DemandIQ assistant powered for retail demand and inventory questions, with support for basic general chat too."
+    if (
+        any(token in normalized for token in {"model", "algorithm", "working"})
+        and any(token in normalized for token in {"project", "system", "this", "app"})
+    ) or "on what model" in normalized or "which model" in normalized:
+        return (
+            f"This project is mainly working on {MODEL_INFO}. "
+            "In simple terms, it uses a Linear Regression forecasting pipeline with lag features, rolling averages, calendar seasonality, and holiday-aware demand behavior."
+        )
+    if any(phrase in normalized for phrase in {"how this project works", "how does this project work", "how this system works", "how does this system work"}):
+        return (
+            "This project loads historical retail data, builds time-series demand signals, trains a forecasting model for product or category demand, "
+            "and then uses those patterns to generate future demand predictions and insights."
+        )
+    if any(phrase in normalized for phrase in {"thank you", "thanks", "ok thanks", "thankyou"}):
+        return "You are welcome. Ask another question anytime."
+    if "forecast" in normalized and any(phrase in normalized for phrase in {"what is", "meaning", "define", "explain"}):
+        return "A forecast is an estimate of future demand or sales based on historical patterns and related signals such as price, seasonality, and promotions."
+    if "inventory" in normalized and any(phrase in normalized for phrase in {"what is", "meaning", "define", "explain"}):
+        return "Inventory is the stock of products available for sale or use. Good inventory management balances product availability with avoiding overstock."
+    if "discount" in normalized and any(phrase in normalized for phrase in {"what is", "meaning", "define", "explain"}):
+        return "A discount is a reduction from the regular selling price, often used to increase demand, clear stock, or support promotions."
+    if "demand" in normalized and any(phrase in normalized for phrase in {"what is", "meaning", "define", "explain"}):
+        return "Demand is the quantity customers want to buy during a given period. In this project, it is reflected mainly through units sold over time."
+    return ""
 
 
-def _platform_bias(platform: str) -> Dict[str, float]:
-    key = str(platform or "").strip().lower()
-    # Used only when platform values are missing and we simulate platform split.
-    if "amazon" in key:
-        return {"demand_mult": 1.02, "price_mult": 0.99}
-    if "flipkart" in key:
-        return {"demand_mult": 0.99, "price_mult": 1.01}
-    return {"demand_mult": 1.0, "price_mult": 1.0}
+def _local_dataset_chat_answer(product: str, message: str, context: Dict[str, Any]) -> str:
+    basic_answer = _basic_chat_answer(message)
+    if basic_answer:
+        return basic_answer
+
+    rows = context.get("recent_rows", [])
+    summary_lines = [
+        f"Dataset summary for {context.get('scope_name', product or 'the selected data')}:",
+        context.get("summary_text", ""),
+    ]
+    if rows:
+        latest = rows[0]
+        latest_bits = [
+            f"Latest row date: {latest.get('date') or 'n/a'}",
+            f"Units sold: {latest.get('units_sold')}",
+        ]
+        if latest.get("price") is not None:
+            latest_bits.append(f"Price: {latest.get('price')}")
+        if latest.get("discount") is not None:
+            latest_bits.append(f"Discount: {latest.get('discount')}")
+        summary_lines.append("Latest record snapshot: " + ", ".join(latest_bits))
+
+    api_key_present = bool(_env_str("OPENAI_API_KEY", ""))
+    if api_key_present:
+        summary_lines.append("Live OpenAI response was unavailable for this request, so this answer was generated from the local dataset summary.")
+    else:
+        summary_lines.append("OpenAI chat is not configured yet, so this answer was generated from the local dataset summary.")
+    summary_lines.append(f"Your question was: {message.strip()}")
+    return "\n\n".join([line for line in summary_lines if line])
 
 
-def _infer_platform_partition(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, str]:
-    if df.empty:
-        return df.copy(), df.copy(), "none"
+def _call_openai_ai_chat(message: str, context: Dict[str, Any]) -> str:
+    api_key = _env_str("OPENAI_API_KEY", "")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is not configured")
 
-    price_col = _dynamic_find_col(df, "price")
-    if price_col:
-        price_vals = pd.to_numeric(_dynamic_get_series(df, price_col), errors="coerce")
-        valid_mask = price_vals.notna()
-        if int(valid_mask.sum()) >= 2:
-            median_price = float(price_vals[valid_mask].median())
-            low_price = df.loc[valid_mask & (price_vals <= median_price)].copy()
-            high_price = df.loc[valid_mask & (price_vals > median_price)].copy()
-            if not low_price.empty and not high_price.empty:
-                return low_price, high_price, "price_median_split"
+    prompt = (
+        "You are DemandIQ Assistant, a concise supply-chain analytics assistant. "
+        "Answer basic general questions naturally. "
+        "When the user asks about products, categories, demand, price, discount, inventory, forecasts, or trends in this project, use the provided dataset context first. "
+        "If the dataset does not contain the requested project-specific detail, say that clearly. "
+        "For general knowledge questions, you may answer normally without pretending the dataset contains that information.\n\n"
+        f"Dataset summary:\n{context['summary_text']}\n\n"
+        f"Recent rows JSON:\n{json.dumps(context['recent_rows'], ensure_ascii=True)}\n\n"
+        f"User question:\n{message.strip()}"
+    )
+    payload = json.dumps(
+        {
+            "model": AI_CHAT_MODEL,
+            "input": prompt,
+        }
+    ).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.openai.com/v1/responses",
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=45) as resp:
+            body = resp.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"OpenAI request failed: {exc.code} {body}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"OpenAI request failed: {exc.reason}") from exc
 
-    ordered = df.copy()
-    date_col = _dynamic_find_col(ordered, "date")
-    if date_col:
-        sort_dates = parse_date_series(_dynamic_get_series(ordered, date_col))
-        ordered = ordered.assign(__sort_date__=sort_dates).sort_values("__sort_date__").drop(columns=["__sort_date__"], errors="ignore")
-    left_rows: List[int] = []
-    right_rows: List[int] = []
-    for idx, row_index in enumerate(ordered.index.tolist()):
-        if idx % 2 == 0:
-            left_rows.append(row_index)
-        else:
-            right_rows.append(row_index)
-    left_df = ordered.loc[left_rows].copy() if left_rows else ordered.iloc[0:0].copy()
-    right_df = ordered.loc[right_rows].copy() if right_rows else ordered.iloc[0:0].copy()
-    return left_df, right_df, "alternating_rows"
+    try:
+        data = json.loads(body)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("OpenAI returned a non-JSON response") from exc
+
+    output_text = str(data.get("output_text") or "").strip()
+    if output_text:
+        return output_text
+    raise RuntimeError("OpenAI returned no output_text")
 
 
 def _looks_like_product_id(value: str) -> bool:
@@ -1788,6 +1878,18 @@ def about_project(request: Request) -> Response:
             detail=f"About project file not found at {FRONTEND_ABOUT_HTML_PATH}",
         )
     return FileResponse(FRONTEND_ABOUT_HTML_PATH, headers=NO_CACHE_HEADERS)
+
+
+@app.get("/ai-chat", include_in_schema=False)
+def ai_chat(request: Request) -> Response:
+    if not _current_user_from_request(request):
+        return RedirectResponse(url="/login", status_code=307)
+    if not FRONTEND_AI_CHAT_HTML_PATH.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"AI chat file not found at {FRONTEND_AI_CHAT_HTML_PATH}",
+        )
+    return FileResponse(FRONTEND_AI_CHAT_HTML_PATH, headers=NO_CACHE_HEADERS)
 
 
 @app.post("/auth/login")
@@ -2288,28 +2390,45 @@ def dynamic_data_options(request: Request) -> Dict[str, Any]:
                 max_date = dates.max().strftime("%Y-%m-%d")
 
         products: set[str] = set()
-        platforms: set[str] = set()
-        category_col = _dynamic_find_col(df, "category")
-        if category_col:
-            values = _dynamic_get_series(df, category_col).astype("string").str.strip().dropna()
+        for key in ("category", "product_id"):
+            col = _dynamic_find_col(df, key)
+            if not col:
+                continue
+            values = _dynamic_get_series(df, col).astype("string").str.strip().dropna()
             products.update({str(v) for v in values if str(v).strip() and str(v).lower() != "nan"})
-        if not products:
-            product_id_col = _dynamic_find_col(df, "product_id")
-            if product_id_col:
-                values = _dynamic_get_series(df, product_id_col).astype("string").str.strip().dropna()
-                products.update({str(v) for v in values if str(v).strip() and str(v).lower() != "nan"})
-        platform_col = _dynamic_find_col(df, "platform")
-        if platform_col:
-            pvals = _dynamic_get_series(df, platform_col).astype("string").str.strip().dropna()
-            platforms.update({str(v) for v in pvals if str(v).strip() and str(v).lower() != "nan"})
-        if not platforms:
-            platforms = {"Amazon", "Flipkart"}
 
     return {
         "products": sorted(products),
-        "platforms": sorted(platforms),
         "min_date": min_date,
         "max_date": max_date,
+    }
+
+
+@app.post("/ai-chat/message")
+def ai_chat_message(payload: AIChatMessageRequest, request: Request) -> Dict[str, Any]:
+    _require_roles(request, ALLOWED_LOGIN_ROLES)
+    product = str(payload.product or "").strip()
+    message = str(payload.message or "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="message is required")
+
+    context = _dataset_context_for_chat(product)
+    model_used = AI_CHAT_MODEL
+    fallback_reason = ""
+    try:
+        answer = _call_openai_ai_chat(message, context)
+    except Exception as exc:
+        answer = _local_dataset_chat_answer(product, message, context)
+        fallback_reason = str(exc).strip()
+        model_used = "local dataset fallback"
+
+    return {
+        "ok": True,
+        "product": context["scope_name"],
+        "model": model_used,
+        "answer": answer,
+        "rows_used": context["row_count"],
+        "fallback_reason": fallback_reason,
     }
 
 
@@ -2361,7 +2480,6 @@ def dynamic_data_add_record(payload: DynamicAddRecordRequest, request: Request) 
     normalized = _canonical_dynamic_payload(payload.record)
     date_val = str(normalized.get("date") or "").strip()
     product_val = str(normalized.get("product_id") or normalized.get("category") or "").strip()
-    platform_val = str(normalized.get("platform") or "").strip()
     units_val = normalized.get("units_sold", None)
     if not date_val:
         raise HTTPException(status_code=400, detail="record.date is required")
@@ -2386,7 +2504,6 @@ def dynamic_data_add_record(payload: DynamicAddRecordRequest, request: Request) 
         row_data[_dynamic_ensure_col(df, "date")] = parsed_date.strftime("%Y-%m-%d")
         row_data[_dynamic_ensure_col(df, "product_id")] = product_val
         row_data[_dynamic_ensure_col(df, "category")] = str(normalized.get("category") or product_val)
-        row_data[_dynamic_ensure_col(df, "platform")] = platform_val or "Amazon"
         row_data[_dynamic_ensure_col(df, "units_sold")] = units_num
 
         for key in ("price", "discount", "inventory_level", "units_ordered", "demand_forecast"):
@@ -2482,128 +2599,58 @@ def dynamic_data_compare(payload: DynamicCompareRequest, request: Request) -> Di
     _require_roles(request, ALLOWED_LOGIN_ROLES)
     if not all(
         [
-            str(payload.product).strip(),
-            str(payload.platform_1).strip(),
-            str(payload.platform_2).strip(),
-            str(payload.from_date).strip(),
-            str(payload.to_date).strip(),
+            str(payload.left_product).strip(),
+            str(payload.right_product).strip(),
+            str(payload.left_from).strip(),
+            str(payload.left_to).strip(),
+            str(payload.right_from).strip(),
+            str(payload.right_to).strip(),
         ]
     ):
-        raise HTTPException(status_code=400, detail="product, platform_1, platform_2, from_date, to_date are required")
+        raise HTTPException(status_code=400, detail="All compare fields are required")
 
     try:
         with _engine_lock:
             df = _load_dynamic_dataset()
-            base_df = _date_filtered(_filter_dynamic_product(df, payload.product), payload.from_date, payload.to_date)
-            same_platform_mode = str(payload.platform_1).strip().lower() == str(payload.platform_2).strip().lower()
-            compare_from = payload.from_date
-            compare_to = payload.to_date
-            left_df = _filter_dynamic_platform(base_df, payload.platform_1)
-            right_df = _filter_dynamic_platform(base_df, payload.platform_2)
-            inference_mode = "exact_platform"
-            # Many historical rows may not yet have platform populated.
-            # If both selected platforms are empty, infer two non-overlapping slices.
-            fallback_used = False
-            if same_platform_mode:
-                start_ts = pd.to_datetime(payload.from_date, errors="coerce")
-                end_ts = pd.to_datetime(payload.to_date, errors="coerce")
-                if pd.isna(start_ts) or pd.isna(end_ts) or end_ts < start_ts:
-                    raise HTTPException(status_code=400, detail="Invalid compare date range")
-                days = int((end_ts - start_ts).days) + 1
-                prev_to = start_ts - pd.Timedelta(days=1)
-                prev_from = prev_to - pd.Timedelta(days=max(0, days - 1))
-                compare_from = prev_from.strftime("%Y-%m-%d")
-                compare_to = prev_to.strftime("%Y-%m-%d")
-                prev_base = _date_filtered(_filter_dynamic_product(df, payload.product), compare_from, compare_to)
-                right_df = _filter_dynamic_platform(prev_base, payload.platform_2)
-                inference_mode = "same_platform_previous_period"
-                if right_df.empty and not left_df.empty:
-                    date_col = _dynamic_find_col(left_df, "date")
-                    if date_col:
-                        sort_dates = parse_date_series(_dynamic_get_series(left_df, date_col))
-                        ordered = left_df.assign(__sort_date__=sort_dates).sort_values("__sort_date__").drop(columns=["__sort_date__"], errors="ignore")
-                    else:
-                        ordered = left_df.copy()
-                    split = max(1, len(ordered.index) // 2)
-                    left_split = ordered.iloc[:split].copy()
-                    right_split = ordered.iloc[split:].copy()
-                    if not right_split.empty:
-                        left_df = left_split
-                        right_df = right_split
-                        inference_mode = "same_platform_split_current_range"
-                        fallback_used = True
-            if left_df.empty and right_df.empty and not base_df.empty:
-                left_df, right_df, inference_mode = _infer_platform_partition(base_df)
-                fallback_used = True
-            else:
-                if left_df.empty and not base_df.empty:
-                    left_df = base_df.drop(index=right_df.index, errors="ignore").copy()
-                    if left_df.empty:
-                        # Ensure non-overlapping fallback groups instead of copying all rows.
-                        inferred_left, inferred_right, inferred_mode = _infer_platform_partition(base_df)
-                        left_df = inferred_left
-                        if right_df.empty:
-                            right_df = inferred_right
-                        inference_mode = f"left_inferred_{inferred_mode}"
-                    else:
-                        inference_mode = "left_complement_fallback"
-                    fallback_used = True
-                if right_df.empty and not base_df.empty:
-                    right_df = base_df.drop(index=left_df.index, errors="ignore").copy()
-                    if right_df.empty:
-                        # Ensure non-overlapping fallback groups instead of copying all rows.
-                        inferred_left, inferred_right, inferred_mode = _infer_platform_partition(base_df)
-                        if left_df.empty:
-                            left_df = inferred_left
-                        right_df = inferred_right
-                        inference_mode = f"right_inferred_{inferred_mode}"
-                    else:
-                        inference_mode = "right_complement_fallback"
-                    fallback_used = True
-            left_metrics = _platform_compare_metrics(left_df)
-            right_metrics = _platform_compare_metrics(right_df)
-            if fallback_used:
-                b1 = _platform_bias(payload.platform_1)
-                b2 = _platform_bias(payload.platform_2)
-                for k in ("avg_demand", "max_demand", "forecast_demand"):
-                    left_metrics[k] = float(left_metrics.get(k, 0.0)) * float(b1.get("demand_mult", 1.0))
-                    right_metrics[k] = float(right_metrics.get(k, 0.0)) * float(b2.get("demand_mult", 1.0))
-                left_metrics["price"] = float(left_metrics.get("price", 0.0)) * float(b1.get("price_mult", 1.0))
-                right_metrics["price"] = float(right_metrics.get("price", 0.0)) * float(b2.get("price_mult", 1.0))
-                inference_mode = f"{inference_mode}_platform_bias"
+            left_df = _date_filtered(_filter_dynamic_product(df, payload.left_product), payload.left_from, payload.left_to)
+            right_df = _date_filtered(_filter_dynamic_product(df, payload.right_product), payload.right_from, payload.right_to)
+            left_metrics = _compare_metrics(left_df)
+            right_metrics = _compare_metrics(right_df)
     except HTTPException:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Dynamic compare failed: {exc}") from exc
 
-    metric_keys = ["avg_demand", "max_demand", "price", "forecast_demand"]
+    metric_keys = sorted(set(left_metrics.keys()) | set(right_metrics.keys()))
     rows: List[Dict[str, Any]] = []
     for key in metric_keys:
         left_val = float(left_metrics.get(key, 0.0))
         right_val = float(right_metrics.get(key, 0.0))
-        better = _better_platform(key, left_val, right_val, payload.platform_1, payload.platform_2)
+        delta = right_val - left_val
+        pct_change = (delta / left_val * 100.0) if abs(left_val) > 1e-12 else (100.0 if abs(right_val) > 1e-12 else 0.0)
         rows.append(
             {
                 "metric": key,
-                "platform_1_value": left_val,
-                "platform_2_value": right_val,
-                "better": better,
+                "left_value": left_val,
+                "right_value": right_val,
+                "delta": delta,
+                "pct_change": pct_change,
             }
         )
 
     return {
-        "product": payload.product,
-        "from": payload.from_date,
-        "to": payload.to_date,
-        "platform_1": payload.platform_1,
-        "platform_2": payload.platform_2,
-        "same_platform_mode": bool(same_platform_mode),
-        "compare_from": compare_from,
-        "compare_to": compare_to,
-        "rows_platform_1": int(len(left_df.index)),
-        "rows_platform_2": int(len(right_df.index)),
-        "fallback_used": bool(fallback_used),
-        "inference_mode": inference_mode,
+        "left": {
+            "product": payload.left_product,
+            "from": payload.left_from,
+            "to": payload.left_to,
+            "rows": int(len(left_df.index)),
+        },
+        "right": {
+            "product": payload.right_product,
+            "from": payload.right_from,
+            "to": payload.right_to,
+            "rows": int(len(right_df.index)),
+        },
         "metrics": rows,
     }
 

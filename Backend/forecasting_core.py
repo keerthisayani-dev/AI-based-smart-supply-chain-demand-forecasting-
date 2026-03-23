@@ -81,7 +81,9 @@ def parse_date_series(values: pd.Series) -> pd.Series:
     iso_parsed = pd.to_datetime(s.where(iso_mask), format="%Y-%m-%d", errors="coerce")
     non_iso_parsed = pd.to_datetime(s.where(~iso_mask), dayfirst=True, errors="coerce")
     parsed = iso_parsed.fillna(non_iso_parsed)
-    fallback = pd.to_datetime(s, dayfirst=False, errors="coerce")
+
+    # Final fallback keeps day-first parsing so datasets like 01-01-2022 do not emit warnings.
+    fallback = pd.to_datetime(s.where(parsed.isna()), dayfirst=True, errors="coerce")
     return parsed.fillna(fallback)
 
 

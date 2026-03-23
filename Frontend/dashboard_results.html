@@ -974,6 +974,137 @@
       font-size: 12px;
       margin: 0;
     }
+    .compare-card {
+      gap: 14px;
+      padding: 16px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025)),
+        rgba(255, 255, 255, 0.03);
+      border-color: rgba(126, 149, 188, 0.18);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+    .compare-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .compare-copy {
+      display: grid;
+      gap: 4px;
+    }
+    .compare-subtitle {
+      margin: 0;
+      color: #9ab0d3;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .compare-badge {
+      min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(103, 176, 255, 0.24);
+      background: rgba(79, 140, 255, 0.1);
+      color: #cfe4ff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .compare-form-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .compare-field {
+      grid-column: span 6;
+      display: grid;
+      gap: 6px;
+    }
+    .compare-field-wide {
+      grid-column: span 12;
+    }
+    .compare-label {
+      color: #8fa7ce;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    #dynamicCompareCard input,
+    #dynamicCompareCard select {
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(18, 30, 53, 0.88);
+      border-color: rgba(148, 163, 184, 0.18);
+    }
+    .compare-action-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      background: rgba(8, 15, 28, 0.34);
+    }
+    .compare-inline-note {
+      flex: 1 1 auto;
+      color: #b5c8e6;
+    }
+    .compare-btn {
+      min-width: 148px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(69, 131, 255, 0.28), rgba(47, 98, 214, 0.22));
+      border-color: rgba(103, 176, 255, 0.3);
+    }
+    .compare-results-card {
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      background: rgba(9, 17, 30, 0.4);
+      padding: 10px;
+      display: grid;
+      gap: 10px;
+    }
+    .compare-results-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 2px 2px 0;
+    }
+    .compare-results-title {
+      margin: 0;
+      color: #dfe9f8;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .compare-results-kicker {
+      color: #87a2cf;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    #dynamicCompareCard .dynamic-compare-table-wrap {
+      max-height: none;
+      min-height: 174px;
+      border-radius: 12px;
+    }
+    #dynamicCompareCard .dynamic-table th,
+    #dynamicCompareCard .dynamic-table td {
+      padding: 10px 12px;
+    }
+    #dynamicCompareCard .dynamic-table td:last-child {
+      font-weight: 700;
+    }
     .dynamic-editor-table-wrap,
     .dynamic-compare-table-wrap {
       max-height: 260px;
@@ -1454,6 +1585,22 @@
       .dynamic-grid {
         grid-template-columns: 1fr;
       }
+      .compare-field,
+      .compare-field-wide {
+        grid-column: span 12;
+      }
+      .compare-head,
+      .compare-action-row,
+      .compare-results-head {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .compare-badge {
+        width: fit-content;
+      }
+      .compare-btn {
+        width: 100%;
+      }
       .top-nav {
         position: static;
         width: calc(100% - 24px);
@@ -1570,6 +1717,10 @@
 
       <div class="menu-group">
         <p class="group-title">PROJECT</p>
+        <a href="/ai-chat" id="navAiChat" class="menu-item">
+          <i data-lucide="messages-square" class="menu-icon"></i>
+          <span class="menu-text">AI Chat</span>
+        </a>
         <a href="/about-project" id="navAbout" class="menu-item">
           <i data-lucide="info" class="menu-icon"></i>
           <span class="menu-text">About Project</span>
@@ -1783,35 +1934,60 @@
             <button class="btn" id="dynAddRecordBtn" type="button">Add Record</button>
           </div>
         </article>
-        <article class="dynamic-card" id="dynamicCompareCard">
-          <h4 class="dynamic-title">Compare Product Across Platforms</h4>
-          <div class="dynamic-row">
-            <select id="cmpProduct"></select>
-            <select id="cmpPlatform1"></select>
+        <article class="dynamic-card compare-card" id="dynamicCompareCard">
+          <div class="compare-head">
+            <div class="compare-copy">
+              <h4 class="dynamic-title">Compare Product Across Platforms</h4>
+              <p class="compare-subtitle">Review demand, peak sales, pricing, and forecast strength side by side in one cleaner view.</p>
+            </div>
+            <div class="compare-badge">Side-by-Side View</div>
           </div>
-          <div class="dynamic-row">
-            <select id="cmpPlatform2"></select>
-            <button class="btn" id="cmpRunBtn" type="button">Compare</button>
+          <div class="compare-form-grid">
+            <label class="compare-field compare-field-wide" for="cmpProduct">
+              <span class="compare-label">Product</span>
+              <select id="cmpProduct"></select>
+            </label>
+            <label class="compare-field" for="cmpPlatform1">
+              <span class="compare-label">Platform 1</span>
+              <select id="cmpPlatform1"></select>
+            </label>
+            <label class="compare-field" for="cmpPlatform2">
+              <span class="compare-label">Platform 2</span>
+              <select id="cmpPlatform2"></select>
+            </label>
+            <label class="compare-field" for="cmpFromDate">
+              <span class="compare-label">From</span>
+              <input id="cmpFromDate" type="text" placeholder="YYYY-MM-DD" />
+            </label>
+            <label class="compare-field" for="cmpToDate">
+              <span class="compare-label">To</span>
+              <input id="cmpToDate" type="text" placeholder="YYYY-MM-DD" />
+            </label>
           </div>
-          <div class="dynamic-row">
-            <input id="cmpFromDate" type="text" placeholder="YYYY-MM-DD" />
-            <input id="cmpToDate" type="text" placeholder="YYYY-MM-DD" />
+          <div class="compare-action-row">
+            <p class="dynamic-note compare-inline-note" id="cmpStatus">Select product, platforms, and date range, then click Compare.</p>
+            <button class="btn compare-btn" id="cmpRunBtn" type="button">Compare</button>
           </div>
-          <p class="dynamic-note" id="cmpStatus">Select product, platforms, and date range, then click Compare.</p>
-          <div class="dynamic-compare-table-wrap">
-            <table class="dynamic-table">
-              <thead>
-                <tr>
-                  <th>Metric</th>
-                  <th id="cmpColP1">Platform 1</th>
-                  <th id="cmpColP2">Platform 2</th>
-                  <th>Better</th>
-                </tr>
-              </thead>
-              <tbody id="cmpTableBody">
-                <tr><td colspan="4">No comparison run yet.</td></tr>
-              </tbody>
-            </table>
+          <div class="compare-results-card">
+            <div class="compare-results-head">
+              <p class="compare-results-title">Comparison Output</p>
+              <span class="compare-results-kicker">Best platform highlighted</span>
+            </div>
+            <div class="dynamic-compare-table-wrap">
+              <table class="dynamic-table">
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th id="cmpColP1">Platform 1</th>
+                    <th id="cmpColP2">Platform 2</th>
+                    <th>Better</th>
+                  </tr>
+                </thead>
+                <tbody id="cmpTableBody">
+                  <tr><td colspan="4">No comparison run yet.</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </article>
       </div>
@@ -1895,13 +2071,15 @@
     let currentUserRole = "viewer";
     let currentUserName = "";
     let roleAccessNote = "Viewer access: read-only forecast dashboard. Export and inventory insights are restricted.";
-    const STRATEGY_ALLOWED_MIN_DATE = "";
-    const STRATEGY_ALLOWED_MAX_DATE = "";
+    const STRATEGY_ALLOWED_MIN_DATE = "2025-01-01";
+    const STRATEGY_ALLOWED_MAX_DATE = "2029-12-31";
     const SIDEBAR_COLLAPSED_KEY = "results_sidebar_collapsed_v1";
     let dynamicProductOptions = [];
     let dynamicPlatformOptions = [];
     let dynamicRecordsCache = [];
     let dynamicDatePickers = [];
+    let dynamicMinDateBound = "";
+    let dynamicMaxDateBound = "";
     let strategyFromPicker = null;
     let strategyToPicker = null;
     const strategyRowsCache = new Map();
@@ -2447,16 +2625,18 @@
       if (!product || !fromEl || !toEl) return;
 
       const rows = await fetchStrategyRows(product, "", "");
-      if (!rows.length) return;
+      if (!rows.length) {
+        applyStrategyDateDefaults(true);
+        return;
+      }
 
       const dates = rows
         .map((r) => String(r?.date || "").trim())
         .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
         .sort();
-      if (dates.length) {
-        fromEl.value = dates[0];
-        toEl.value = dates[dates.length - 1];
-      }
+      const bounds = getStrategyDateBounds();
+      fromEl.value = bounds.minDate || dates[0] || fromEl.value || "";
+      toEl.value = bounds.maxDate || dates[dates.length - 1] || toEl.value || "";
 
       // Pick platform with max rows for selected product so simulation is data-rich.
       const platformCounts = rows.reduce((acc, r) => {
@@ -2530,6 +2710,26 @@
       }
     }
 
+    function getStrategyDateBounds() {
+      return {
+        minDate: STRATEGY_ALLOWED_MIN_DATE || dynamicMinDateBound || "",
+        maxDate: STRATEGY_ALLOWED_MAX_DATE || dynamicMaxDateBound || "",
+      };
+    }
+
+    function applyStrategyDateDefaults(force = false) {
+      const fromEl = document.getElementById("strategyFromDate");
+      const toEl = document.getElementById("strategyToDate");
+      if (!fromEl || !toEl) return;
+      const bounds = getStrategyDateBounds();
+      if (force || !String(fromEl.value || "").trim()) {
+        fromEl.value = bounds.minDate || fromEl.value || "";
+      }
+      if (force || !String(toEl.value || "").trim()) {
+        toEl.value = bounds.maxDate || toEl.value || "";
+      }
+    }
+
     function initDynamicDatePickers() {
       if (!window.flatpickr) return;
       dynamicDatePickers.forEach((picker) => {
@@ -2554,10 +2754,23 @@
       ids.forEach((id) => {
         const el = document.getElementById(id);
         if (!el) return;
+        const currentValue = String(el.value || "").trim();
+        const isStrategyPicker = id === "strategyFromDate" || id === "strategyToDate";
+        const bounds = isStrategyPicker
+          ? getStrategyDateBounds()
+          : { minDate: dynamicMinDateBound, maxDate: dynamicMaxDateBound };
+        if (bounds.maxDate && currentValue && currentValue > bounds.maxDate) {
+          el.value = bounds.maxDate;
+        }
+        if (bounds.minDate && String(el.value || "").trim() && String(el.value || "").trim() < bounds.minDate) {
+          el.value = bounds.minDate;
+        }
         const pickerConfig = {
           dateFormat: "Y-m-d",
           allowInput: false,
           monthSelectorType: "static",
+          ...(bounds.minDate ? { minDate: bounds.minDate } : {}),
+          ...(bounds.maxDate ? { maxDate: bounds.maxDate } : {}),
           ...(el.value ? { defaultDate: el.value } : {}),
         };
         const picker = window.flatpickr(el, pickerConfig);
@@ -2649,17 +2862,16 @@
       const addDateEl = document.getElementById("dynAddDate");
       const cmpFromEl = document.getElementById("cmpFromDate");
       const cmpToEl = document.getElementById("cmpToDate");
-      const strategyFromEl = document.getElementById("strategyFromDate");
-      const strategyToEl = document.getElementById("strategyToDate");
       const minDate = String(payload.min_date || "");
       const maxDate = String(payload.max_date || "");
+      dynamicMinDateBound = minDate;
+      dynamicMaxDateBound = maxDate;
       if (fromEl && !fromEl.value && minDate) fromEl.value = minDate;
       if (toEl && !toEl.value && maxDate) toEl.value = maxDate;
       if (addDateEl && !addDateEl.value && maxDate) addDateEl.value = maxDate;
       if (cmpFromEl && !cmpFromEl.value && minDate) cmpFromEl.value = minDate;
       if (cmpToEl && !cmpToEl.value && maxDate) cmpToEl.value = maxDate;
-      if (strategyFromEl && !strategyFromEl.value && minDate) strategyFromEl.value = minDate;
-      if (strategyToEl && !strategyToEl.value && maxDate) strategyToEl.value = maxDate;
+      applyStrategyDateDefaults(false);
       initDynamicDatePickers();
       if (!dynamicProductOptions.length) {
         setDynamicEditorStatus("No products found. Check dataset columns and API auth/session.");
@@ -2794,10 +3006,6 @@
       const colP2El = document.getElementById("cmpColP2");
       if (!product || !platform1 || !platform2 || !fromDate || !toDate) {
         setCompareStatus("Select product, platforms, and date range.");
-        return;
-      }
-      if (platform1 === platform2) {
-        setCompareStatus("Choose two different platforms to compare (Amazon vs Flipkart).");
         return;
       }
       if (colP1El) colP1El.textContent = platform1;
@@ -4386,25 +4594,6 @@
     });
     const cmpPlatform1El = document.getElementById("cmpPlatform1");
     const cmpPlatform2El = document.getElementById("cmpPlatform2");
-    function enforceDifferentPlatforms(changed) {
-      const p1 = String(cmpPlatform1El?.value || "").trim();
-      const p2 = String(cmpPlatform2El?.value || "").trim();
-      if (!p1 || !p2 || p1 !== p2) return;
-      const alternative = dynamicPlatformOptions.find((p) => p !== p1);
-      if (alternative) {
-        if (changed === "p1" && cmpPlatform2El) cmpPlatform2El.value = alternative;
-        if (changed === "p2" && cmpPlatform1El) cmpPlatform1El.value = alternative;
-        setCompareStatus(`Platforms must be different. Auto-switched to ${alternative}.`);
-      } else {
-        setCompareStatus("Need two distinct platforms (e.g., Amazon and Flipkart).");
-      }
-    }
-    if (cmpPlatform1El) {
-      cmpPlatform1El.addEventListener("change", () => enforceDifferentPlatforms("p1"));
-    }
-    if (cmpPlatform2El) {
-      cmpPlatform2El.addEventListener("change", () => enforceDifferentPlatforms("p2"));
-    }
     if (dynEditorBody) {
       dynEditorBody.addEventListener("click", async (e) => {
         const editBtn = e.target.closest("[data-dyn-edit]");
