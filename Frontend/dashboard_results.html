@@ -3494,11 +3494,12 @@
         "avg_units_sold",
         "avg_price",
         "demand_stability",
-        "estimated_revenue",
-        "estimated_profit_margin",
-        "estimated_profit",
         "avg_discount",
         "avg_demand_forecast",
+        "avg_inventory_level",
+        "estimated_revenue",
+        "estimated_profit",
+        "estimated_profit_margin",
       ];
       const rowMap = new Map((Array.isArray(rows) ? rows : []).map((row) => [String(row?.metric || ""), row]));
       return preferredOrder.map((key) => rowMap.get(key)).filter(Boolean);
