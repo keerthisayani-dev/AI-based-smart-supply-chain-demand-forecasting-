@@ -56,13 +56,15 @@
     .summary-card {
       min-height: 112px;
       padding: 14px 16px;
-      border-radius: 14px;
-      border: 1px solid rgba(124, 154, 201, 0.26);
-      background: rgba(20, 31, 54, 0.72);
+      border-radius: 16px;
+      border: 1px solid rgba(124, 154, 201, 0.2);
+      background: rgba(18, 26, 39, 0.72);
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
       gap: 8px;
+      box-shadow: 0 10px 24px rgba(2, 8, 20, 0.22);
+      backdrop-filter: blur(10px);
     }
     .summary-head {
       display: inline-flex;
@@ -115,12 +117,13 @@
     }
     .admin-panel {
       border-radius: 16px;
-      border: 1px solid rgba(124, 154, 201, 0.24);
-      background: linear-gradient(180deg, rgba(16, 27, 48, 0.86), rgba(10, 20, 38, 0.9));
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+      border: 1px solid rgba(124, 154, 201, 0.18);
+      background: rgba(18, 26, 39, 0.74);
+      box-shadow: 0 10px 24px rgba(2, 8, 20, 0.22);
       padding: 14px;
       max-height: none;
       overflow: hidden;
+      backdrop-filter: blur(10px);
     }
     .two-col > .glass-card.admin-panel {
       display: flex;
@@ -157,9 +160,9 @@
       min-height: 0;
       max-height: none;
       overflow: auto;
-      border: 1px solid rgba(125, 155, 202, 0.2);
+      border: 1px solid rgba(125, 155, 202, 0.16);
       border-radius: 12px;
-      background: rgba(15, 24, 43, 0.64);
+      background: rgba(12, 20, 36, 0.55);
       scrollbar-width: thin;
       scrollbar-color: rgba(122, 158, 216, 0.62) rgba(10, 18, 33, 0.86);
     }
