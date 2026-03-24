@@ -1154,12 +1154,17 @@ class DynamicDeleteRecordRequest(BaseModel):
 
 
 class DynamicCompareRequest(BaseModel):
-    left_product: str
-    right_product: str
-    left_from: str
-    left_to: str
-    right_from: str
-    right_to: str
+    product: str = ""
+    platform_1: str = ""
+    platform_2: str = ""
+    from_date: str = ""
+    to_date: str = ""
+    left_product: str = ""
+    right_product: str = ""
+    left_from: str = ""
+    left_to: str = ""
+    right_from: str = ""
+    right_to: str = ""
 
 
 class AIChatMessageRequest(BaseModel):
@@ -1181,6 +1186,7 @@ def _dynamic_alias_map() -> Dict[str, set[str]]:
         "date": {"order_date", "sales_date", "transaction_date"},
         "product_id": {"product id", "product", "sku", "item_id", "item id"},
         "category": {"product_category", "item_category"},
+        "platform": {"sales_channel", "channel", "marketplace", "source_platform"},
         "units_sold": {"units sold", "qty_sold", "quantity_sold"},
         "price": {"unit_price", "selling_price"},
         "discount": {"discount_pct", "discount_percentage"},
@@ -1366,6 +1372,50 @@ def _filter_dynamic_product(df: pd.DataFrame, product_value: str) -> pd.DataFram
     return df.loc[mask].copy()
 
 
+def _normalize_platform_name(value: Any) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    lower = raw.lower()
+    if "amazon" in lower:
+        return "Amazon"
+    if "flipkart" in lower:
+        return "Flipkart"
+    return raw
+
+
+def _filter_dynamic_platform(df: pd.DataFrame, platform_value: str) -> Tuple[pd.DataFrame, bool]:
+    requested = _normalize_platform_name(platform_value)
+    if not requested:
+        return df.copy(), False
+
+    platform_col = _dynamic_find_col(df, "platform")
+    if platform_col:
+        normalized = _dynamic_get_series(df, platform_col).map(_normalize_platform_name)
+        mask = normalized == requested
+        matched = df.loc[mask].copy()
+        if not matched.empty:
+            return matched, False
+
+    price_col = _dynamic_find_col(df, "price")
+    if not price_col:
+        return df.iloc[0:0].copy(), False
+
+    prices = pd.to_numeric(_dynamic_get_series(df, price_col), errors="coerce")
+    valid_prices = prices.dropna().sort_values()
+    if valid_prices.empty:
+        return df.iloc[0:0].copy(), False
+
+    median_price = float(valid_prices.iloc[len(valid_prices) // 2])
+    if requested == "Amazon":
+        mask = prices.notna() & (prices <= median_price)
+    elif requested == "Flipkart":
+        mask = prices.notna() & (prices > median_price)
+    else:
+        return df.iloc[0:0].copy(), False
+    return df.loc[mask].copy(), True
+
+
 def _date_filtered(df: pd.DataFrame, from_date: str, to_date: str) -> pd.DataFrame:
     date_col = _dynamic_find_col(df, "date")
     if not date_col:
@@ -1398,6 +1448,31 @@ def _compare_metrics(df: pd.DataFrame) -> Dict[str, float]:
         vals = pd.to_numeric(_dynamic_get_series(df, col), errors="coerce")
         return float(vals.sum()) if vals.notna().any() else 0.0
 
+    units_col = _dynamic_find_col(df, "units_sold")
+    price_col = _dynamic_find_col(df, "price")
+    discount_col = _dynamic_find_col(df, "discount")
+    units = pd.to_numeric(_dynamic_get_series(df, units_col), errors="coerce") if units_col else pd.Series(dtype="float64")
+    prices = pd.to_numeric(_dynamic_get_series(df, price_col), errors="coerce") if price_col else pd.Series(dtype="float64")
+    discounts = pd.to_numeric(_dynamic_get_series(df, discount_col), errors="coerce") if discount_col else pd.Series(dtype="float64")
+    valid_units = units.dropna()
+    demand_stability = 0.0
+    if not valid_units.empty:
+        mean_units = float(valid_units.mean())
+        std_units = float(valid_units.std(ddof=0))
+        if mean_units > 0:
+            demand_stability = max(0.0, 100.0 - ((std_units / mean_units) * 100.0))
+
+    estimated_revenue = 0.0
+    if units_col and price_col:
+        revenue_series = (units.fillna(0.0) * prices.fillna(0.0)).astype(float)
+        estimated_revenue = float(revenue_series.sum())
+
+    total_units = _sum("units_sold")
+    estimated_unit_cost = 42.0
+    estimated_cost = total_units * estimated_unit_cost
+    estimated_profit = estimated_revenue - estimated_cost
+    estimated_profit_margin = (estimated_profit / estimated_revenue * 100.0) if estimated_revenue > 0 else 0.0
+
     return {
         "rows": rows,
         "total_units_sold": _sum("units_sold"),
@@ -1407,6 +1482,90 @@ def _compare_metrics(df: pd.DataFrame) -> Dict[str, float]:
         "avg_inventory_level": _avg("inventory_level"),
         "avg_units_ordered": _avg("units_ordered"),
         "avg_demand_forecast": _avg("demand_forecast"),
+        "demand_stability": demand_stability,
+        "estimated_revenue": estimated_revenue,
+        "estimated_profit": estimated_profit,
+        "estimated_profit_margin": estimated_profit_margin,
+        "estimated_cost": estimated_cost,
+    }
+
+
+def _score_metric_pair(
+    left_val: float,
+    right_val: float,
+    higher_is_better: bool = True,
+) -> Tuple[float, float]:
+    left = float(left_val)
+    right = float(right_val)
+    scale = max(abs(left), abs(right), 1e-9)
+    if not higher_is_better:
+        left = -left
+        right = -right
+    left_norm = (left / scale + 1.0) / 2.0
+    right_norm = (right / scale + 1.0) / 2.0
+    return max(0.0, left_norm), max(0.0, right_norm)
+
+
+def _build_compare_recommendation(
+    platform_1: str,
+    platform_2: str,
+    left_metrics: Dict[str, float],
+    right_metrics: Dict[str, float],
+) -> Dict[str, Any]:
+    weights: List[Tuple[str, float, bool, str]] = [
+        ("total_units_sold", 0.30, True, "higher total sales"),
+        ("avg_units_sold", 0.18, True, "stronger average demand"),
+        ("demand_stability", 0.18, True, "better demand stability"),
+        ("estimated_revenue", 0.16, True, "higher estimated revenue"),
+        ("estimated_profit_margin", 0.10, True, "better estimated profit margin"),
+        ("avg_price", 0.05, True, "stronger pricing"),
+        ("avg_discount", 0.03, False, "lower discount dependence"),
+    ]
+
+    left_score = 0.0
+    right_score = 0.0
+    contributions: List[Tuple[str, float, str]] = []
+    for key, weight, higher_is_better, reason in weights:
+        left_component, right_component = _score_metric_pair(
+            left_metrics.get(key, 0.0),
+            right_metrics.get(key, 0.0),
+            higher_is_better=higher_is_better,
+        )
+        left_weighted = left_component * weight
+        right_weighted = right_component * weight
+        left_score += left_weighted
+        right_score += right_weighted
+        advantage = left_weighted - right_weighted
+        if abs(advantage) > 1e-9:
+            winner = platform_1 if advantage > 0 else platform_2
+            contributions.append((winner, abs(advantage), reason))
+
+    if left_score > right_score:
+        best_platform = platform_1
+    elif right_score > left_score:
+        best_platform = platform_2
+    else:
+        best_platform = "Tie"
+
+    reasons = [reason for winner, _, reason in sorted(contributions, key=lambda item: item[1], reverse=True) if winner == best_platform][:3]
+    if best_platform == "Tie":
+        summary = f"Both platforms are evenly matched on the current weighted score."
+    elif reasons:
+        summary = f"{best_platform} is recommended due to {', '.join(reasons[:2])}."
+    else:
+        summary = f"{best_platform} is recommended on the weighted comparison score."
+
+    return {
+        "best_platform": best_platform,
+        "scores": {
+            platform_1: round(left_score * 100.0, 2),
+            platform_2: round(right_score * 100.0, 2),
+        },
+        "summary": summary,
+        "weighted_basis": [
+            {"metric": key, "weight": weight, "higher_is_better": higher_is_better}
+            for key, weight, higher_is_better, _ in weights
+        ],
     }
 
 
@@ -2597,23 +2756,24 @@ def dynamic_data_delete_record(payload: DynamicDeleteRecordRequest, request: Req
 @app.post("/dynamic-data/compare")
 def dynamic_data_compare(payload: DynamicCompareRequest, request: Request) -> Dict[str, Any]:
     _require_roles(request, ALLOWED_LOGIN_ROLES)
-    if not all(
-        [
-            str(payload.left_product).strip(),
-            str(payload.right_product).strip(),
-            str(payload.left_from).strip(),
-            str(payload.left_to).strip(),
-            str(payload.right_from).strip(),
-            str(payload.right_to).strip(),
-        ]
-    ):
-        raise HTTPException(status_code=400, detail="All compare fields are required")
+    product = str(payload.product or payload.left_product or payload.right_product).strip()
+    platform_1 = _normalize_platform_name(payload.platform_1)
+    platform_2 = _normalize_platform_name(payload.platform_2)
+    from_date = str(payload.from_date or payload.left_from or payload.right_from).strip()
+    to_date = str(payload.to_date or payload.left_to or payload.right_to).strip()
+
+    if not all([product, platform_1, platform_2, from_date, to_date]):
+        raise HTTPException(status_code=400, detail="Product, both platforms, and date range are required")
+    if platform_1 == platform_2:
+        raise HTTPException(status_code=400, detail="Choose two different platforms to compare")
 
     try:
         with _engine_lock:
             df = _load_dynamic_dataset()
-            left_df = _date_filtered(_filter_dynamic_product(df, payload.left_product), payload.left_from, payload.left_to)
-            right_df = _date_filtered(_filter_dynamic_product(df, payload.right_product), payload.right_from, payload.right_to)
+            product_df = _filter_dynamic_product(df, product)
+            scoped_df = _date_filtered(product_df, from_date, to_date)
+            left_df, left_inferred = _filter_dynamic_platform(scoped_df, platform_1)
+            right_df, right_inferred = _filter_dynamic_platform(scoped_df, platform_2)
             left_metrics = _compare_metrics(left_df)
             right_metrics = _compare_metrics(right_df)
     except HTTPException:
@@ -2626,31 +2786,48 @@ def dynamic_data_compare(payload: DynamicCompareRequest, request: Request) -> Di
     for key in metric_keys:
         left_val = float(left_metrics.get(key, 0.0))
         right_val = float(right_metrics.get(key, 0.0))
-        delta = right_val - left_val
-        pct_change = (delta / left_val * 100.0) if abs(left_val) > 1e-12 else (100.0 if abs(right_val) > 1e-12 else 0.0)
+        if left_val > right_val:
+            better = platform_1
+        elif right_val > left_val:
+            better = platform_2
+        else:
+            better = "Tie"
         rows.append(
             {
                 "metric": key,
-                "left_value": left_val,
-                "right_value": right_val,
-                "delta": delta,
-                "pct_change": pct_change,
+                "platform_1_value": left_val,
+                "platform_2_value": right_val,
+                "better": better,
             }
         )
 
+    recommendation = _build_compare_recommendation(platform_1, platform_2, left_metrics, right_metrics)
+
     return {
-        "left": {
-            "product": payload.left_product,
-            "from": payload.left_from,
-            "to": payload.left_to,
-            "rows": int(len(left_df.index)),
+        "product": product,
+        "platform_1": platform_1,
+        "platform_2": platform_2,
+        "from": from_date,
+        "to": to_date,
+        "fallback_used": bool(left_inferred or right_inferred),
+        "inference_mode": "price-median-platform-split" if (left_inferred or right_inferred) else "",
+        "same_platform_mode": False,
+        "left_rows": int(len(left_df.index)),
+        "right_rows": int(len(right_df.index)),
+        "profitability": {
+            "estimated_unit_cost": 42.0,
+            "platform_1": {
+                "estimated_revenue": float(left_metrics.get("estimated_revenue", 0.0)),
+                "estimated_profit": float(left_metrics.get("estimated_profit", 0.0)),
+                "estimated_profit_margin": float(left_metrics.get("estimated_profit_margin", 0.0)),
+            },
+            "platform_2": {
+                "estimated_revenue": float(right_metrics.get("estimated_revenue", 0.0)),
+                "estimated_profit": float(right_metrics.get("estimated_profit", 0.0)),
+                "estimated_profit_margin": float(right_metrics.get("estimated_profit_margin", 0.0)),
+            },
         },
-        "right": {
-            "product": payload.right_product,
-            "from": payload.right_from,
-            "to": payload.right_to,
-            "rows": int(len(right_df.index)),
-        },
+        "recommendation": recommendation,
         "metrics": rows,
     }
 

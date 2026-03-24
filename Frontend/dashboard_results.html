@@ -1122,8 +1122,9 @@
     .dynamic-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-      margin-top: 12px;
+      gap: 14px;
+      margin-top: 10px;
+      align-items: stretch;
     }
     .dynamic-card {
       border: 1px solid var(--line-soft);
@@ -1131,13 +1132,116 @@
       background: rgba(255, 255, 255, 0.03);
       padding: 12px;
       display: grid;
-      gap: 10px;
+      gap: 8px;
+      align-content: start;
     }
     .dynamic-title {
       margin: 0;
       font-size: 14px;
       color: #e7efff;
       font-weight: 700;
+    }
+    .dynamic-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .dynamic-copy {
+      display: grid;
+      gap: 4px;
+    }
+    .dynamic-subtitle {
+      margin: 0;
+      color: #9ab0d3;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .dynamic-badge {
+      min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(103, 176, 255, 0.24);
+      background: rgba(79, 140, 255, 0.1);
+      color: #cfe4ff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .dynamic-panel {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      background: rgba(8, 15, 28, 0.34);
+      align-content: start;
+    }
+    .dynamic-panel-title {
+      margin: 0;
+      color: #dfe9f8;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .dynamic-form-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .dynamic-field {
+      grid-column: span 4;
+      display: grid;
+      gap: 6px;
+    }
+    .dynamic-field-wide {
+      grid-column: span 6;
+    }
+    .dynamic-label {
+      color: #8fa7ce;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .dynamic-action-slot {
+      grid-column: span 6;
+      display: flex;
+      align-items: flex-end;
+    }
+    .dynamic-cta {
+      width: 100%;
+      min-width: 140px;
+      height: 40px;
+      border-radius: 10px;
+    }
+    #dynamicEditorCard .dynamic-cta {
+      background: linear-gradient(135deg, rgba(69, 131, 255, 0.28), rgba(47, 98, 214, 0.22));
+      border-color: rgba(103, 176, 255, 0.3);
+    }
+    .dynamic-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      background: rgba(12, 20, 36, 0.46);
+    }
+    .dynamic-status-note {
+      color: #7fa2d4;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
     }
     .dynamic-row {
       display: grid;
@@ -1151,37 +1255,39 @@
     }
     .dynamic-card input,
     .dynamic-card select {
-      height: 34px;
-      border-radius: 8px;
-      border: 1px solid var(--line-soft);
-      background: rgba(18, 30, 53, 0.95);
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(18, 30, 53, 0.88);
       color: #e7edf8;
-      padding: 0 10px;
+      padding: 0 12px;
       font-size: 12px;
       font-family: inherit;
       color-scheme: dark;
-      transition: none;
+      transition: border-color 0.2s ease, background 0.2s ease;
       box-shadow: none;
       outline: none;
     }
+    .dynamic-card input:focus,
     .dynamic-card select:focus,
     .dynamic-card select:focus-visible {
       outline: none;
       box-shadow: none;
-      border-color: var(--line-soft);
+      border-color: rgba(103, 176, 255, 0.34);
+      background: rgba(21, 35, 60, 0.94);
     }
     #xaiSection .dynamic-row input,
     #xaiSection .dynamic-row select {
-      height: 34px;
-      border-radius: 8px;
-      border: 1px solid var(--line-soft);
-      background: rgba(18, 30, 53, 0.95);
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(18, 30, 53, 0.88);
       color: #e7edf8;
-      padding: 0 10px;
+      padding: 0 12px;
       font-size: 12px;
       font-family: inherit;
       color-scheme: dark;
-      transition: none;
+      transition: border-color 0.2s ease, background 0.2s ease;
       box-shadow: none;
       outline: none;
     }
@@ -1191,7 +1297,8 @@
     #xaiSection .dynamic-row select:focus-visible {
       outline: none;
       box-shadow: none;
-      border-color: var(--line-soft);
+      border-color: rgba(103, 176, 255, 0.34);
+      background: rgba(21, 35, 60, 0.94);
     }
     .dynamic-card select option {
       background: #16233a;
@@ -1220,9 +1327,21 @@
       font-size: 12px;
       margin: 0;
     }
+    #dynamicEditorCard {
+      gap: 12px;
+      padding: 14px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
+        rgba(255, 255, 255, 0.03);
+      border-color: rgba(126, 149, 188, 0.18);
+    }
+    .dynamic-panel-fill {
+      min-height: 0;
+    }
     .compare-card {
-      gap: 14px;
-      padding: 16px;
+      gap: 10px;
+      padding: 14px;
+      grid-template-rows: auto auto auto minmax(0, 1fr);
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025)),
         rgba(255, 255, 255, 0.03);
@@ -1264,7 +1383,7 @@
     .compare-form-grid {
       display: grid;
       grid-template-columns: repeat(12, minmax(0, 1fr));
-      gap: 10px;
+      gap: 8px;
     }
     .compare-field {
       grid-column: span 6;
@@ -1292,8 +1411,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      padding: 12px 14px;
+      gap: 10px;
+      padding: 10px 12px;
       border-radius: 12px;
       border: 1px solid rgba(148, 163, 184, 0.14);
       background: rgba(8, 15, 28, 0.34);
@@ -1313,9 +1432,151 @@
       border-radius: 12px;
       border: 1px solid rgba(148, 163, 184, 0.14);
       background: rgba(9, 17, 30, 0.4);
-      padding: 10px;
+      padding: 9px;
+      display: grid;
+      gap: 8px;
+      min-height: 0;
+      height: 100%;
+      grid-template-rows: auto auto auto minmax(0, 1fr);
+    }
+    .compare-recommendation-card {
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      background: rgba(9, 17, 30, 0.4);
+      padding: 12px;
+      display: grid;
+      gap: 12px;
+    }
+    .compare-reco-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .compare-reco-title {
+      margin: 0;
+      color: #dfe9f8;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .compare-reco-badge {
+      color: #87a2cf;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .compare-best-platform {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(52, 211, 153, 0.18);
+      background: linear-gradient(135deg, rgba(22, 101, 52, 0.22), rgba(15, 23, 42, 0.55));
+    }
+    .compare-best-label {
+      color: #9ab0d3;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .compare-best-value {
+      color: #eafff4;
+      font-size: 24px;
+      font-weight: 800;
+    }
+    .compare-reco-summary {
+      margin: 0;
+      color: #c6d6ee;
+      line-height: 1.5;
+      font-size: 13px;
+    }
+    .compare-platform-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .compare-platform-card {
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      background: rgba(16, 24, 39, 0.5);
+      padding: 12px;
       display: grid;
       gap: 10px;
+    }
+    .compare-platform-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    }
+    .compare-mini-label {
+      color: #8fa7ce;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .compare-mini-value {
+      color: #eff6ff;
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .compare-platform-name {
+      color: #eff6ff;
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .compare-platform-score {
+      color: #9fd5ff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .compare-platform-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .compare-metric-stack {
+      display: grid;
+      gap: 3px;
+    }
+    .compare-mini-sub {
+      color: #9fb5df;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .compare-assumption {
+      color: #87a2cf;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+    .compare-detail-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 2px 2px 0;
+    }
+    .compare-detail-title {
+      margin: 0;
+      color: #dfe9f8;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .compare-detail-note {
+      color: #87a2cf;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
     .compare-results-head {
       display: flex;
@@ -1341,7 +1602,8 @@
     }
     #dynamicCompareCard .dynamic-compare-table-wrap {
       max-height: none;
-      min-height: 174px;
+      min-height: 0;
+      height: 100%;
       border-radius: 12px;
     }
     #dynamicCompareCard .dynamic-table th,
@@ -1353,13 +1615,51 @@
     }
     .dynamic-editor-table-wrap,
     .dynamic-compare-table-wrap {
-      max-height: 260px;
+      position: relative;
+      max-height: 280px;
       overflow: auto;
       border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 10px;
+      border-radius: 12px;
       background: rgba(12, 20, 36, 0.55);
       scrollbar-width: thin;
       scrollbar-color: rgba(125, 182, 255, 0.45) rgba(18, 26, 39, 0.92);
+    }
+    .dynamic-panel-fill .dynamic-editor-table-wrap {
+      height: 520px;
+      max-height: 520px;
+      min-height: 520px;
+    }
+    .table-scroll-top-btn {
+      position: sticky;
+      left: calc(100% - 54px);
+      bottom: 12px;
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid rgba(103, 176, 255, 0.28);
+      background: rgba(20, 33, 56, 0.94);
+      color: #d9e8ff;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(2, 6, 23, 0.36);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+      z-index: 3;
+    }
+    .table-scroll-top-btn.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .table-scroll-top-btn:hover {
+      border-color: rgba(125, 182, 255, 0.5);
+      background: rgba(27, 44, 72, 0.98);
     }
     .dynamic-editor-table-wrap::-webkit-scrollbar,
     .dynamic-compare-table-wrap::-webkit-scrollbar {
@@ -1388,7 +1688,7 @@
     }
     .dynamic-table th,
     .dynamic-table td {
-      padding: 8px;
+      padding: 12px 10px;
       border-bottom: 1px solid rgba(148, 163, 184, 0.18);
       text-align: left;
       white-space: nowrap;
@@ -1398,6 +1698,43 @@
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.02em;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #141d2c;
+    }
+    .dynamic-table tbody tr:hover {
+      background: rgba(79, 140, 255, 0.06);
+    }
+    #dynamicEditorCard .mini-btn {
+      min-width: 46px;
+      padding: 6px 12px;
+    }
+    .dynamic-add-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .dynamic-add-grid .dynamic-field:nth-child(1),
+    .dynamic-add-grid .dynamic-field:nth-child(2),
+    .dynamic-add-grid .dynamic-field:nth-child(3) {
+      grid-column: span 4;
+    }
+    .dynamic-add-grid .dynamic-field:nth-child(4),
+    .dynamic-add-grid .dynamic-field:nth-child(5),
+    .dynamic-add-grid .dynamic-field:nth-child(6) {
+      grid-column: span 4;
+    }
+    .dynamic-add-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .dynamic-add-hint {
+      color: #87a2cf;
+      font-size: 12px;
+      line-height: 1.4;
     }
     .delta-pos { color: #34d399; }
     .delta-neg { color: #fca5a5; }
@@ -1832,18 +2169,38 @@
         grid-template-columns: 1fr;
       }
       .compare-field,
+      .dynamic-field,
       .compare-field-wide {
         grid-column: span 12;
       }
+      .dynamic-field-wide,
+      .dynamic-action-slot,
+      .dynamic-add-grid .dynamic-field:nth-child(1),
+      .dynamic-add-grid .dynamic-field:nth-child(2),
+      .dynamic-add-grid .dynamic-field:nth-child(3),
+      .dynamic-add-grid .dynamic-field:nth-child(4),
+      .dynamic-add-grid .dynamic-field:nth-child(5),
+      .dynamic-add-grid .dynamic-field:nth-child(6) {
+        grid-column: span 12;
+      }
+      .dynamic-card-head,
       .compare-head,
+      .dynamic-status-row,
+      .dynamic-add-footer,
       .compare-action-row,
-      .compare-results-head {
+      .compare-results-head,
+      .compare-reco-head,
+      .compare-best-platform,
+      .compare-platform-head,
+      .compare-detail-head {
         flex-direction: column;
         align-items: stretch;
       }
+      .dynamic-badge,
       .compare-badge {
         width: fit-content;
       }
+      .dynamic-cta,
       .compare-btn {
         width: 100%;
       }
@@ -1909,6 +2266,28 @@
       .menu-item { font-size: 13px; min-height: 38px; }
       #datasetFileInput {
         min-width: 100%;
+      }
+      .dynamic-panel,
+      #dynamicEditorCard,
+      .compare-card {
+        padding: 12px;
+        grid-template-rows: none;
+      }
+      #dynamicEditorCard {
+        grid-template-rows: none;
+      }
+      .dynamic-panel-fill .dynamic-editor-table-wrap {
+        height: 320px;
+        max-height: 320px;
+        min-height: 320px;
+      }
+      .compare-platform-grid,
+      .compare-platform-metrics {
+        grid-template-columns: 1fr;
+      }
+      .dynamic-table th,
+      .dynamic-table td {
+        padding: 10px 8px;
       }
 
       .user-badge {
@@ -2145,11 +2524,11 @@
             </div>
             <div class="xai-field-row">
               <label class="xai-field" for="strategyPriceChange">
-                <span class="xai-label">Price Change <span>Optional</span></span>
+                <span class="xai-label">Price Change <span>(Optional)</span></span>
                 <input id="strategyPriceChange" type="number" step="0.1" placeholder="Price change (%)" />
               </label>
               <label class="xai-field" for="strategyDiscount">
-                <span class="xai-label">Discount <span>Optional</span></span>
+                <span class="xai-label">Discount <span>(Optional)</span></span>
                 <input id="strategyDiscount" type="number" step="0.1" placeholder="Discount (%)" />
               </label>
             </div>
@@ -2192,45 +2571,90 @@
       </div>
       <div class="dynamic-grid">
         <article class="dynamic-card" id="dynamicEditorCard">
-          <h4 class="dynamic-title">Edit Dynamic Records</h4>
-          <div class="dynamic-row">
-            <select id="dynFilterProduct"></select>
-            <button class="btn" id="dynLoadRecordsBtn" type="button">Load Records</button>
+          <div class="dynamic-card-head">
+            <div class="dynamic-copy">
+              <h4 class="dynamic-title">Edit Dynamic Records</h4>
+              <p class="dynamic-subtitle">Filter, review, and update product rows without leaving the dashboard.</p>
+            </div>
+            <div class="dynamic-badge">Editor</div>
           </div>
-          <div class="dynamic-row">
-            <input id="dynFilterFromDate" type="text" placeholder="YYYY-MM-DD" />
-            <input id="dynFilterToDate" type="text" placeholder="YYYY-MM-DD" />
+          <div class="dynamic-panel">
+            <p class="dynamic-panel-title">Find Records</p>
+            <div class="dynamic-form-grid">
+              <label class="dynamic-field dynamic-field-wide" for="dynFilterProduct">
+                <span class="dynamic-label">Product</span>
+                <select id="dynFilterProduct"></select>
+              </label>
+              <div class="dynamic-action-slot">
+                <button class="btn dynamic-cta" id="dynLoadRecordsBtn" type="button">Load Records</button>
+              </div>
+              <label class="dynamic-field" for="dynFilterFromDate">
+                <span class="dynamic-label">From Date</span>
+                <input id="dynFilterFromDate" type="text" placeholder="YYYY-MM-DD" />
+              </label>
+              <label class="dynamic-field" for="dynFilterToDate">
+                <span class="dynamic-label">To Date</span>
+                <input id="dynFilterToDate" type="text" placeholder="YYYY-MM-DD" />
+              </label>
+            </div>
+            <div class="dynamic-status-row">
+              <p class="dynamic-note" id="dynEditorStatus">Load records to edit or delete existing entries.</p>
+              <span class="dynamic-status-note">Up to 300 records per load</span>
+            </div>
           </div>
-          <p class="dynamic-note" id="dynEditorStatus">Load records to edit or delete existing entries.</p>
-          <div class="dynamic-editor-table-wrap">
-            <table class="dynamic-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Product</th>
-                  <th>Platform</th>
-                  <th>Units</th>
-                  <th>Price</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="dynEditorBody">
-                <tr><td colspan="6">No records loaded.</td></tr>
-              </tbody>
-            </table>
+          <div class="dynamic-panel dynamic-panel-fill">
+            <p class="dynamic-panel-title">Loaded Records</p>
+            <div class="dynamic-editor-table-wrap">
+              <table class="dynamic-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Product</th>
+                    <th>Platform</th>
+                    <th>Units</th>
+                    <th>Price</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="dynEditorBody">
+                  <tr><td colspan="6">No records loaded.</td></tr>
+                </tbody>
+              </table>
+              <button class="table-scroll-top-btn" id="dynTableScrollTopBtn" type="button" aria-label="Scroll loaded records to top" title="Scroll to top">↑</button>
+            </div>
           </div>
-          <div class="dynamic-row-3">
-            <input id="dynAddDate" type="text" placeholder="YYYY-MM-DD" />
-            <select id="dynAddProduct"></select>
-            <select id="dynAddPlatform"></select>
-          </div>
-          <div class="dynamic-row-3">
-            <input id="dynAddUnits" type="number" step="0.01" placeholder="Units sold" />
-            <input id="dynAddPrice" type="number" step="0.01" placeholder="Price (optional)" />
-            <input id="dynAddDiscount" type="number" step="0.01" placeholder="Discount (optional)" />
-          </div>
-          <div class="dynamic-row">
-            <button class="btn" id="dynAddRecordBtn" type="button">Add Record</button>
+          <div class="dynamic-panel">
+            <p class="dynamic-panel-title">Add Record</p>
+            <div class="dynamic-add-grid">
+              <label class="dynamic-field" for="dynAddDate">
+                <span class="dynamic-label">Date</span>
+                <input id="dynAddDate" type="text" placeholder="YYYY-MM-DD" />
+              </label>
+              <label class="dynamic-field" for="dynAddProduct">
+                <span class="dynamic-label">Product</span>
+                <select id="dynAddProduct"></select>
+              </label>
+              <label class="dynamic-field" for="dynAddPlatform">
+                <span class="dynamic-label">Platform</span>
+                <select id="dynAddPlatform"></select>
+              </label>
+              <label class="dynamic-field" for="dynAddUnits">
+                <span class="dynamic-label">Units Sold</span>
+                <input id="dynAddUnits" type="number" step="0.01" placeholder="Units sold" />
+              </label>
+              <label class="dynamic-field" for="dynAddPrice">
+                <span class="dynamic-label">Price (Optional)</span>
+                <input id="dynAddPrice" type="number" step="0.01" placeholder="Price" />
+              </label>
+              <label class="dynamic-field" for="dynAddDiscount">
+                <span class="dynamic-label">Discount (Optional)</span>
+                <input id="dynAddDiscount" type="number" step="0.01" placeholder="Discount" />
+              </label>
+            </div>
+            <div class="dynamic-add-footer">
+              <p class="dynamic-add-hint">Required fields: date, product, platform, and units sold.</p>
+              <button class="btn dynamic-cta" id="dynAddRecordBtn" type="button">Add Record</button>
+            </div>
           </div>
         </article>
         <article class="dynamic-card compare-card" id="dynamicCompareCard">
@@ -2271,6 +2695,62 @@
             <div class="compare-results-head">
               <p class="compare-results-title">Comparison Output</p>
               <span class="compare-results-kicker">Best platform highlighted</span>
+            </div>
+            <div class="compare-recommendation-card">
+              <div class="compare-reco-head">
+                <p class="compare-reco-title">Final Recommendation</p>
+                <span class="compare-reco-badge">Weighted Decision</span>
+              </div>
+              <div class="compare-best-platform">
+                <span class="compare-best-label">Best Platform Overall</span>
+                <strong class="compare-best-value" id="cmpBestPlatform">-</strong>
+              </div>
+              <p class="compare-reco-summary" id="cmpRecommendationText">Compare two platforms to see the final recommendation.</p>
+              <div class="compare-platform-grid">
+                <div class="compare-platform-card">
+                  <div class="compare-platform-head">
+                    <div>
+                      <span class="compare-mini-label" id="cmpScoreLabel1">Platform 1</span>
+                      <div class="compare-platform-name" id="cmpPlatformSummary1">Amazon</div>
+                    </div>
+                    <div class="compare-platform-score" id="cmpScore1">-</div>
+                  </div>
+                  <div class="compare-platform-metrics">
+                    <div class="compare-metric-stack">
+                      <span class="compare-mini-label" id="cmpRevenueLabel1">Revenue</span>
+                      <strong class="compare-mini-value" id="cmpRevenue1">-</strong>
+                    </div>
+                    <div class="compare-metric-stack">
+                      <span class="compare-mini-label">Profit Margin</span>
+                      <strong class="compare-mini-value" id="cmpMargin1">-</strong>
+                    </div>
+                  </div>
+                </div>
+                <div class="compare-platform-card">
+                  <div class="compare-platform-head">
+                    <div>
+                      <span class="compare-mini-label" id="cmpScoreLabel2">Platform 2</span>
+                      <div class="compare-platform-name" id="cmpPlatformSummary2">Flipkart</div>
+                    </div>
+                    <div class="compare-platform-score" id="cmpScore2">-</div>
+                  </div>
+                  <div class="compare-platform-metrics">
+                    <div class="compare-metric-stack">
+                      <span class="compare-mini-label" id="cmpRevenueLabel2">Revenue</span>
+                      <strong class="compare-mini-value" id="cmpRevenue2">-</strong>
+                    </div>
+                    <div class="compare-metric-stack">
+                      <span class="compare-mini-label">Profit Margin</span>
+                      <strong class="compare-mini-value" id="cmpMargin2">-</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="compare-assumption" id="cmpProfitabilityNote">Estimated revenue uses price × units sold. Estimated profit margin uses a fixed unit cost assumption.</div>
+            </div>
+            <div class="compare-detail-head">
+              <p class="compare-detail-title">Detailed Metrics</p>
+              <span class="compare-detail-note">Metric-wise winner</span>
             </div>
             <div class="dynamic-compare-table-wrap">
               <table class="dynamic-table">
@@ -2900,7 +3380,7 @@
           <td class="value-cell">${formatStrategyNumber(result.avgDemand)}</td>
           <td class="value-cell">${formatStrategyNumber(result.simDemand)}</td>
           <td class="change-cell ${demandDeltaCls}">
-            ${formatStrategySigned(demandDelta)} (${formatStrategySigned(result.demandChangePct)}%)
+            ${formatStrategySigned(result.demandChangePct)}%
           </td>
         </tr>
         <tr>
@@ -2908,7 +3388,7 @@
           <td class="value-cell">${formatStrategyNumber(result.avgPrice)}</td>
           <td class="value-cell">${formatStrategyNumber(result.simPrice)}</td>
           <td class="change-cell ${priceDeltaCls}">
-            ${formatStrategySigned(priceDelta)} (${formatStrategySigned(priceChangePctComputed)}%)
+            ${formatStrategySigned(priceChangePctComputed)}%
           </td>
         </tr>
         <tr>
@@ -2916,7 +3396,7 @@
           <td class="value-cell">${formatStrategyNumber(result.baselineRevenue)}</td>
           <td class="value-cell">${formatStrategyNumber(result.simRevenue)}</td>
           <td class="change-cell ${revenueDeltaCls}">
-            ${formatStrategySigned(revenueDelta)} (${formatStrategySigned(result.revenueChangePct)}%)
+            ${formatStrategySigned(result.revenueChangePct)}%
           </td>
         </tr>
       `;
@@ -2975,8 +3455,120 @@
         max_demand: "Max Demand",
         price: "Price",
         forecast_demand: "Forecast Demand",
+        rows: "Rows",
+        total_units_sold: "Total Units Sold",
+        avg_units_sold: "Avg Units Sold",
+        avg_price: "Avg Price",
+        avg_discount: "Avg Discount",
+        avg_inventory_level: "Avg Inventory Level",
+        avg_units_ordered: "Avg Units Ordered",
+        avg_demand_forecast: "Avg Demand Forecast",
+        demand_stability: "Demand Stability",
+        estimated_revenue: "Estimated Revenue",
+        estimated_profit: "Estimated Profit",
+        estimated_profit_margin: "Estimated Profit Margin",
+        estimated_cost: "Estimated Cost",
       };
       return mapping[String(metricKey || "")] || String(metricKey || "");
+    }
+
+    function formatMoneyShort(value) {
+      const num = Number(value || 0);
+      if (!Number.isFinite(num)) return "Rs 0.00";
+      return `Rs ${num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    function formatCompareMetricValue(metricKey, value) {
+      const num = Number(value || 0);
+      if (!Number.isFinite(num)) return "-";
+      const key = String(metricKey || "");
+      if (key === "rows") return Math.round(num).toString();
+      if (key.includes("revenue") || key.includes("profit") || key.includes("cost")) return formatMoneyShort(num);
+      if (key.includes("margin") || key.includes("discount") || key.includes("stability")) return `${num.toFixed(2)}%`;
+      return num.toFixed(2);
+    }
+
+    function getPrimaryCompareMetrics(rows) {
+      const preferredOrder = [
+        "total_units_sold",
+        "avg_units_sold",
+        "avg_price",
+        "demand_stability",
+        "estimated_revenue",
+        "estimated_profit_margin",
+        "estimated_profit",
+        "avg_discount",
+        "avg_demand_forecast",
+      ];
+      const rowMap = new Map((Array.isArray(rows) ? rows : []).map((row) => [String(row?.metric || ""), row]));
+      return preferredOrder.map((key) => rowMap.get(key)).filter(Boolean);
+    }
+
+    function setCompareRecommendationView(payload, platform1, platform2) {
+      const recommendation = payload?.recommendation || {};
+      const profitability = payload?.profitability || {};
+      const scoreMap = recommendation?.scores || {};
+      const p1Name = String(payload?.platform_1 || platform1 || "Platform 1");
+      const p2Name = String(payload?.platform_2 || platform2 || "Platform 2");
+
+      const bestEl = document.getElementById("cmpBestPlatform");
+      const summaryEl = document.getElementById("cmpRecommendationText");
+      const scoreLabel1 = document.getElementById("cmpScoreLabel1");
+      const scoreLabel2 = document.getElementById("cmpScoreLabel2");
+      const platformSummary1 = document.getElementById("cmpPlatformSummary1");
+      const platformSummary2 = document.getElementById("cmpPlatformSummary2");
+      const score1 = document.getElementById("cmpScore1");
+      const score2 = document.getElementById("cmpScore2");
+      const revenueLabel1 = document.getElementById("cmpRevenueLabel1");
+      const revenueLabel2 = document.getElementById("cmpRevenueLabel2");
+      const revenue1 = document.getElementById("cmpRevenue1");
+      const revenue2 = document.getElementById("cmpRevenue2");
+      const margin1 = document.getElementById("cmpMargin1");
+      const margin2 = document.getElementById("cmpMargin2");
+      const noteEl = document.getElementById("cmpProfitabilityNote");
+
+      if (bestEl) bestEl.textContent = String(recommendation?.best_platform || "-");
+      if (summaryEl) summaryEl.textContent = String(recommendation?.summary || "Compare two platforms to see the final recommendation.");
+      if (scoreLabel1) scoreLabel1.textContent = "Weighted Score";
+      if (scoreLabel2) scoreLabel2.textContent = "Weighted Score";
+      if (platformSummary1) platformSummary1.textContent = p1Name;
+      if (platformSummary2) platformSummary2.textContent = p2Name;
+      if (score1) score1.textContent = `${Number(scoreMap?.[p1Name] || 0).toFixed(2)}`;
+      if (score2) score2.textContent = `${Number(scoreMap?.[p2Name] || 0).toFixed(2)}`;
+      if (revenueLabel1) revenueLabel1.textContent = "Estimated Revenue";
+      if (revenueLabel2) revenueLabel2.textContent = "Estimated Revenue";
+      if (revenue1) revenue1.textContent = formatMoneyShort(profitability?.platform_1?.estimated_revenue || 0);
+      if (revenue2) revenue2.textContent = formatMoneyShort(profitability?.platform_2?.estimated_revenue || 0);
+      if (margin1) margin1.textContent = `${Number(profitability?.platform_1?.estimated_profit_margin || 0).toFixed(2)}%`;
+      if (margin2) margin2.textContent = `${Number(profitability?.platform_2?.estimated_profit_margin || 0).toFixed(2)}%`;
+      if (noteEl) {
+        const unitCost = Number(profitability?.estimated_unit_cost || 42);
+        noteEl.textContent = `Estimated revenue uses price x units sold. Estimated profit margin uses a fixed unit cost assumption of Rs ${unitCost.toFixed(2)} per unit.`;
+      }
+    }
+
+    function syncDynamicTableScrollTopButton() {
+      const wrap = document.querySelector("#dynamicEditorCard .dynamic-editor-table-wrap");
+      const btn = document.getElementById("dynTableScrollTopBtn");
+      if (!wrap || !btn) return;
+      btn.classList.toggle("is-visible", wrap.scrollTop > 80);
+    }
+
+    function formatApiErrorDetail(detail, fallbackMessage) {
+      if (Array.isArray(detail) && detail.length) {
+        return detail.map((item) => {
+          if (item && typeof item === "object") {
+            const location = Array.isArray(item.loc) ? item.loc.slice(1).join(" -> ") : "";
+            const message = String(item.msg || "Invalid request");
+            return location ? `${location}: ${message}` : message;
+          }
+          return String(item || "");
+        }).filter(Boolean).join(" | ");
+      }
+      if (detail && typeof detail === "object") {
+        return String(detail.message || detail.detail || fallbackMessage || "Request failed");
+      }
+      return String(detail || fallbackMessage || "Request failed");
     }
 
     function setDynamicEditorStatus(msg) {
@@ -3018,6 +3610,8 @@
       el.innerHTML = options.join("");
       if (current && dynamicPlatformOptions.includes(current)) {
         el.value = current;
+      } else if (selectId === "cmpPlatform2" && dynamicPlatformOptions.length > 1) {
+        el.value = dynamicPlatformOptions[1];
       } else if (dynamicPlatformOptions.length) {
         el.value = dynamicPlatformOptions[0];
       }
@@ -3028,6 +3622,20 @@
         minDate: STRATEGY_ALLOWED_MIN_DATE || dynamicMinDateBound || "",
         maxDate: STRATEGY_ALLOWED_MAX_DATE || dynamicMaxDateBound || "",
       };
+    }
+
+    function ensureDistinctComparePlatforms(changedId) {
+      const p1El = document.getElementById("cmpPlatform1");
+      const p2El = document.getElementById("cmpPlatform2");
+      if (!p1El || !p2El || dynamicPlatformOptions.length < 2) return;
+      if (String(p1El.value || "") !== String(p2El.value || "")) return;
+      const replacement = dynamicPlatformOptions.find((p) => String(p) !== String((changedId === "cmpPlatform1" ? p1El.value : p2El.value) || ""));
+      if (!replacement) return;
+      if (changedId === "cmpPlatform1") {
+        p2El.value = replacement;
+      } else {
+        p1El.value = replacement;
+      }
     }
 
     function applyStrategyDateDefaults(force = false) {
@@ -3216,6 +3824,9 @@
       const payload = await resp.json();
       renderDynamicRecords(payload.items || []);
       setDynamicEditorStatus(`Loaded ${Number(payload.count || 0)} records.`);
+      const wrap = document.querySelector("#dynamicEditorCard .dynamic-editor-table-wrap");
+      if (wrap) wrap.scrollTo({ top: 0, behavior: "auto" });
+      syncDynamicTableScrollTopButton();
     }
 
     async function addDynamicRecord() {
@@ -3324,6 +3935,11 @@
         setCompareStatus("Select product, platforms, and date range.");
         return;
       }
+      if (platform1 === platform2) {
+        setCompareStatus("Choose two different platforms to compare.");
+        if (bodyEl) bodyEl.innerHTML = "<tr><td colspan='4'>Choose two different platforms to compare.</td></tr>";
+        return;
+      }
       if (colP1El) colP1El.textContent = platform1;
       if (colP2El) colP2El.textContent = platform2;
 
@@ -3341,25 +3957,27 @@
       });
       const payload = await resp.json().catch(() => ({}));
       if (!resp.ok) {
-        throw new Error(String(payload?.detail || `Compare failed (${resp.status})`));
+        throw new Error(formatApiErrorDetail(payload?.detail, `Compare failed (${resp.status})`));
       }
       const rows = Array.isArray(payload.metrics) ? payload.metrics : [];
-      if (!rows.length) {
+      const primaryRows = getPrimaryCompareMetrics(rows);
+      if (!primaryRows.length) {
         bodyEl.innerHTML = "<tr><td colspan='4'>No metrics returned.</td></tr>";
       } else {
-        bodyEl.innerHTML = rows.map((r) => {
+        bodyEl.innerHTML = primaryRows.map((r) => {
           const better = String(r.better || "-");
           const betterCls = better === platform1 || better === platform2 ? "delta-pos" : "";
           return `
             <tr>
               <td>${escapeHtml(formatMetricLabel(r.metric))}</td>
-              <td>${Number(r.platform_1_value || 0).toFixed(2)}</td>
-              <td>${Number(r.platform_2_value || 0).toFixed(2)}</td>
+              <td>${escapeHtml(formatCompareMetricValue(r.metric, r.platform_1_value))}</td>
+              <td>${escapeHtml(formatCompareMetricValue(r.metric, r.platform_2_value))}</td>
               <td class="${betterCls}">${escapeHtml(better)}</td>
             </tr>
           `;
         }).join("");
       }
+      setCompareRecommendationView(payload, platform1, platform2);
       const fallbackMode = String(payload.inference_mode || "");
       if (payload.same_platform_mode && colP2El) {
         colP2El.textContent = `${payload.platform_2 || platform2} (${payload.compare_from || fromDate} to ${payload.compare_to || toDate})`;
@@ -4848,6 +5466,8 @@
     const strategyPriceEl = document.getElementById("strategyPriceChange");
     const strategyDiscountEl = document.getElementById("strategyDiscount");
     const dynEditorBody = document.getElementById("dynEditorBody");
+    const dynEditorTableWrap = document.querySelector("#dynamicEditorCard .dynamic-editor-table-wrap");
+    const dynTableScrollTopBtn = document.getElementById("dynTableScrollTopBtn");
 
     if (dynLoadRecordsBtn) {
       dynLoadRecordsBtn.addEventListener("click", async () => {
@@ -4876,6 +5496,14 @@
         }
       });
     }
+    ["cmpPlatform1", "cmpPlatform2"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener("change", () => {
+          ensureDistinctComparePlatforms(id);
+        });
+      }
+    });
     if (strategyRunBtn) {
       strategyRunBtn.addEventListener("click", async () => {
         try {
@@ -4925,6 +5553,15 @@
         } catch (err) {
           setDynamicEditorStatus(String(err?.message || "Record action failed."));
         }
+      });
+    }
+    if (dynEditorTableWrap) {
+      dynEditorTableWrap.addEventListener("scroll", syncDynamicTableScrollTopButton);
+      syncDynamicTableScrollTopButton();
+    }
+    if (dynTableScrollTopBtn && dynEditorTableWrap) {
+      dynTableScrollTopBtn.addEventListener("click", () => {
+        dynEditorTableWrap.scrollTo({ top: 0, behavior: "smooth" });
       });
     }
 
