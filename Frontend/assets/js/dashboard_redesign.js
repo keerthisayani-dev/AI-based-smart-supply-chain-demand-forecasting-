@@ -7,6 +7,8 @@ const categoryTriggerEl = document.getElementById("categoryTrigger");
 const categoryTriggerTextEl = document.getElementById("categoryTriggerText");
 const categoryMenuEl = document.getElementById("categoryMenu");
 const categoryErrorEl = document.getElementById("categoryError");
+const categoryMetaEl = document.getElementById("categoryMeta");
+const forecastInputsEl = document.querySelector(".forecast-inputs");
 const fromDateErrorEl = document.getElementById("fromDateError");
 const toDateErrorEl = document.getElementById("toDateError");
 const userMetaChipEl = document.getElementById("userMetaChip");
@@ -723,12 +725,17 @@ function closeCategoryMenu() {
   if (!categoryShellEl || !categoryTriggerEl) return;
   categoryShellEl.classList.remove("is-open");
   categoryTriggerEl.setAttribute("aria-expanded", "false");
+  if (forecastInputsEl) forecastInputsEl.style.setProperty("--category-menu-space", "0px");
 }
 
 function openCategoryMenu() {
   if (!categoryShellEl || !categoryTriggerEl) return;
   categoryShellEl.classList.add("is-open");
   categoryTriggerEl.setAttribute("aria-expanded", "true");
+  if (forecastInputsEl && categoryMenuEl) {
+    const menuHeight = Math.min(categoryMenuEl.scrollHeight, window.innerHeight * 0.30, 220);
+    forecastInputsEl.style.setProperty("--category-menu-space", `${Math.ceil(menuHeight + 4)}px`);
+  }
 }
 
 function rebuildCategoryMenu() {
@@ -742,29 +749,89 @@ function rebuildCategoryMenu() {
     .filter((opt) => opt.value && !opt.disabled);
 
   categoryMenuEl.innerHTML = "";
+  if (categoryMetaEl) {
+    categoryMetaEl.textContent = options.length
+      ? `${options.length} categories available for forecasting`
+      : "No categories available right now";
+  }
   if (!options.length) {
     const empty = document.createElement("div");
-    empty.className = "category-option";
-    empty.style.cursor = "default";
-    empty.style.opacity = ".8";
+    empty.className = "category-empty";
     empty.textContent = "No categories available";
     categoryMenuEl.appendChild(empty);
     return;
   }
 
-  options.forEach((opt) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = `category-option${opt.value === categoryEl.value ? " is-selected" : ""}`;
-    btn.dataset.value = opt.value;
-    btn.textContent = opt.label;
-    btn.addEventListener("click", () => {
-      categoryEl.value = opt.value;
-      categoryEl.dispatchEvent(new Event("change", { bubbles: true }));
-      closeCategoryMenu();
+  const head = document.createElement("div");
+  head.className = "category-menu-head";
+
+  const topLine = document.createElement("div");
+  topLine.className = "category-menu-topline";
+
+  const title = document.createElement("div");
+  title.className = "category-menu-title";
+  title.textContent = "Select category";
+
+  const count = document.createElement("div");
+  count.className = "category-menu-count";
+  count.textContent = `${options.length} total`;
+
+  topLine.appendChild(title);
+  topLine.appendChild(count);
+
+  const search = document.createElement("input");
+  search.type = "text";
+  search.className = "category-search";
+  search.placeholder = "Search categories";
+  search.setAttribute("aria-label", "Search categories");
+
+  head.appendChild(topLine);
+  head.appendChild(search);
+  categoryMenuEl.appendChild(head);
+
+  const listWrap = document.createElement("div");
+  listWrap.className = "category-menu-list";
+  categoryMenuEl.appendChild(listWrap);
+
+  const renderOptions = (query = "") => {
+    const normalized = String(query || "").trim().toLowerCase();
+    const filtered = normalized
+      ? options.filter((opt) => opt.label.toLowerCase().includes(normalized))
+      : options;
+
+    listWrap.innerHTML = "";
+    count.textContent = normalized ? `${filtered.length} shown` : `${options.length} total`;
+
+    if (!filtered.length) {
+      const emptyState = document.createElement("div");
+      emptyState.className = "category-empty";
+      emptyState.textContent = "No matching categories";
+      listWrap.appendChild(emptyState);
+      return;
+    }
+
+    filtered.forEach((opt) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `category-option${opt.value === categoryEl.value ? " is-selected" : ""}`;
+      btn.dataset.value = opt.value;
+      btn.textContent = opt.label;
+      btn.addEventListener("click", () => {
+        categoryEl.value = opt.value;
+        categoryEl.dispatchEvent(new Event("change", { bubbles: true }));
+        closeCategoryMenu();
+      });
+      listWrap.appendChild(btn);
     });
-    categoryMenuEl.appendChild(btn);
+  };
+
+  search.addEventListener("input", () => {
+    renderOptions(search.value);
+    if (categoryShellEl?.classList.contains("is-open")) openCategoryMenu();
   });
+
+  renderOptions();
+  if (categoryShellEl?.classList.contains("is-open")) openCategoryMenu();
 }
 
 function saveDashboardState() {

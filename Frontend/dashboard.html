@@ -65,6 +65,7 @@
             </button>
             <div id="categoryMenu" class="category-menu" role="listbox" aria-label="Category options"></div>
           </div>
+          <p id="categoryMeta" class="field-meta">Loading categories...</p>
           <div id="categoryError" class="field-error" role="alert" aria-live="polite"></div>
         </div>
         <div class="date-grid">
@@ -83,6 +84,7 @@
       </article>
 
       <article class="surface-card assistant-card" aria-label="Forecast assistant">
+        <span class="assistant-eyebrow">AI planner</span>
         <h2>Forecast Assistant</h2>
         <p class="assistant-copy">Pick a category and date range, then generate projected demand to support planning.</p>
         <div class="assistant-bars" aria-hidden="true">
@@ -95,11 +97,11 @@
           <span style="height:52px;"></span>
           <span style="height:66px;"></span>
         </div>
-        <ul class="assistant-points">
-          <li>Average forecast: <strong id="avgForecastKpi">-</strong></li>
-          <li>Peak day: <strong id="peakDayKpi">-</strong></li>
-          <li>Risk level: <strong id="riskLevelKpi">-</strong></li>
-        </ul>
+        <div class="assistant-points">
+          <div class="assistant-stat"><span>Average forecast</span><strong id="avgForecastKpi">-</strong></div>
+          <div class="assistant-stat"><span>Peak day</span><strong id="peakDayKpi">-</strong></div>
+          <div class="assistant-stat"><span>Risk level</span><strong id="riskLevelKpi">-</strong></div>
+        </div>
         <canvas id="summarySparkline" class="assistant-sparkline" aria-label="Forecast summary sparkline"></canvas>
         <p id="summaryHint" class="summary-hint">Summary updates when category/date changes.</p>
       </article>
