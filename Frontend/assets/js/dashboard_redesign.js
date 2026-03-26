@@ -725,17 +725,12 @@ function closeCategoryMenu() {
   if (!categoryShellEl || !categoryTriggerEl) return;
   categoryShellEl.classList.remove("is-open");
   categoryTriggerEl.setAttribute("aria-expanded", "false");
-  if (forecastInputsEl) forecastInputsEl.style.setProperty("--category-menu-space", "0px");
 }
 
 function openCategoryMenu() {
   if (!categoryShellEl || !categoryTriggerEl) return;
   categoryShellEl.classList.add("is-open");
   categoryTriggerEl.setAttribute("aria-expanded", "true");
-  if (forecastInputsEl && categoryMenuEl) {
-    const menuHeight = Math.min(categoryMenuEl.scrollHeight, window.innerHeight * 0.30, 220);
-    forecastInputsEl.style.setProperty("--category-menu-space", `${Math.ceil(menuHeight + 4)}px`);
-  }
 }
 
 function rebuildCategoryMenu() {
@@ -762,33 +757,6 @@ function rebuildCategoryMenu() {
     return;
   }
 
-  const head = document.createElement("div");
-  head.className = "category-menu-head";
-
-  const topLine = document.createElement("div");
-  topLine.className = "category-menu-topline";
-
-  const title = document.createElement("div");
-  title.className = "category-menu-title";
-  title.textContent = "Select category";
-
-  const count = document.createElement("div");
-  count.className = "category-menu-count";
-  count.textContent = `${options.length} total`;
-
-  topLine.appendChild(title);
-  topLine.appendChild(count);
-
-  const search = document.createElement("input");
-  search.type = "text";
-  search.className = "category-search";
-  search.placeholder = "Search categories";
-  search.setAttribute("aria-label", "Search categories");
-
-  head.appendChild(topLine);
-  head.appendChild(search);
-  categoryMenuEl.appendChild(head);
-
   const listWrap = document.createElement("div");
   listWrap.className = "category-menu-list";
   categoryMenuEl.appendChild(listWrap);
@@ -800,7 +768,6 @@ function rebuildCategoryMenu() {
       : options;
 
     listWrap.innerHTML = "";
-    count.textContent = normalized ? `${filtered.length} shown` : `${options.length} total`;
 
     if (!filtered.length) {
       const emptyState = document.createElement("div");
@@ -824,11 +791,6 @@ function rebuildCategoryMenu() {
       listWrap.appendChild(btn);
     });
   };
-
-  search.addEventListener("input", () => {
-    renderOptions(search.value);
-    if (categoryShellEl?.classList.contains("is-open")) openCategoryMenu();
-  });
 
   renderOptions();
   if (categoryShellEl?.classList.contains("is-open")) openCategoryMenu();
