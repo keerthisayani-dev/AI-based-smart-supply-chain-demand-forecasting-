@@ -1,7 +1,14 @@
 
+const cityEl = document.getElementById("city");
 const categoryEl = document.getElementById("category");
 const fromDateEl = document.getElementById("fromDate");
 const toDateEl = document.getElementById("toDate");
+const cityShellEl = document.getElementById("cityShell");
+const cityTriggerEl = document.getElementById("cityTrigger");
+const cityTriggerTextEl = document.getElementById("cityTriggerText");
+const cityMenuEl = document.getElementById("cityMenu");
+const cityErrorEl = document.getElementById("cityError");
+const cityMetaEl = document.getElementById("cityMeta");
 const categoryShellEl = document.getElementById("categoryShell");
 const categoryTriggerEl = document.getElementById("categoryTrigger");
 const categoryTriggerTextEl = document.getElementById("categoryTriggerText");
@@ -60,6 +67,7 @@ function setFieldError(inputEl, errorEl, message) {
   errorEl.textContent = String(message || "");
   errorEl.classList.add("is-visible");
   inputEl.classList.add("input-error");
+  if (inputEl === cityEl && cityTriggerEl) cityTriggerEl.classList.add("input-error");
   if (inputEl === categoryEl && categoryTriggerEl) categoryTriggerEl.classList.add("input-error");
 }
 
@@ -67,10 +75,12 @@ function clearFieldError(inputEl, errorEl) {
   errorEl.textContent = "";
   errorEl.classList.remove("is-visible");
   inputEl.classList.remove("input-error");
+  if (inputEl === cityEl && cityTriggerEl) cityTriggerEl.classList.remove("input-error");
   if (inputEl === categoryEl && categoryTriggerEl) categoryTriggerEl.classList.remove("input-error");
 }
 
 function clearAllErrors() {
+  clearFieldError(cityEl, cityErrorEl);
   clearFieldError(categoryEl, categoryErrorEl);
   clearFieldError(fromDateEl, fromDateErrorEl);
   clearFieldError(toDateEl, toDateErrorEl);
@@ -287,10 +297,15 @@ function getSelectedOrFirstCategory() {
   return categoryEl.value || "";
 }
 
+function getSelectedCity() {
+  return cityEl.value || "";
+}
+
 function buildRenderKey() {
+  const city = getSelectedCity();
   const category = getSelectedOrFirstCategory();
   const { from, to } = getResolvedDateRange();
-  return `${category}|${from}|${to}`;
+  return `${city}|${category}|${from}|${to}`;
 }
 
 function queueRenderForecastVisualization(options = {}) {
@@ -318,8 +333,8 @@ function queueRenderForecastVisualization(options = {}) {
   return undefined;
 }
 
-async function fetchForecastSnapshot(category, fromDate, toDate) {
-  const key = `${category}|${fromDate}|${toDate}`;
+async function fetchForecastSnapshot(city, category, fromDate, toDate) {
+  const key = `${city}|${category}|${fromDate}|${toDate}`;
   if (vizDataCache.has(key)) return vizDataCache.get(key);
   const promise = (async () => {
     const fromDateObj = new Date(fromDate);
@@ -329,7 +344,7 @@ async function fetchForecastSnapshot(category, fromDate, toDate) {
     const anchor = new Date(fromDateObj);
     anchor.setDate(anchor.getDate() - 1);
     const anchorDate = anchor.toISOString().slice(0, 10);
-    const url = `${apiBase()}/forecast/${encodeURIComponent(category)}?horizon=${periodDays}&history_lookback_days=${lookback}&anchor_date=${anchorDate}`;
+    const url = `${apiBase()}/forecast/${encodeURIComponent(category)}?city=${encodeURIComponent(city)}&horizon=${periodDays}&history_lookback_days=${lookback}&anchor_date=${anchorDate}`;
     const resp = await fetch(url, { cache: "no-store" });
     if (!resp.ok) throw new Error(`Forecast load failed (${resp.status}).`);
     const data = await resp.json();
@@ -363,15 +378,16 @@ function destroyCharts() {
 async function renderForecastVisualization(runId = null, requestedKey = "") {
   if (typeof Chart === "undefined") return;
   const isStale = () => Number.isFinite(runId) && runId !== renderRunId;
+  const city = getSelectedCity();
   const category = getSelectedOrFirstCategory();
-  if (!category) {
+  if (!city || !category) {
     if (isStale()) return;
     destroyCharts();
     latestDashboardData = null;
     document.getElementById("avgForecastKpi").textContent = "-";
     document.getElementById("peakDayKpi").textContent = "-";
     document.getElementById("riskLevelKpi").textContent = "-";
-    document.getElementById("summaryHint").textContent = "Select a category to preview summary.";
+    document.getElementById("summaryHint").textContent = "Select both city and category to preview summary.";
     setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
     setChartEmptyState("categoryComparisonEmpty", true, "No category comparison data.");
     setChartEmptyState("stockRiskEmpty", true, "No risk data available.");
@@ -382,11 +398,11 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
 
   const { from, to } = getResolvedDateRange();
   const subtitleEl = document.getElementById("vizSubtitle");
-  subtitleEl.textContent = `${category} | ${from} to ${to}`;
+  subtitleEl.textContent = `${city} | ${category} | ${from} to ${to}`;
 
   let snapshot;
   try {
-    snapshot = await fetchForecastSnapshot(category, from, to);
+    snapshot = await fetchForecastSnapshot(city, category, from, to);
     if (isStale()) return;
   } catch (err) {
     if (isStale()) return;
@@ -411,6 +427,14 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
   const forecastMap = new Map(forecast.map((r) => [r.date, Number(r.forecast_units_sold || 0)]));
   const actualSeries = labels.map((d) => (actualMap.has(d) ? actualMap.get(d) : null));
   const forecastSeries = labels.map((d) => (forecastMap.has(d) ? forecastMap.get(d) : null));
+  const weekendSeries = labels.map((d) => {
+    const ts = new Date(`${d}T00:00:00`);
+    const day = ts.getDay();
+    if (![0, 6].includes(day)) return null;
+    if (actualMap.has(d)) return actualMap.get(d);
+    if (forecastMap.has(d)) return forecastMap.get(d);
+    return null;
+  });
 
   const totalForecast = forecast.reduce((sum, r) => sum + Number(r.forecast_units_sold || 0), 0);
   const avgForecast = forecast.length ? totalForecast / forecast.length : 0;
@@ -440,7 +464,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
   document.getElementById("riskLevelKpi").textContent = riskLabel;
   document.getElementById("summaryHint").textContent = peakDayRow?.date
     ? `Peak forecast on ${formatShortDate(peakDayRow.date)} with ${Number(peakDayRow.forecast_units_sold || 0).toFixed(1)} units.`
-    : "Summary updates when category/date changes.";
+    : "Summary updates when city, category, or date changes.";
 
   const lineCtx = document.getElementById("actualForecastChart").getContext("2d");
   const lineBlue = lineCtx.createLinearGradient(0, 0, 0, 320);
@@ -460,6 +484,18 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
         datasets: [
           { label: "Actual Demand", data: actualSeries, borderColor: lineBlue, backgroundColor: "rgba(59, 130, 246, 0.18)", tension: 0.35, borderWidth: 2, pointRadius: 1.6, spanGaps: true },
           { label: "Forecast Demand", data: forecastSeries, borderColor: linePurple, backgroundColor: "rgba(139, 92, 246, 0.18)", tension: 0.35, borderWidth: 2, pointRadius: 1.6, spanGaps: true },
+          {
+            label: "Weekend",
+            data: weekendSeries,
+            type: "scatter",
+            showLine: false,
+            pointRadius: 4,
+            pointHoverRadius: 5,
+            pointBackgroundColor: "#f8fafc",
+            pointBorderColor: "rgba(148, 163, 184, 0.9)",
+            pointBorderWidth: 1.2,
+            spanGaps: true,
+          },
         ],
       },
       options: {
@@ -548,6 +584,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
   }));
 
   updateAdvancedSections({
+    city,
     category,
     from,
     to,
@@ -570,7 +607,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
     .slice(0, 6);
   const categoryRows = await Promise.all(categoryOptions.map(async (cat) => {
     try {
-      const snap = await fetchForecastSnapshot(cat, from, to);
+      const snap = await fetchForecastSnapshot(city, cat, from, to);
       const totalActual = snap.filteredHistory.reduce((sum, r) => sum + Number(r.actual_units_sold || 0), 0);
       const totalProjected = snap.filteredForecast.reduce((sum, r) => sum + Number(r.forecast_units_sold || 0), 0);
       return { category: cat, units: totalActual > 0 ? totalActual : totalProjected };
@@ -673,31 +710,55 @@ function initDatePickers() {
 }
 
 async function loadCategories(preferredCategory) {
+  return loadScopeOptions("", preferredCategory);
+}
+
+async function loadScopeOptions(preferredCity, preferredCategory) {
   try {
     const resp = await fetch(`${apiBase()}/categories`, { cache: "no-store" });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
+    const cities = Array.isArray(data.cities) ? data.cities : [];
     const categories = Array.isArray(data.categories) ? data.categories : [];
-    const dropdownValues = [...new Set(categories.map((v) => String(v).trim()).filter(Boolean))].sort();
+    const cityValues = [...new Set(cities.map((v) => String(v).trim()).filter(Boolean))].sort();
+    const categoryValues = [...new Set(categories.map((v) => String(v).trim()).filter(Boolean))].sort();
+    cityEl.innerHTML = '<option value="" selected disabled>Select city</option>';
+    cityValues.forEach((city) => {
+      const opt = document.createElement("option");
+      opt.value = city;
+      opt.textContent = city;
+      cityEl.appendChild(opt);
+    });
     categoryEl.innerHTML = '<option value="" selected disabled>Select category</option>';
-    dropdownValues.forEach((cat) => {
+    categoryValues.forEach((cat) => {
       const opt = document.createElement("option");
       opt.value = cat;
       opt.textContent = cat;
       categoryEl.appendChild(opt);
     });
-    if (preferredCategory && dropdownValues.includes(preferredCategory)) {
+    if (preferredCity && cityValues.includes(preferredCity)) {
+      cityEl.value = preferredCity;
+    }
+    if (preferredCategory && categoryValues.includes(preferredCategory)) {
       categoryEl.value = preferredCategory;
     }
+    updateCityPlaceholderState();
     updateCategoryPlaceholderState();
+    rebuildCityMenu();
     rebuildCategoryMenu();
   } catch (err) {
     console.error(`Failed to load categories: ${err.message}`);
+    setFieldError(cityEl, cityErrorEl, "Unable to load cities. Please refresh and try again.");
     setFieldError(categoryEl, categoryErrorEl, "Unable to load categories. Please refresh and try again.");
   }
 }
 
 function clearInputState() {
+  cityEl.innerHTML = "";
+  cityEl.classList.remove("has-value");
+  if (cityTriggerTextEl) cityTriggerTextEl.textContent = "Select city";
+  if (cityTriggerEl) cityTriggerEl.classList.remove("has-value");
+  if (cityMenuEl) cityMenuEl.innerHTML = "";
   categoryEl.innerHTML = "";
   categoryEl.classList.remove("has-value");
   if (categoryTriggerTextEl) categoryTriggerTextEl.textContent = "Select category";
@@ -705,6 +766,20 @@ function clearInputState() {
   if (categoryMenuEl) categoryMenuEl.innerHTML = "";
   fromDateEl.value = "";
   toDateEl.value = "";
+}
+
+function updateCityPlaceholderState() {
+  const hasValue = Boolean(String(cityEl.value || "").trim());
+  cityEl.classList.toggle("has-value", hasValue);
+  if (cityTriggerEl) cityTriggerEl.classList.toggle("has-value", hasValue);
+  if (cityTriggerTextEl) {
+    if (!hasValue) {
+      cityTriggerTextEl.textContent = "Select city";
+    } else {
+      const selectedOption = cityEl.options[cityEl.selectedIndex];
+      cityTriggerTextEl.textContent = String(selectedOption?.textContent || cityEl.value || "Select city");
+    }
+  }
 }
 
 function updateCategoryPlaceholderState() {
@@ -719,6 +794,18 @@ function updateCategoryPlaceholderState() {
       categoryTriggerTextEl.textContent = String(selectedOption?.textContent || categoryEl.value || "Select category");
     }
   }
+}
+
+function closeCityMenu() {
+  if (!cityShellEl || !cityTriggerEl) return;
+  cityShellEl.classList.remove("is-open");
+  cityTriggerEl.setAttribute("aria-expanded", "false");
+}
+
+function openCityMenu() {
+  if (!cityShellEl || !cityTriggerEl) return;
+  cityShellEl.classList.add("is-open");
+  cityTriggerEl.setAttribute("aria-expanded", "true");
 }
 
 function closeCategoryMenu() {
@@ -796,8 +883,54 @@ function rebuildCategoryMenu() {
   if (categoryShellEl?.classList.contains("is-open")) openCategoryMenu();
 }
 
+function rebuildCityMenu() {
+  if (!cityMenuEl) return;
+  const options = Array.from(cityEl.options || [])
+    .map((opt) => ({
+      value: String(opt.value || ""),
+      label: String(opt.textContent || "").trim(),
+      disabled: Boolean(opt.disabled),
+    }))
+    .filter((opt) => opt.value && !opt.disabled);
+
+  cityMenuEl.innerHTML = "";
+  if (cityMetaEl) {
+    cityMetaEl.textContent = options.length
+      ? `${options.length} cities available for forecasting`
+      : "No cities available right now";
+  }
+  if (!options.length) {
+    const empty = document.createElement("div");
+    empty.className = "category-empty";
+    empty.textContent = "No cities available";
+    cityMenuEl.appendChild(empty);
+    return;
+  }
+
+  const listWrap = document.createElement("div");
+  listWrap.className = "category-menu-list";
+  cityMenuEl.appendChild(listWrap);
+
+  listWrap.innerHTML = "";
+  options.forEach((opt) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `category-option${opt.value === cityEl.value ? " is-selected" : ""}`;
+    btn.dataset.value = opt.value;
+    btn.textContent = opt.label;
+    btn.addEventListener("click", () => {
+      cityEl.value = opt.value;
+      cityEl.dispatchEvent(new Event("change", { bubbles: true }));
+      closeCityMenu();
+    });
+    listWrap.appendChild(btn);
+  });
+
+  if (cityShellEl?.classList.contains("is-open")) openCityMenu();
+}
+
 function saveDashboardState() {
-  const state = { category: categoryEl.value || "", fromDate: fromDateEl.value || "", toDate: toDateEl.value || "" };
+  const state = { city: cityEl.value || "", category: categoryEl.value || "", fromDate: fromDateEl.value || "", toDate: toDateEl.value || "" };
   sessionStorage.setItem(DASHBOARD_STATE_KEY, JSON.stringify(state));
 }
 
@@ -812,6 +945,7 @@ function readDashboardState() {
     const parsed = JSON.parse(raw);
     return {
       category: String(parsed?.category || ""),
+      city: String(parsed?.city || ""),
       fromDate: String(parsed?.fromDate || ""),
       toDate: String(parsed?.toDate || ""),
     };
@@ -840,19 +974,21 @@ async function initializeDefaults() {
   if (shouldClear) clearDashboardState();
   clearInputState();
   initDatePickers();
-  await loadCategories(savedState?.category || "");
+  await loadScopeOptions(savedState?.city || "", savedState?.category || "");
+  const hasSavedCity = Boolean(savedState?.city);
   const hasSavedCategory = Boolean(savedState?.category);
-  if (hasSavedCategory && savedState?.fromDate) {
+  if (hasSavedCity && hasSavedCategory && savedState?.fromDate) {
     fromPicker.setDate(savedState.fromDate, true, "Y-m-d");
   }
-  if (hasSavedCategory && savedState?.toDate) {
+  if (hasSavedCity && hasSavedCategory && savedState?.toDate) {
     toPicker.setDate(savedState.toDate, true, "Y-m-d");
   }
   const minAllowedStr = ALLOWED_MIN_DATE;
   const maxAllowedStr = ALLOWED_MAX_DATE;
   const savedFrom = String(savedState?.fromDate || "");
   const savedTo = String(savedState?.toDate || "");
-  const hasValidSavedRange = hasSavedCategory
+  const hasValidSavedRange = hasSavedCity
+    && hasSavedCategory
     && savedFrom && savedTo
     && savedFrom >= minAllowedStr
     && savedTo <= maxAllowedStr
@@ -871,10 +1007,15 @@ async function initializeDefaults() {
 
 function validateInputs() {
   clearAllErrors();
+  const city = cityEl.value;
   const category = categoryEl.value;
   const fromDate = fromDateEl.value;
   const toDate = toDateEl.value;
   let hasError = false;
+  if (!city) {
+    setFieldError(cityEl, cityErrorEl, "Please select a city.");
+    hasError = true;
+  }
   if (!category) {
     setFieldError(categoryEl, categoryErrorEl, "Please select a category.");
     hasError = true;
@@ -910,7 +1051,7 @@ function validateInputs() {
 function goToResults(mode) {
   if (!validateInputs()) return;
   saveDashboardState();
-  const resultUrl = `/dashboard/results?category=${encodeURIComponent(categoryEl.value)}&from=${encodeURIComponent(fromDateEl.value)}&to=${encodeURIComponent(toDateEl.value)}&mode=${encodeURIComponent(mode)}`;
+  const resultUrl = `/dashboard/results?city=${encodeURIComponent(cityEl.value)}&category=${encodeURIComponent(categoryEl.value)}&from=${encodeURIComponent(fromDateEl.value)}&to=${encodeURIComponent(toDateEl.value)}&mode=${encodeURIComponent(mode)}`;
   window.location.href = resultUrl;
 }
 
@@ -928,11 +1069,11 @@ async function logoutAndGoLogin() {
 
 function exportForecastCsv() {
   if (!latestDashboardData || !Array.isArray(latestDashboardData.rows) || !latestDashboardData.rows.length) return;
-  const header = "date,category,actual_demand,forecast_demand\n";
+  const header = "date,city,category,actual_demand,forecast_demand\n";
   const lines = latestDashboardData.rows.map((row) => {
     const actual = row.actual == null ? "" : Number(row.actual).toFixed(2);
     const forecast = row.forecast == null ? "" : Number(row.forecast).toFixed(2);
-    return `${row.date},${latestDashboardData.category},${actual},${forecast}`;
+    return `${row.date},${latestDashboardData.city},${latestDashboardData.category},${actual},${forecast}`;
   });
   const csv = `${header}${lines.join("\n")}`;
   const safeCategory = String(latestDashboardData.category || "forecast").replace(/\s+/g, "_").toLowerCase();
@@ -963,6 +1104,7 @@ function exportForecastPdf() {
   y += 22;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
+  doc.text(`City: ${latestDashboardData.city}`, marginX, y); y += 16;
   doc.text(`Category: ${latestDashboardData.category}`, marginX, y); y += 16;
   doc.text(`Period: ${latestDashboardData.from} to ${latestDashboardData.to}`, marginX, y); y += 16;
   doc.text(`Reorder Point: ${formatUnits(latestDashboardData.reorderPoint)}`, marginX, y); y += 16;
@@ -992,6 +1134,13 @@ function exportForecastPdf() {
   doc.save(`forecast_report_${Date.now()}.pdf`);
 }
 
+cityEl.addEventListener("change", () => {
+  clearFieldError(cityEl, cityErrorEl);
+  updateCityPlaceholderState();
+  rebuildCityMenu();
+  saveDashboardState();
+  queueRenderForecastVisualization();
+});
 categoryEl.addEventListener("change", () => {
   clearFieldError(categoryEl, categoryErrorEl);
   updateCategoryPlaceholderState();
@@ -1046,15 +1195,24 @@ if (categoryTriggerEl) {
     else openCategoryMenu();
   });
 }
+if (cityTriggerEl) {
+  cityTriggerEl.addEventListener("click", () => {
+    if (!cityShellEl) return;
+    const isOpen = cityShellEl.classList.contains("is-open");
+    if (isOpen) closeCityMenu();
+    else openCityMenu();
+  });
+}
 document.addEventListener("click", (event) => {
-  if (!categoryShellEl) return;
   const target = event.target;
-  if (target instanceof Node && !categoryShellEl.contains(target)) {
-    closeCategoryMenu();
-  }
+  if (target instanceof Node && categoryShellEl && !categoryShellEl.contains(target)) closeCategoryMenu();
+  if (target instanceof Node && cityShellEl && !cityShellEl.contains(target)) closeCityMenu();
 });
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") closeCategoryMenu();
+  if (event.key === "Escape") {
+    closeCategoryMenu();
+    closeCityMenu();
+  }
 });
 if (exportCsvBtnEl) exportCsvBtnEl.addEventListener("click", exportForecastCsv);
 if (exportPngBtnEl) exportPngBtnEl.addEventListener("click", exportChartPng);

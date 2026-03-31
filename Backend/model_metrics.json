@@ -1,0 +1,12 @@
+{
+  "input_dataset": "retail_store_inventory_city_level_cleaned_features.csv",
+  "train_rows": 131520,
+  "test_rows": 32880,
+  "feature_count": 35,
+  "fit_seconds": 14.48061227798462,
+  "mae": 5.394380323521693,
+  "mse": 46.376887586060164,
+  "rmse": 6.810057825456416,
+  "r2": 0.8622697820475432,
+  "train_mae": 11.387698484832397
+}

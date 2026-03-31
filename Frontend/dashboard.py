@@ -1,13 +1,27 @@
+import sys
 from datetime import date, timedelta
 
+sys.dont_write_bytecode = True
+
 import pandas as pd
-import plotly.graph_objects as go
 import requests
-import streamlit as st
+try:
+    import streamlit as st
+except ModuleNotFoundError:
+    print("Missing dependency: streamlit. Install it to run the dashboard.")
+    raise SystemExit(1)
+try:
+    import plotly.graph_objects as go
+except ModuleNotFoundError:
+    go = None
 
 st.set_page_config(page_title="Supply Chain Dashboard", layout="wide")
 st.title("DemandIQ Smart Supply Chain Demand Forecasting")
-st.caption("Uses Backend/forecast_api.py endpoints to display product demand forecasts.")
+st.caption("Uses Backend/forecast_api.py endpoints to display city-level or category-level demand forecasts.")
+
+if go is None:
+    st.error("Missing dependency: plotly. Install it to view charts in the dashboard.")
+    st.stop()
 
 
 def _get_json(url: str, timeout: int = 15):
@@ -20,8 +34,10 @@ def _get_json(url: str, timeout: int = 15):
 def load_categories(api_base: str):
     data = _get_json(f"{api_base}/categories")
     categories = data.get("categories", [])
-    cleaned_categories = sorted(set([str(x).strip() for x in categories if str(x).strip()]))
-    return cleaned_categories
+    cities = data.get("cities", [])
+    options = [*categories, *cities]
+    cleaned_options = sorted(set([str(x).strip() for x in options if str(x).strip()]))
+    return cleaned_options
 
 
 @st.cache_data(ttl=30)
@@ -60,19 +76,19 @@ except Exception as exc:
     st.stop()
 
 if not category_options:
-    st.warning("No categories found in dataset.")
+    st.warning("No cities or categories found in dataset.")
     st.stop()
 
 if from_date > to_date:
     st.error("From Date must be earlier than or equal to To Date.")
     st.stop()
 
-category_with_default = ["Select category"] + category_options
-category = st.selectbox("Choose Product Category", options=category_with_default, index=0)
+category_with_default = ["Select city or category"] + category_options
+category = st.selectbox("Choose City or Category", options=category_with_default, index=0)
 
 if st.button("Generate Forecast", type="primary"):
-    if category == "Select category":
-        st.warning("Please select a category before generating the forecast.")
+    if category == "Select city or category":
+        st.warning("Please select a city or category before generating the forecast.")
         st.stop()
 
     lookback = max(30, (to_date - from_date).days + 1)
@@ -160,4 +176,4 @@ if st.button("Generate Forecast", type="primary"):
         else:
             st.dataframe(forecast_df, use_container_width=True)
 else:
-    st.info("Select a category and click 'Generate Forecast'.")
+    st.info("Select a city or category and click 'Generate Forecast'.")

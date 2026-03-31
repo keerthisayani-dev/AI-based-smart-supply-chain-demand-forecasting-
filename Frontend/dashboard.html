@@ -48,25 +48,42 @@
         </span>
       </h1>
       <p class="hero-sub">Smart Supply Chain Demand Forecasting</p>
-      <p class="hero-desc">Configure category and date range to generate AI-powered demand projections.</p>
+      <p class="hero-desc">Choose both a city and a category, then select a date range to generate demand projections.</p>
+      <p class="hero-meta">Target Variable: <strong>Units Sold</strong></p>
       <p id="roleHint" class="hero-meta">Loading access level...</p>
     </section>
 
     <section id="forecastPanel" class="forecast-panel">
       <article class="surface-card forecast-inputs">
-        <div class="field">
-          <label for="category">Category</label>
-          <div class="select-shell" id="categoryShell">
-            <select id="category" autocomplete="off" aria-hidden="true" tabindex="-1">
-              <option value="" selected disabled>Select category</option>
-            </select>
-            <button id="categoryTrigger" class="category-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
-              <span id="categoryTriggerText">Select category</span>
-            </button>
-            <div id="categoryMenu" class="category-menu" role="listbox" aria-label="Category options"></div>
+        <div class="date-grid">
+          <div class="field">
+            <label for="city">City</label>
+            <div class="select-shell" id="cityShell">
+              <select id="city" autocomplete="off" aria-hidden="true" tabindex="-1">
+                <option value="" selected disabled>Select city</option>
+              </select>
+              <button id="cityTrigger" class="category-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                <span id="cityTriggerText">Select city</span>
+              </button>
+              <div id="cityMenu" class="category-menu" role="listbox" aria-label="City options"></div>
+            </div>
+            <p id="cityMeta" class="field-meta">Loading cities...</p>
+            <div id="cityError" class="field-error" role="alert" aria-live="polite"></div>
           </div>
-          <p id="categoryMeta" class="field-meta">Loading categories...</p>
-          <div id="categoryError" class="field-error" role="alert" aria-live="polite"></div>
+          <div class="field">
+            <label for="category">Category</label>
+            <div class="select-shell" id="categoryShell">
+              <select id="category" autocomplete="off" aria-hidden="true" tabindex="-1">
+                <option value="" selected disabled>Select category</option>
+              </select>
+              <button id="categoryTrigger" class="category-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                <span id="categoryTriggerText">Select category</span>
+              </button>
+              <div id="categoryMenu" class="category-menu" role="listbox" aria-label="Category options"></div>
+            </div>
+            <p id="categoryMeta" class="field-meta">Loading categories...</p>
+            <div id="categoryError" class="field-error" role="alert" aria-live="polite"></div>
+          </div>
         </div>
         <div class="date-grid">
           <div class="field">
@@ -85,7 +102,7 @@
 
       <article class="surface-card assistant-card" aria-label="Forecast assistant">
         <h2>Forecast Assistant</h2>
-        <p class="assistant-copy">Pick a category and date range, then generate projected demand to support planning.</p>
+        <p class="assistant-copy">Pick both a city and a category with your date range, then generate projected demand to support planning.</p>
         <div class="assistant-bars" aria-hidden="true">
           <span style="height:22px;"></span>
           <span style="height:34px;"></span>
@@ -102,14 +119,14 @@
           <div class="assistant-stat"><span>Risk level</span><strong id="riskLevelKpi">-</strong></div>
         </div>
         <canvas id="summarySparkline" class="assistant-sparkline" aria-label="Forecast summary sparkline"></canvas>
-        <p id="summaryHint" class="summary-hint">Summary updates when category/date changes.</p>
+        <p id="summaryHint" class="summary-hint">Summary updates when city, category, or date changes.</p>
       </article>
     </section>
 
     <section id="forecastVisualization" class="surface-card viz-panel">
       <div class="viz-head">
         <h2>Forecast Visualization</h2>
-        <span id="vizSubtitle" class="viz-meta-line">Live category projection view</span>
+        <span id="vizSubtitle" class="viz-meta-line">Live city and category projection view</span>
       </div>
       <div class="viz-grid">
         <article class="surface-card viz-card viz-card-wide">
@@ -120,10 +137,10 @@
           </div>
         </article>
         <article class="surface-card viz-card">
-          <h3>Category Demand Comparison</h3>
+          <h3>Scope Demand Comparison</h3>
           <div class="chart-wrap">
             <canvas id="categoryComparisonChart" aria-label="Category demand comparison chart"></canvas>
-            <p id="categoryComparisonEmpty" class="chart-empty is-hidden">No category comparison data.</p>
+            <p id="categoryComparisonEmpty" class="chart-empty is-hidden">No forecast scope comparison data.</p>
           </div>
         </article>
         <article class="surface-card viz-card">

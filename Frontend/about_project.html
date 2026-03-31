@@ -13,13 +13,13 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
-      --bg: #0b0f17;
-      --text: #e6edf7;
-      --muted: #8e9bb0;
-      --line: rgba(236, 243, 255, 0.14);
-      --line-soft: rgba(236, 243, 255, 0.08);
-      --glass: rgba(255, 255, 255, 0.03);
-      --glass-border: rgba(255, 255, 255, 0.1);
+      --bg: #f4f7fb;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: rgba(30, 41, 59, 0.12);
+      --line-soft: rgba(30, 41, 59, 0.08);
+      --glass: rgba(255, 255, 255, 0.92);
+      --glass-border: rgba(30, 41, 59, 0.1);
     }
     * { box-sizing: border-box; }
     body {
@@ -27,7 +27,13 @@
       min-height: 100vh;
       font-family: "Inter", "Segoe UI", Tahoma, sans-serif;
       color: var(--text);
-      background: radial-gradient(1200px 500px at 30% -15%, #162133 0%, var(--bg) 55%);
+      background: linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%);
+      animation: none;
+    }
+
+    @keyframes themeDrift {
+      0% { background-position: 0% 0%, 100% 0%, 50% 100%, 0 0; }
+      100% { background-position: 4% 2%, 96% 4%, 52% 96%, 0 0; }
     }
     .mesh-bg {
       position: fixed;
@@ -35,8 +41,8 @@
       pointer-events: none;
       z-index: 0;
       background:
-        radial-gradient(620px 320px at 14% 8%, rgba(79, 140, 255, 0.08), transparent 70%),
-        radial-gradient(540px 300px at 88% 14%, rgba(103, 129, 255, 0.07), transparent 72%);
+        radial-gradient(620px 320px at 14% 8%, rgba(37, 99, 235, 0.06), transparent 70%),
+        radial-gradient(540px 300px at 88% 14%, rgba(91, 141, 239, 0.05), transparent 72%);
       filter: blur(16px);
     }
     .top-nav,
@@ -82,7 +88,7 @@
       border-radius: 10px;
       border: 1px solid var(--line-soft);
       background: rgba(255, 255, 255, 0.03);
-      color: #d8e2f2;
+      color: #7d9360;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -119,12 +125,12 @@
     .logo-wordmark {
       font-size: 33px;
       font-weight: 700;
-      color: #f3f7ff;
+      color: #1f2937;
       letter-spacing: -0.3px;
       line-height: 1;
     }
     .logo-wordmark .iq {
-      background: linear-gradient(90deg, #37d6ff 0%, #7c4dff 100%);
+      background: linear-gradient(90deg, #2563eb 0%, #5b8def 100%);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -156,7 +162,7 @@
       margin: 0 2px 2px;
       font-size: 11px;
       letter-spacing: 1px;
-      color: rgba(255, 255, 255, 0.45);
+      color: #7c8794;
       font-weight: 700;
     }
     .menu-item {
@@ -165,7 +171,7 @@
       align-items: center;
       justify-content: flex-start;
       gap: 10px;
-      color: #dfe8fb;
+      color: #1f2937;
       text-decoration: none;
       font-size: 14px;
       font-weight: 500;
@@ -181,14 +187,14 @@
       cursor: pointer;
     }
     .menu-item:hover {
-      background: rgba(0, 140, 255, 0.15);
-      border-color: rgba(116, 174, 255, 0.45);
+      background: rgba(37, 99, 235, 0.08);
+      border-color: rgba(37, 99, 235, 0.2);
     }
     .menu-item.active {
       color: #f3f8ff;
-      background: linear-gradient(135deg, #4f7cff, #7c4dff);
-      box-shadow: 0 0 15px rgba(124,77,255,0.4);
-      border-left: 4px solid #7c4dff;
+      background: linear-gradient(135deg, #2563eb, #5b8def);
+      box-shadow: 0 0 14px rgba(37,99,235,0.16);
+      border-left: 4px solid #2563eb;
       padding-left: 10px;
     }
     .menu-icon { width: 16px; height: 16px; opacity: 0.95; flex: 0 0 auto; }
@@ -202,7 +208,7 @@
       padding: 0 10px;
       font-size: 11px;
       font-weight: 600;
-      color: #d3dff3;
+      color: #7d9360;
       border: 1px solid var(--line);
       background: rgba(255, 255, 255, 0.03);
       width: auto;
@@ -217,7 +223,7 @@
       width: 100%;
       justify-content: space-between;
       cursor: pointer;
-      color: #dfe8fb;
+      color: #556b2f;
       font-size: 14px;
       font-weight: 500;
     }
@@ -310,7 +316,7 @@
       box-shadow: 0 10px 28px rgba(3, 8, 20, 0.34);
     }
     h1, h2 { margin: 0 0 10px; }
-    p, li { color: #c9d8ef; line-height: 1.55; }
+    p, li { color: #6e8450; line-height: 1.55; }
     ul { margin: 0; padding-left: 20px; }
     .meta-grid {
       display: grid;
@@ -321,7 +327,7 @@
       border: 1px solid var(--line-soft);
       border-radius: 12px;
       padding: 14px;
-      background: rgba(15, 23, 42, 0.45);
+      background: rgba(250, 247, 239, 0.82);
     }
     .meta-k { color: var(--muted); font-size: 12px; font-weight: 600; }
     .meta-v { font-size: 22px; font-weight: 700; margin-top: 4px; }
@@ -340,7 +346,7 @@
       padding: 11px 12px;
       font-size: 14px;
     }
-    .cell.key { color: #98abd0; background: rgba(255, 255, 255, 0.03); }
+    .cell.key { color: #7d9360; background: rgba(255, 255, 255, 0.24); }
 
     .page-footer {
       width: calc(100% - 298px - 32px);
@@ -426,10 +432,6 @@
 
       <div class="menu-group">
         <p class="group-title">PROJECT</p>
-        <a href="/ai-chat" class="menu-item">
-          <i data-lucide="messages-square" class="menu-icon"></i>
-          <span class="menu-text">AI Chat</span>
-        </a>
         <a href="/about-project" class="menu-item active">
           <i data-lucide="info" class="menu-icon"></i>
           <span class="menu-text">About Project</span>
@@ -478,7 +480,7 @@
     <section class="glass-card">
       <h2>How The Project Works</h2>
       <ul>
-        <li>Loads historical retail records and aggregates time-series demand by category.</li>
+        <li>Loads historical retail records and aggregates time-series demand by city or category.</li>
         <li>Trains forecast models on cleaned demand signals.</li>
         <li>Generates future demand predictions for a chosen date range.</li>
         <li>Compares forecast and recent actuals through charts and tabular outputs.</li>
@@ -488,9 +490,10 @@
 
     <section class="glass-card">
       <h2>Data Used By The Model</h2>
-      <p>Current dataset: <code>Dataset/retail_store_inventory.csv</code></p>
+      <p>Current dataset: <code>Dataset/retail_store_inventory_city_level.csv</code> with fallback to <code>Dataset/retail_store_inventory.csv</code></p>
+      <p><strong>Target Variable:</strong> <code>units sold</code></p>
       <div class="table-like">
-        <div class="row"><div class="cell key">Date & Identity</div><div class="cell">date, store id, product id, category, location</div></div>
+        <div class="row"><div class="cell key">Date & Identity</div><div class="cell">date, store id, product id, category, location, region, city, state, country, store_name</div></div>
         <div class="row"><div class="cell key">Inventory & Demand</div><div class="cell">inventory level, units sold, units ordered, demand forecast</div></div>
         <div class="row"><div class="cell key">Pricing Signals</div><div class="cell">price, discount, competitor pricing</div></div>
         <div class="row"><div class="cell key">External Factors</div><div class="cell">weather condition, holiday/promotion, seasonality</div></div>

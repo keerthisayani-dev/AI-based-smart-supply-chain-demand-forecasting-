@@ -8,6 +8,9 @@ import json
 import shutil
 import base64
 import re
+import subprocess
+import sys
+import tempfile
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
@@ -27,6 +30,8 @@ try:
     from pydantic import ConfigDict  # pydantic v2
 except ImportError:  # pydantic v1
     ConfigDict = None
+
+sys.dont_write_bytecode = True
 
 try:
     from .forecasting_core import (
@@ -55,15 +60,20 @@ except ImportError:  # Allows running as a script from Backend/
 
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = BASE_DIR.parent
-CSV_PATH = PROJECT_DIR / "Dataset" / "retail_store_inventory.csv"
+CITY_LEVEL_CSV_PATH = PROJECT_DIR / "Dataset" / "retail_store_inventory_city_level.csv"
+LEGACY_CSV_PATH = PROJECT_DIR / "Dataset" / "retail_store_inventory.csv"
+CSV_PATH = CITY_LEVEL_CSV_PATH if CITY_LEVEL_CSV_PATH.exists() else LEGACY_CSV_PATH
 FRONTEND_LOGIN_HTML_PATH = PROJECT_DIR / "Frontend" / "login.html"
 FRONTEND_HTML_PATH = PROJECT_DIR / "Frontend" / "dashboard.html"
 FRONTEND_RESULTS_HTML_PATH = PROJECT_DIR / "Frontend" / "dashboard_results.html"
 FRONTEND_ADMIN_HTML_PATH = PROJECT_DIR / "Frontend" / "admin_dashboard.html"
 FRONTEND_ABOUT_HTML_PATH = PROJECT_DIR / "Frontend" / "about_project.html"
-FRONTEND_AI_CHAT_HTML_PATH = PROJECT_DIR / "Frontend" / "ai_chat.html"
 HISTORY_DB_PATH = PROJECT_DIR / "Backend" / "forecast_history.db"
 AUTH_DB_PATH = PROJECT_DIR / "Backend" / "auth.db"
+MODEL_METRICS_PATH = PROJECT_DIR / "Backend" / "model_metrics.json"
+PREPROCESSING_SCRIPT_PATH = PROJECT_DIR / "Backend" / "preprocessing.py"
+FEATURE_ENGINEERING_SCRIPT_PATH = PROJECT_DIR / "Backend" / "features_engineering.py"
+MODEL_TRAIN_SCRIPT_PATH = PROJECT_DIR / "Backend" / "model_train.py"
 UPLOADS_ROOT = PROJECT_DIR / "uploads"
 UPLOADS_SALES_DIR = UPLOADS_ROOT / "sales"
 UPLOADS_INVENTORY_DIR = UPLOADS_ROOT / "inventory"
@@ -84,8 +94,6 @@ PASSWORD_POLICY_MESSAGE = (
 ROLE_ADMIN = "admin"
 ROLE_INVENTORY_MANAGER = "inventory_manager"
 ROLE_VIEWER = "viewer"
-AI_CHAT_MODEL = "gpt-4o-mini"
-
 ROLE_ALIASES: Dict[str, str] = {
     "admin": ROLE_ADMIN,
     "inventory_manager": ROLE_INVENTORY_MANAGER,
@@ -144,6 +152,57 @@ class _EngineCache:
 
 
 _engine_cache = _EngineCache()
+
+
+def _probe_sqlite_path(path: Path, probe_table: str) -> tuple[bool, str]:
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with sqlite3.connect(path) as conn:
+            conn.execute(f"CREATE TABLE IF NOT EXISTS {probe_table} (id INTEGER)")
+            conn.commit()
+            conn.execute(f"DROP TABLE IF EXISTS {probe_table}")
+            conn.commit()
+        return True, ""
+    except Exception as exc:
+        return False, str(exc)
+
+
+def _resolve_runtime_db_path(preferred_path: Path, runtime_name: str) -> Path:
+    probe_table = f"__{runtime_name}_rw_probe"
+    is_usable, _ = _probe_sqlite_path(preferred_path, probe_table)
+    if is_usable:
+        return preferred_path
+
+    runtime_dir = Path(tempfile.gettempdir()) / "demandiq_runtime"
+    runtime_dir.mkdir(parents=True, exist_ok=True)
+    runtime_path = runtime_dir / preferred_path.name
+
+    try:
+        source_exists = preferred_path.exists()
+        source_is_newer = (
+            source_exists
+            and (
+                not runtime_path.exists()
+                or preferred_path.stat().st_mtime_ns > runtime_path.stat().st_mtime_ns
+            )
+        )
+        if source_is_newer:
+            shutil.copy2(preferred_path, runtime_path)
+    except Exception:
+        pass
+
+    runtime_usable, runtime_error = _probe_sqlite_path(runtime_path, probe_table)
+    if runtime_usable:
+        return runtime_path
+
+    raise RuntimeError(
+        f"SQLite database is not writable in project or temp runtime location for {preferred_path.name}: "
+        f"{runtime_error}"
+    )
+
+
+HISTORY_DB_PATH = _resolve_runtime_db_path(HISTORY_DB_PATH, "history")
+AUTH_DB_PATH = _resolve_runtime_db_path(AUTH_DB_PATH, "auth")
 
 
 def _load_env_file(path: Path) -> None:
@@ -530,7 +589,6 @@ def _delete_session(session_id: str) -> None:
         conn.execute("DELETE FROM auth_sessions WHERE session_id = ?", (session_id,))
         conn.commit()
 
-
 def _safe_json_compact(data: Dict[str, Any]) -> str:
     try:
         return json.dumps(data, separators=(",", ":"), ensure_ascii=True)
@@ -834,14 +892,68 @@ def _retrain_all_categories() -> Dict[str, Any]:
 
         for category in categories:
             try:
-                selector_col, resolved_category = _resolve_selector(df, category)
-                _get_trained_model(df, resolved_category, selector_col=selector_col)
+                resolved_category = _resolve_category_value(df, category)
+                _get_trained_model(df, resolved_category)
                 trained_categories += 1
             except Exception:
                 errors.append(category)
     return {
         "trained_categories": trained_categories,
         "failed_categories": errors,
+    }
+
+
+def _tail_text(text: str, max_lines: int = 12) -> str:
+    lines = [line for line in str(text or "").splitlines() if line.strip()]
+    if not lines:
+        return ""
+    return "\n".join(lines[-max_lines:])
+
+
+def _load_model_metrics() -> Dict[str, Any]:
+    if not MODEL_METRICS_PATH.exists():
+        raise FileNotFoundError(f"Model metrics file not found at {MODEL_METRICS_PATH.name}")
+    try:
+        return json.loads(MODEL_METRICS_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Model metrics file is invalid JSON: {exc}") from exc
+
+
+def _run_python_pipeline_script(script_path: Path, timeout_seconds: int = 900) -> Dict[str, Any]:
+    completed = subprocess.run(
+        [sys.executable, str(script_path)],
+        cwd=str(PROJECT_DIR),
+        capture_output=True,
+        text=True,
+        timeout=timeout_seconds,
+        check=False,
+    )
+    if completed.returncode != 0:
+        error_tail = _tail_text(completed.stderr or completed.stdout)
+        raise RuntimeError(f"{script_path.name} failed.\n{error_tail}")
+    return {
+        "script": script_path.name,
+        "stdout_tail": _tail_text(completed.stdout),
+    }
+
+
+def _run_connected_training_pipeline() -> Dict[str, Any]:
+    script_results: List[Dict[str, Any]] = []
+    for script_path in (
+        PREPROCESSING_SCRIPT_PATH,
+        FEATURE_ENGINEERING_SCRIPT_PATH,
+        MODEL_TRAIN_SCRIPT_PATH,
+    ):
+        script_results.append(_run_python_pipeline_script(script_path))
+
+    _invalidate_engine_cache()
+    retrained = _retrain_all_categories()
+    metrics = _load_model_metrics()
+    return {
+        "trained_categories": int(retrained.get("trained_categories", 0)),
+        "failed_categories": retrained.get("failed_categories", []),
+        "model_metrics": metrics,
+        "pipeline_scripts": script_results,
     }
 
 
@@ -1165,11 +1277,6 @@ class DynamicCompareRequest(BaseModel):
     left_to: str = ""
     right_from: str = ""
     right_to: str = ""
-
-
-class AIChatMessageRequest(BaseModel):
-    product: str = ""
-    message: str
 
 
 def _norm_text(value: Any) -> str:
@@ -1754,16 +1861,20 @@ def _looks_like_product_id(value: str) -> bool:
 
 
 def _resolve_selector(df: pd.DataFrame, category: str) -> tuple[str, str]:
-    # Resolve user input against product/category columns with case-insensitive matching.
+    # Resolve user input against product/category and geography columns with case-insensitive matching.
     requested = _norm_key(category)
     if not requested:
-        raise ValueError("category cannot be empty")
+        raise ValueError("selection cannot be empty")
 
     candidate_cols: List[str] = []
-    if "product id" in df.columns:
-        candidate_cols.append("product id")
-    if PRODUCT_COL in df.columns and PRODUCT_COL not in candidate_cols:
-        candidate_cols.append(PRODUCT_COL)
+    prefers_product_id = _looks_like_product_id(category)
+    preferred_base_cols = [PRODUCT_COL, "product id"] if not prefers_product_id else ["product id", PRODUCT_COL]
+    for col in preferred_base_cols:
+        if col in df.columns and col not in candidate_cols:
+            candidate_cols.append(col)
+    for col in ("city", "state", "region", "country", "store id", "store_name"):
+        if col in df.columns and col not in candidate_cols:
+            candidate_cols.append(col)
 
     for col in candidate_cols:
         values = df[col].dropna().astype(str).map(str.strip)
@@ -1782,7 +1893,68 @@ def _resolve_selector(df: pd.DataFrame, category: str) -> tuple[str, str]:
         if requested in lower_map:
             return col, lower_map[requested]
 
+    raise ValueError(f"No rows found for selection {category}")
+
+
+def _resolve_category_value(df: pd.DataFrame, category: str) -> str:
+    requested = _norm_key(category)
+    if not requested:
+        raise ValueError("category cannot be empty")
+
+    candidate_cols: List[str] = []
+    preferred_base_cols = [PRODUCT_COL, "product id"] if not _looks_like_product_id(category) else ["product id", PRODUCT_COL]
+    for col in preferred_base_cols:
+        if col in df.columns and col not in candidate_cols:
+            candidate_cols.append(col)
+
+    for col in candidate_cols:
+        values = df[col].dropna().astype(str).map(str.strip)
+        if values.empty:
+            continue
+        exact = values[values == category]
+        if not exact.empty:
+            return str(exact.iloc[0])
+        lower_map: Dict[str, str] = {}
+        for v in values:
+            k = v.lower()
+            if k not in lower_map:
+                lower_map[k] = v
+        if requested in lower_map:
+            return lower_map[requested]
+
     raise ValueError(f"No rows found for category {category}")
+
+
+def _resolve_city_value(df: pd.DataFrame, city: Optional[str]) -> Optional[str]:
+    requested = _norm_key(city or "")
+    if not requested:
+        return None
+    if "city" not in df.columns:
+        raise ValueError("City data is not available in the dataset")
+    values = df["city"].dropna().astype(str).map(str.strip)
+    exact = values[values == str(city)]
+    if not exact.empty:
+        return str(exact.iloc[0])
+    lower_map: Dict[str, str] = {}
+    for v in values:
+        k = v.lower()
+        if k not in lower_map:
+            lower_map[k] = v
+    if requested in lower_map:
+        return lower_map[requested]
+    raise ValueError(f"No rows found for city {city}")
+
+
+def _scope_df_for_forecast(df: pd.DataFrame, category: str, city: Optional[str] = None) -> tuple[pd.DataFrame, str, Optional[str]]:
+    resolved_category = _resolve_category_value(df, category)
+    scoped_df = df[df[PRODUCT_COL].astype(str).str.strip() == resolved_category].copy()
+    resolved_city = _resolve_city_value(df, city)
+    if resolved_city:
+        scoped_df = scoped_df[scoped_df["city"].astype(str).str.strip() == resolved_city].copy()
+    if scoped_df.empty:
+        city_msg = f" in city {resolved_city}" if resolved_city else ""
+        raise ValueError(f"No rows found for category {resolved_category}{city_msg}")
+    return scoped_df, resolved_category, resolved_city
 
 
 def _read_csv_mtime_ns() -> int:
@@ -1807,12 +1979,13 @@ def _get_cached_df() -> pd.DataFrame:
     return _engine_cache.df
 
 
-def _get_trained_model(df: pd.DataFrame, resolved_category: str, selector_col: str) -> Any:
-    key = f"{selector_col}|{_norm_key(resolved_category)}"
+def _get_trained_model(df: pd.DataFrame, resolved_category: str, city: Optional[str] = None) -> Any:
+    key = f"{PRODUCT_COL}|{_norm_key(resolved_category)}|{_norm_key(city or '')}"
     if key in _engine_cache.trained_by_category:
         return _engine_cache.trained_by_category[key]
 
-    daily = build_daily_series(df, category=resolved_category, selector_col=selector_col)
+    scoped_df, _, _ = _scope_df_for_forecast(df, resolved_category, city=city)
+    daily = build_daily_series(scoped_df, category=resolved_category, selector_col=PRODUCT_COL)
     trained = train_forecast_model(daily, target=TARGET_COL)
     _engine_cache.trained_by_category[key] = trained
     return trained
@@ -1901,10 +2074,11 @@ def _forecast_for_category(
     df: pd.DataFrame,
     category: str,
     horizon: int,
+    city: Optional[str] = None,
     anchor_date: Optional[pd.Timestamp] = None,
 ) -> List[Dict[str, Any]]:
-    selector_col, resolved_category = _resolve_selector(df, category)
-    trained = _get_trained_model(df, resolved_category, selector_col=selector_col)
+    _, resolved_category, resolved_city = _scope_df_for_forecast(df, category, city=city)
+    trained = _get_trained_model(df, resolved_category, city=resolved_city)
     forecast_df = forecast_next_days(trained, horizon=horizon, anchor_date=anchor_date)
     return forecast_df.to_dict(orient="records")
 
@@ -1913,18 +2087,17 @@ def _fallback_forecast_for_category(
     df: pd.DataFrame,
     category: str,
     horizon: int,
+    city: Optional[str] = None,
     anchor_date: Optional[pd.Timestamp] = None,
 ) -> List[Dict[str, Any]]:
-    selector_col, resolved_category = _resolve_selector(df, category)
-    category_rows = df[df[selector_col].astype(str).str.strip() == resolved_category].copy()
-    if category_rows.empty:
-        raise ValueError(f"No rows found for category {category}")
+    category_rows, resolved_category, resolved_city = _scope_df_for_forecast(df, category, city=city)
     category_rows[DATE_COL] = parse_date_series(category_rows[DATE_COL])
     category_rows = category_rows.dropna(subset=[DATE_COL, TARGET_COL]).sort_values(DATE_COL)
     if anchor_date is not None:
         category_rows = category_rows[category_rows[DATE_COL] <= anchor_date]
     if category_rows.empty:
-        raise ValueError(f"No rows found for category {category}")
+        city_msg = f" in city {resolved_city}" if resolved_city else ""
+        raise ValueError(f"No rows found for category {resolved_category}{city_msg}")
 
     last_date = pd.to_datetime(category_rows[DATE_COL].max()).normalize()
     last_value = float(pd.to_numeric(category_rows[TARGET_COL], errors="coerce").dropna().iloc[-1])
@@ -1941,11 +2114,11 @@ def _fallback_forecast_for_category(
 def _history_for_category(
     df: pd.DataFrame,
     category: str,
+    city: Optional[str] = None,
     lookback_days: int = 60,
     anchor_date: Optional[pd.Timestamp] = None,
 ) -> List[Dict[str, Any]]:
-    selector_col, resolved_category = _resolve_selector(df, category)
-    category_rows = df[df[selector_col].astype(str).str.strip() == resolved_category].copy()
+    category_rows, _, _ = _scope_df_for_forecast(df, category, city=city)
     if category_rows.empty:
         return []
 
@@ -2037,18 +2210,6 @@ def about_project(request: Request) -> Response:
             detail=f"About project file not found at {FRONTEND_ABOUT_HTML_PATH}",
         )
     return FileResponse(FRONTEND_ABOUT_HTML_PATH, headers=NO_CACHE_HEADERS)
-
-
-@app.get("/ai-chat", include_in_schema=False)
-def ai_chat(request: Request) -> Response:
-    if not _current_user_from_request(request):
-        return RedirectResponse(url="/login", status_code=307)
-    if not FRONTEND_AI_CHAT_HTML_PATH.exists():
-        raise HTTPException(
-            status_code=404,
-            detail=f"AI chat file not found at {FRONTEND_AI_CHAT_HTML_PATH}",
-        )
-    return FileResponse(FRONTEND_AI_CHAT_HTML_PATH, headers=NO_CACHE_HEADERS)
 
 
 @app.post("/auth/login")
@@ -2446,13 +2607,48 @@ def get_categories(request: Request) -> Dict[str, Any]:
         if "product id" in df.columns:
             pvalues = df["product id"].dropna().astype(str).map(str.strip)
             product_ids = sorted({v for v in pvalues if v})
-    return {"categories": categories, "product_ids": product_ids}
+        cities: List[str] = []
+        if "city" in df.columns:
+            cvalues = df["city"].dropna().astype(str).map(str.strip)
+            cities = sorted({v for v in cvalues if v})
+        regions: List[str] = []
+        if "region" in df.columns:
+            rvalues = df["region"].dropna().astype(str).map(str.strip)
+            regions = sorted({v for v in rvalues if v})
+        states: List[str] = []
+        if "state" in df.columns:
+            svalues = df["state"].dropna().astype(str).map(str.strip)
+            states = sorted({v for v in svalues if v})
+    return {
+        "categories": categories,
+        "product_ids": product_ids,
+        "cities": cities,
+        "regions": regions,
+        "states": states,
+        "dataset_path": str(CSV_PATH.name),
+    }
+
+
+@app.get("/model-metrics")
+def get_model_metrics(request: Request) -> Dict[str, Any]:
+    _require_roles(request, ALLOWED_LOGIN_ROLES)
+    try:
+        metrics = _load_model_metrics()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return {
+        "ok": True,
+        "metrics": metrics,
+    }
 
 
 @app.get("/forecast/{category}")
 def get_forecast(
     request: Request,
     category: str,
+    city: Optional[str] = None,
     horizon: int = DEFAULT_HORIZON,
     anchor_date: Optional[str] = None,
     history_lookback_days: int = 365,
@@ -2476,6 +2672,7 @@ def get_forecast(
             rows = _forecast_for_category(
                 df,
                 category=category,
+                city=city,
                 horizon=horizon,
                 anchor_date=parsed_anchor,
             )
@@ -2485,16 +2682,18 @@ def get_forecast(
                 rows = _fallback_forecast_for_category(
                     df,
                     category=category,
+                    city=city,
                     horizon=horizon,
                     anchor_date=parsed_anchor,
                 )
-            elif "No rows found for category" in msg:
+            elif "No rows found for" in msg:
                 raise HTTPException(status_code=404, detail=msg) from exc
             else:
                 raise HTTPException(status_code=400, detail=msg) from exc
         history = _history_for_category(
             df,
             category=category,
+            city=city,
             lookback_days=history_lookback_days,
             anchor_date=parsed_anchor,
         )
@@ -2511,6 +2710,7 @@ def get_forecast(
 
     return {
         "category": category,
+        "city": city,
         "horizon": horizon,
         "history_lookback_days": history_lookback_days,
         "anchor_date": anchor_date,
@@ -2560,34 +2760,6 @@ def dynamic_data_options(request: Request) -> Dict[str, Any]:
         "products": sorted(products),
         "min_date": min_date,
         "max_date": max_date,
-    }
-
-
-@app.post("/ai-chat/message")
-def ai_chat_message(payload: AIChatMessageRequest, request: Request) -> Dict[str, Any]:
-    _require_roles(request, ALLOWED_LOGIN_ROLES)
-    product = str(payload.product or "").strip()
-    message = str(payload.message or "").strip()
-    if not message:
-        raise HTTPException(status_code=400, detail="message is required")
-
-    context = _dataset_context_for_chat(product)
-    model_used = AI_CHAT_MODEL
-    fallback_reason = ""
-    try:
-        answer = _call_openai_ai_chat(message, context)
-    except Exception as exc:
-        answer = _local_dataset_chat_answer(product, message, context)
-        fallback_reason = str(exc).strip()
-        model_used = "local dataset fallback"
-
-    return {
-        "ok": True,
-        "product": context["scope_name"],
-        "model": model_used,
-        "answer": answer,
-        "rows_used": context["row_count"],
-        "fallback_reason": fallback_reason,
     }
 
 
@@ -3012,7 +3184,7 @@ def _process_admin_upload(
                     combined.to_csv(CSV_PATH, index=False)
                     _invalidate_engine_cache()
                     if retrain_model:
-                        retrain_result = _retrain_all_categories()
+                        retrain_result = _run_connected_training_pipeline()
                         retrained_done = True
                     if canonical_type == UPLOAD_TYPE_MAIN_DATASET:
                         info_message = "Main dataset updated with non-duplicate rows (duplicates skipped)."
@@ -3073,6 +3245,7 @@ def _process_admin_upload(
             "retrained": retrained_done,
             "trained_categories": int(retrain_result.get("trained_categories", 0)),
             "failed_categories": retrain_result.get("failed_categories", []),
+            "model_metrics": retrain_result.get("model_metrics", {}),
             "inventory_alerts": {
                 "low_stock": low_stock_alerts,
                 "overstock": overstock_alerts,
@@ -3283,6 +3456,7 @@ def admin_approve_dataset(payload: StageActionRequest, request: Request) -> Dict
         "staging_id": staging_id,
         "trained_categories": int(retrained.get("trained_categories", 0)),
         "failed_categories": retrained.get("failed_categories", []),
+        "model_metrics": retrained.get("model_metrics", {}),
     }
 
 
@@ -3555,12 +3729,13 @@ def admin_delete_user(payload: AdminDeleteUserRequest, request: Request) -> Dict
 @app.post("/admin/retrain-model")
 def admin_retrain_model(request: Request) -> Dict[str, Any]:
     _require_roles(request, {ROLE_ADMIN})
-    retrained = _retrain_all_categories()
+    retrained = _run_connected_training_pipeline()
     return {
         "ok": True,
         "message": "Retraining completed",
         "trained_categories": int(retrained.get("trained_categories", 0)),
         "failed_categories": retrained.get("failed_categories", []),
+        "model_metrics": retrained.get("model_metrics", {}),
     }
 
 
