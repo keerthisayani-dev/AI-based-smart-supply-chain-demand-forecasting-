@@ -299,6 +299,14 @@
       padding-left: 10px;
     }
 
+    .menu-item.optional-toggle.active {
+      color: #f3f8ff;
+      background: linear-gradient(135deg, rgba(125, 147, 96, 0.96), rgba(159, 190, 115, 0.98));
+      border-left: 4px solid #7d9360;
+      box-shadow: 0 0 15px rgba(125, 147, 96, 0.16);
+      padding-left: 10px;
+    }
+
     .menu-icon {
       width: 16px;
       height: 16px;
@@ -507,6 +515,10 @@
       transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
     }
 
+    .optional-panel-hidden {
+      display: none !important;
+    }
+
     .glass-card:hover {
       transform: scale(1.02);
       border-color: rgba(159, 190, 115, 0.28);
@@ -710,6 +722,13 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 24px;
+    }
+
+    .data-grid.history-hidden {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .data-grid.history-only {
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .insight-grid {
@@ -1151,6 +1170,12 @@
       grid-template-columns: minmax(0, 1fr);
     }
     .dynamic-grid.compare-only #dynamicCompareCard {
+      max-width: 100%;
+    }
+    .dynamic-grid.editor-only {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .dynamic-grid.editor-only #dynamicEditorCard {
       max-width: 100%;
     }
     .dynamic-card {
@@ -2382,6 +2407,26 @@
           <i data-lucide="line-chart" class="menu-icon"></i>
           <span class="menu-text">Past Demand View</span>
         </button>
+        <button class="menu-item optional-toggle" id="strategyNavBtn" type="button" style="display:none;">
+          <i data-lucide="sliders-horizontal" class="menu-icon"></i>
+          <span class="menu-text">Demand Strategy</span>
+        </button>
+        <button class="menu-item optional-toggle" id="dynamicToolsNavBtn" type="button">
+          <i data-lucide="table-properties" class="menu-icon"></i>
+          <span class="menu-text">Dynamic Tools</span>
+        </button>
+        <button class="menu-item optional-toggle" id="compareNavBtn" type="button">
+          <i data-lucide="git-compare-arrows" class="menu-icon"></i>
+          <span class="menu-text">Compare Platforms</span>
+        </button>
+        <button class="menu-item optional-toggle" id="historyNavBtn" type="button">
+          <i data-lucide="history" class="menu-icon"></i>
+          <span class="menu-text">Recent History</span>
+        </button>
+        <button class="menu-item optional-toggle" id="adminUploadNavBtn" type="button" style="display:none;">
+          <i data-lucide="upload" class="menu-icon"></i>
+          <span class="menu-text">Admin Upload</span>
+        </button>
         <div class="download-dropdown" id="downloadDropdown">
           <button class="download-toggle menu-item" id="downloadToggleBtn" type="button" aria-haspopup="menu" aria-expanded="false">
             <span class="menu-text"><i data-lucide="download" class="menu-icon"></i>Download</span>
@@ -2437,7 +2482,7 @@
       <div class="header-divider" aria-hidden="true"></div>
     </section>
 
-    <section class="metrics">
+    <section class="metrics" id="metricsSection">
       <article class="glass-card metric">
         <i data-lucide="box" class="metric-icon"></i>
         <div class="k" id="kTotalLabel">Total Forecast Units</div>
@@ -2455,7 +2500,7 @@
       </article>
     </section>
 
-    <section class="glass-card">
+    <section class="glass-card" id="chartSection">
       <div class="chart-head">
         <h3 id="chartSectionTitle"><i data-lucide="line-chart" class="chart-title-icon"></i>Demand Trend vs Forecast</h3>
         <button class="chart-download-btn" id="chartDownloadBtn" type="button" title="Download graph as PNG">
@@ -2511,7 +2556,7 @@
         </article>
       </div>
     </section>
-    <section class="glass-card" id="xaiSection">
+    <section class="glass-card optional-panel-hidden" id="xaiSection">
       <div class="chart-head xai-header">
         <div class="xai-header-copy">
           <h3>Demand Strategy Simulator</h3>
@@ -2594,7 +2639,7 @@
         </article>
       </div>
     </section>
-    <section class="glass-card" id="dynamicCompareSection">
+    <section class="glass-card optional-panel-hidden" id="dynamicCompareSection">
       <div class="chart-head">
         <h3 id="dynamicCompareTitle">Dynamic Dataset Editor and Product Comparison</h3>
       </div>
@@ -2794,12 +2839,12 @@
         </article>
       </div>
     </section>
-    <section class="data-grid">
-      <article class="glass-card">
+    <section class="data-grid history-hidden" id="historyForecastSection">
+      <article class="glass-card optional-panel-hidden" id="historySection">
         <h3 class="table-title" id="historyTitle">Recent History</h3>
         <div id="historyTable"></div>
       </article>
-      <article class="glass-card">
+      <article class="glass-card" id="forecastSection">
         <div class="table-head">
           <h3 class="table-title" id="forecastTitle">Forecast Output</h3>
           <div class="granularity-switch" id="granularitySwitch" hidden>
@@ -2812,7 +2857,7 @@
       </article>
     </section>
 
-    <section class="glass-card" id="adminControlsSection">
+    <section class="glass-card optional-panel-hidden" id="adminControlsSection">
       <div class="chart-head">
         <h3>Upload Document (Admin)</h3>
       </div>
@@ -2882,12 +2927,21 @@
     let dynamicDatePickers = [];
     let dynamicMinDateBound = "";
     let dynamicMaxDateBound = "";
+    let dynamicOptionsPromise = null;
     let strategyFromPicker = null;
     let strategyToPicker = null;
     const strategyRowsCache = new Map();
     const strategyRowsInflight = new Map();
     const STRATEGY_CACHE_TTL_MS = 10 * 60 * 1000;
+    const DYNAMIC_OPTIONS_CACHE_KEY = "results_dynamic_options_cache_v1";
+    const DYNAMIC_OPTIONS_CACHE_TTL_MS = 10 * 60 * 1000;
     let strategyCacheWarmStarted = false;
+    let strategyPanelOpen = false;
+    let dynamicToolsPanelOpen = false;
+    let comparePanelOpen = false;
+    let historyPanelOpen = false;
+    let adminUploadPanelOpen = false;
+    let currentResultsSection = "reports";
 
     function apiBase() {
       return window.location.origin;
@@ -2938,6 +2992,190 @@
       return mapping[key] || "Unknown";
     }
 
+    function normalizeResultsSection(value) {
+      const key = String(value || "").trim().toLowerCase();
+      if (["strategy", "dynamic-tools", "compare", "history", "admin-upload"].includes(key)) {
+        return key;
+      }
+      return "reports";
+    }
+
+    function buildResultsSectionUrl(section) {
+      const url = new URL(window.location.href);
+      url.pathname = "/dashboard/results";
+      const normalized = normalizeResultsSection(section);
+      if (normalized === "reports") {
+        url.searchParams.delete("section");
+      } else {
+        url.searchParams.set("section", normalized);
+      }
+      return url.toString();
+    }
+
+    function navigateToResultsSection(section, options = {}) {
+      const { replace = false } = options;
+      const nextUrl = buildResultsSectionUrl(section);
+      const currentUrl = window.location.href;
+      if (nextUrl !== currentUrl) {
+        const state = { section: normalizeResultsSection(section) };
+        if (replace) {
+          window.history.replaceState(state, "", nextUrl);
+        } else {
+          window.history.pushState(state, "", nextUrl);
+        }
+      }
+      applyResultsSectionRoute();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function setStrategyPanelOpen(isOpen) {
+      strategyPanelOpen = Boolean(isOpen);
+      const xaiSection = document.getElementById("xaiSection");
+      const strategyNavBtn = document.getElementById("strategyNavBtn");
+      if (xaiSection) {
+        xaiSection.classList.toggle("optional-panel-hidden", !strategyPanelOpen);
+      }
+      if (strategyNavBtn) {
+        strategyNavBtn.classList.toggle("active", strategyPanelOpen);
+        strategyNavBtn.setAttribute("aria-pressed", strategyPanelOpen ? "true" : "false");
+      }
+    }
+
+    function setDynamicToolsPanelOpen(isOpen) {
+      dynamicToolsPanelOpen = Boolean(isOpen);
+      const dynamicEditorCard = document.getElementById("dynamicEditorCard");
+      const dynamicToolsNavBtn = document.getElementById("dynamicToolsNavBtn");
+      if (dynamicEditorCard) {
+        dynamicEditorCard.classList.toggle("optional-panel-hidden", !dynamicToolsPanelOpen);
+      }
+      if (dynamicToolsNavBtn) {
+        dynamicToolsNavBtn.classList.toggle("active", dynamicToolsPanelOpen);
+        dynamicToolsNavBtn.setAttribute("aria-pressed", dynamicToolsPanelOpen ? "true" : "false");
+      }
+    }
+
+    function setComparePanelOpen(isOpen) {
+      comparePanelOpen = Boolean(isOpen);
+      const dynamicCompareCard = document.getElementById("dynamicCompareCard");
+      const compareNavBtn = document.getElementById("compareNavBtn");
+      if (dynamicCompareCard) {
+        dynamicCompareCard.classList.toggle("optional-panel-hidden", !comparePanelOpen);
+      }
+      if (compareNavBtn) {
+        compareNavBtn.classList.toggle("active", comparePanelOpen);
+        compareNavBtn.setAttribute("aria-pressed", comparePanelOpen ? "true" : "false");
+      }
+    }
+
+    function setHistoryPanelOpen(isOpen) {
+      historyPanelOpen = Boolean(isOpen);
+      const historySection = document.getElementById("historySection");
+      const historyForecastSection = document.getElementById("historyForecastSection");
+      const historyNavBtn = document.getElementById("historyNavBtn");
+      if (historySection) {
+        historySection.classList.toggle("optional-panel-hidden", !historyPanelOpen);
+      }
+      if (historyForecastSection) {
+        historyForecastSection.classList.toggle("history-hidden", !historyPanelOpen);
+      }
+      if (historyNavBtn) {
+        historyNavBtn.classList.toggle("active", historyPanelOpen);
+        historyNavBtn.setAttribute("aria-pressed", historyPanelOpen ? "true" : "false");
+      }
+    }
+
+    function setAdminUploadPanelOpen(isOpen) {
+      adminUploadPanelOpen = Boolean(isOpen);
+      const adminControlsSection = document.getElementById("adminControlsSection");
+      const adminUploadNavBtn = document.getElementById("adminUploadNavBtn");
+      if (adminControlsSection) {
+        adminControlsSection.classList.toggle("optional-panel-hidden", !adminUploadPanelOpen);
+      }
+      if (adminUploadNavBtn) {
+        adminUploadNavBtn.classList.toggle("active", adminUploadPanelOpen);
+        adminUploadNavBtn.setAttribute("aria-pressed", adminUploadPanelOpen ? "true" : "false");
+      }
+    }
+
+    function applyResultsSectionRoute() {
+      const requestedSection = normalizeResultsSection(new URLSearchParams(window.location.search).get("section"));
+      const canUseStrategy = currentUserRole === "admin" || currentUserRole === "inventory_manager";
+      const canUseAdminUpload = currentUserRole === "admin";
+      let section = requestedSection;
+
+      if (section === "strategy" && !canUseStrategy) {
+        section = "reports";
+      }
+      if (section === "admin-upload" && !canUseAdminUpload) {
+        section = "reports";
+      }
+
+      currentResultsSection = section;
+
+      const pageTitleEl = document.getElementById("resultsPageTitle");
+      const reportTextEl = document.getElementById("reportText");
+      const navReports = document.getElementById("navReports");
+      const metricsSection = document.getElementById("metricsSection");
+      const chartSection = document.getElementById("chartSection");
+      const inventoryInsightsSection = document.getElementById("inventoryInsightsSection");
+      const profitabilitySection = document.getElementById("profitabilitySection");
+      const dynamicCompareSection = document.getElementById("dynamicCompareSection");
+      const dynamicCompareGrid = dynamicCompareSection?.querySelector(".dynamic-grid");
+      const historyForecastSection = document.getElementById("historyForecastSection");
+      const forecastSection = document.getElementById("forecastSection");
+      const sectionLabels = {
+        reports: currentMode === "past" ? "Past Demand Results" : "Forecast Results",
+        strategy: "Demand Strategy",
+        "dynamic-tools": "Dynamic Dataset Editor",
+        compare: "Compare Platforms",
+        history: "Recent History",
+        "admin-upload": "Admin Upload",
+      };
+
+      const isReports = section === "reports";
+      const isStrategy = section === "strategy";
+      const isDynamic = section === "dynamic-tools";
+      const isCompare = section === "compare";
+      const isHistory = section === "history";
+      const isAdminUpload = section === "admin-upload";
+
+      if (navReports) navReports.classList.toggle("active", isReports);
+      setStrategyPanelOpen(isStrategy);
+      setDynamicToolsPanelOpen(isDynamic);
+      setComparePanelOpen(isCompare);
+      setHistoryPanelOpen(isHistory);
+      setAdminUploadPanelOpen(isAdminUpload);
+
+      [metricsSection, chartSection, inventoryInsightsSection, profitabilitySection].forEach((el) => {
+        if (!el) return;
+        el.classList.toggle("optional-panel-hidden", !isReports);
+      });
+      if (dynamicCompareSection) {
+        dynamicCompareSection.classList.toggle("optional-panel-hidden", !(isDynamic || isCompare));
+      }
+      if (dynamicCompareGrid) {
+        dynamicCompareGrid.classList.toggle("editor-only", isDynamic);
+        dynamicCompareGrid.classList.toggle("compare-only", isCompare);
+      }
+
+      if (historyForecastSection) {
+        historyForecastSection.classList.toggle("optional-panel-hidden", !(isReports || isHistory));
+        historyForecastSection.classList.toggle("history-hidden", !isHistory);
+        historyForecastSection.classList.toggle("history-only", isHistory);
+      }
+      if (forecastSection) {
+        forecastSection.classList.toggle("optional-panel-hidden", !isReports);
+      }
+
+      if (pageTitleEl) pageTitleEl.textContent = sectionLabels[section] || "Forecast Results";
+      if (reportTextEl) {
+        reportTextEl.textContent = isReports
+          ? (currentMode === "past" ? "Report Type: Past Demand Report" : "Report Type: Forecast Report")
+          : `Report Type: ${sectionLabels[section] || "Results Page"}`;
+      }
+      document.title = `${sectionLabels[section] || "Results"} - DemandIQ`;
+    }
+
     function applyRoleFeatureGates() {
       const isAdmin = currentUserRole === "admin";
       const isInventoryManager = currentUserRole === "inventory_manager";
@@ -2957,11 +3195,15 @@
       const chartDownloadBtn = document.getElementById("chartDownloadBtn");
       const modeToggleBtn = document.getElementById("modeToggleBtn");
       const adminDashBtn = document.getElementById("adminDashBtn");
+      const strategyNavBtn = document.getElementById("strategyNavBtn");
+      const compareNavBtn = document.getElementById("compareNavBtn");
+      const adminUploadNavBtn = document.getElementById("adminUploadNavBtn");
+      const canUseStrategy = isAdmin || isInventoryManager;
 
       if (inventoryInsightsSection) inventoryInsightsSection.style.display = (isAdmin || isInventoryManager) ? "" : "none";
       if (profitabilitySection) profitabilitySection.style.display = isAdmin ? "" : "none";
       if (adminControlsSection) adminControlsSection.style.display = isAdmin ? "" : "none";
-      if (xaiSection) xaiSection.style.display = (isAdmin || isInventoryManager) ? "" : "none";
+      if (xaiSection) xaiSection.style.display = canUseStrategy ? "" : "none";
       if (dynamicCompareSection) dynamicCompareSection.style.display = "";
       if (dynamicEditorCard) dynamicEditorCard.style.display = (isAdmin || isInventoryManager) ? "" : "none";
       if (dynamicCompareCard) dynamicCompareCard.style.display = "";
@@ -2978,6 +3220,16 @@
       if (chartDownloadBtn) chartDownloadBtn.style.display = isViewer ? "none" : "";
       if (modeToggleBtn) modeToggleBtn.disabled = false;
       if (adminDashBtn) adminDashBtn.style.display = isAdmin ? "" : "none";
+      if (strategyNavBtn) strategyNavBtn.style.display = canUseStrategy ? "" : "none";
+      if (compareNavBtn) compareNavBtn.style.display = "";
+      if (adminUploadNavBtn) adminUploadNavBtn.style.display = isAdmin ? "" : "none";
+      if (!canUseStrategy) {
+        setStrategyPanelOpen(false);
+      }
+      if (!isAdmin) {
+        setAdminUploadPanelOpen(false);
+      }
+      applyResultsSectionRoute();
     }
 
     function updateInsightsAndFinancials(filteredForecast, history) {
@@ -3621,6 +3873,68 @@
       if (el) el.textContent = String(msg || "");
     }
 
+    function readDynamicOptionsCache() {
+      try {
+        const raw = sessionStorage.getItem(DYNAMIC_OPTIONS_CACHE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return null;
+        if ((Date.now() - Number(parsed.ts || 0)) > DYNAMIC_OPTIONS_CACHE_TTL_MS) return null;
+        return parsed.payload || null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function writeDynamicOptionsCache(payload) {
+      try {
+        sessionStorage.setItem(DYNAMIC_OPTIONS_CACHE_KEY, JSON.stringify({
+          ts: Date.now(),
+          payload,
+        }));
+      } catch (_) {
+        // Ignore cache write failures.
+      }
+    }
+
+    function applyDynamicOptionsPayload(payload = {}) {
+      dynamicProductOptions = Array.isArray(payload.products) ? payload.products : [];
+      dynamicPlatformOptions = Array.isArray(payload.platforms) ? payload.platforms : [];
+      if (!dynamicPlatformOptions.length) {
+        dynamicPlatformOptions = ["Amazon", "Flipkart"];
+      }
+
+      populateProductSelect("dynFilterProduct", true);
+      populateProductSelect("dynAddProduct", false);
+      populateProductSelect("cmpProduct", false);
+      populateProductSelect("strategyProduct", false);
+      populatePlatformSelect("dynAddPlatform");
+      populatePlatformSelect("cmpPlatform1");
+      populatePlatformSelect("cmpPlatform2");
+      populatePlatformSelect("strategyPlatform");
+
+      const fromEl = document.getElementById("dynFilterFromDate");
+      const toEl = document.getElementById("dynFilterToDate");
+      const addDateEl = document.getElementById("dynAddDate");
+      const cmpFromEl = document.getElementById("cmpFromDate");
+      const cmpToEl = document.getElementById("cmpToDate");
+      const minDate = String(payload.min_date || "");
+      const maxDate = String(payload.max_date || "");
+      dynamicMinDateBound = minDate;
+      dynamicMaxDateBound = maxDate;
+      if (fromEl && !fromEl.value && minDate) fromEl.value = minDate;
+      if (toEl && !toEl.value && maxDate) toEl.value = maxDate;
+      if (addDateEl && !addDateEl.value && maxDate) addDateEl.value = maxDate;
+      if (cmpFromEl && !cmpFromEl.value && minDate) cmpFromEl.value = minDate;
+      if (cmpToEl && !cmpToEl.value && maxDate) cmpToEl.value = maxDate;
+      applyStrategyDateDefaults(false);
+      initDynamicDatePickers();
+      if (dynamicPlatformOptions.length) {
+        const p2 = document.getElementById("cmpPlatform2");
+        if (p2 && !p2.value) p2.value = dynamicPlatformOptions[Math.min(1, dynamicPlatformOptions.length - 1)];
+      }
+    }
+
     function populateProductSelect(selectId, includeAll = false) {
       const el = document.getElementById(selectId);
       if (!el) return;
@@ -3780,70 +4094,68 @@
       `).join("");
     }
 
-    async function loadDynamicOptions() {
-      let payload = {};
-      try {
-        const resp = await authFetch(`${apiBase()}/dynamic-data/options`, { cache: "no-store" });
-        if (resp.ok) {
-          payload = await resp.json();
+    async function loadDynamicOptions(options = {}) {
+      const { preferCache = true, forceRefresh = false } = options;
+
+      if (preferCache) {
+        const cached = readDynamicOptionsCache();
+        if (cached) {
+          applyDynamicOptionsPayload(cached);
         }
-      } catch (_) {
-        // Fall through to categories fallback.
       }
 
-      dynamicProductOptions = Array.isArray(payload.products) ? payload.products : [];
-      dynamicPlatformOptions = Array.isArray(payload.platforms) ? payload.platforms : [];
-      if (!dynamicPlatformOptions.length) {
-        dynamicPlatformOptions = ["Amazon", "Flipkart"];
+      if (!forceRefresh && dynamicOptionsPromise) {
+        return dynamicOptionsPromise;
       }
-      if (!dynamicProductOptions.length) {
+
+      dynamicOptionsPromise = (async () => {
+        let payload = {};
         try {
-          const catResp = await authFetch(`${apiBase()}/categories`, { cache: "no-store" });
-          if (catResp.ok) {
-            const catPayload = await catResp.json();
-            const categories = Array.isArray(catPayload?.categories) ? catPayload.categories : [];
-            dynamicProductOptions = [...new Set(categories.map((v) => String(v || "").trim()).filter(Boolean))];
-            if (!dynamicProductOptions.length) {
-              const productIds = Array.isArray(catPayload?.product_ids) ? catPayload.product_ids : [];
-              dynamicProductOptions = [...new Set(productIds.map((v) => String(v || "").trim()).filter(Boolean))];
-            }
+          const resp = await authFetch(`${apiBase()}/dynamic-data/options`);
+          if (resp.ok) {
+            payload = await resp.json();
           }
         } catch (_) {
-          // Keep empty options and surface message below.
+          // Fall through to categories fallback.
         }
-      }
-      populateProductSelect("dynFilterProduct", true);
-      populateProductSelect("dynAddProduct", false);
-      populateProductSelect("cmpProduct", false);
-      populateProductSelect("strategyProduct", false);
-      populatePlatformSelect("dynAddPlatform");
-      populatePlatformSelect("cmpPlatform1");
-      populatePlatformSelect("cmpPlatform2");
-      populatePlatformSelect("strategyPlatform");
 
-      const fromEl = document.getElementById("dynFilterFromDate");
-      const toEl = document.getElementById("dynFilterToDate");
-      const addDateEl = document.getElementById("dynAddDate");
-      const cmpFromEl = document.getElementById("cmpFromDate");
-      const cmpToEl = document.getElementById("cmpToDate");
-      const minDate = String(payload.min_date || "");
-      const maxDate = String(payload.max_date || "");
-      dynamicMinDateBound = minDate;
-      dynamicMaxDateBound = maxDate;
-      if (fromEl && !fromEl.value && minDate) fromEl.value = minDate;
-      if (toEl && !toEl.value && maxDate) toEl.value = maxDate;
-      if (addDateEl && !addDateEl.value && maxDate) addDateEl.value = maxDate;
-      if (cmpFromEl && !cmpFromEl.value && minDate) cmpFromEl.value = minDate;
-      if (cmpToEl && !cmpToEl.value && maxDate) cmpToEl.value = maxDate;
-      applyStrategyDateDefaults(false);
-      initDynamicDatePickers();
-      if (!dynamicProductOptions.length) {
-        setDynamicEditorStatus("No products found. Check dataset columns and API auth/session.");
-        setCompareStatus("No products found. Try reloading the page after login.");
-      }
-      if (dynamicPlatformOptions.length) {
-        const p2 = document.getElementById("cmpPlatform2");
-        if (p2 && !p2.value) p2.value = dynamicPlatformOptions[Math.min(1, dynamicPlatformOptions.length - 1)];
+        let nextProducts = Array.isArray(payload.products) ? payload.products : [];
+        if (!nextProducts.length) {
+          try {
+            const catResp = await authFetch(`${apiBase()}/categories`);
+            if (catResp.ok) {
+              const catPayload = await catResp.json();
+              const categories = Array.isArray(catPayload?.categories) ? catPayload.categories : [];
+              nextProducts = [...new Set(categories.map((v) => String(v || "").trim()).filter(Boolean))];
+              if (!nextProducts.length) {
+                const productIds = Array.isArray(catPayload?.product_ids) ? catPayload.product_ids : [];
+                nextProducts = [...new Set(productIds.map((v) => String(v || "").trim()).filter(Boolean))];
+              }
+            }
+          } catch (_) {
+            // Keep empty options and surface message below.
+          }
+        }
+
+        const normalizedPayload = {
+          ...payload,
+          products: nextProducts,
+          platforms: Array.isArray(payload.platforms) ? payload.platforms : ["Amazon", "Flipkart"],
+        };
+
+        applyDynamicOptionsPayload(normalizedPayload);
+        writeDynamicOptionsCache(normalizedPayload);
+
+        if (!dynamicProductOptions.length) {
+          setDynamicEditorStatus("No products found. Check dataset columns and API auth/session.");
+          setCompareStatus("No products found. Try reloading the page after login.");
+        }
+      })();
+
+      try {
+        await dynamicOptionsPromise;
+      } finally {
+        dynamicOptionsPromise = null;
       }
     }
 
@@ -4949,13 +5261,19 @@
       const params = new URLSearchParams(window.location.search);
       params.set("mode", currentMode === "past" ? "forecast" : "past");
       const newUrl = `${window.location.pathname}?${params.toString()}`;
-      window.history.replaceState({}, "", newUrl);
-      loadResults();
+      window.history.replaceState({ section: currentResultsSection }, "", newUrl);
+      loadResults().then(() => {
+        applyResultsSectionRoute();
+      });
     });
     document.getElementById("adminDashBtn").addEventListener("click", () => {
       window.location.href = "/admin/dashboard";
     });
     const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
+    window.addEventListener("popstate", () => {
+      applyResultsSectionRoute();
+    });
+
     function applySidebarState(collapsed) {
       document.body.classList.toggle("sidebar-collapsed", Boolean(collapsed));
       if (sidebarToggleBtn) {
@@ -5562,11 +5880,54 @@
 
     document.getElementById("navReports").addEventListener("click", (e) => {
       e.preventDefault();
-      const reportsSection = document.querySelector(".data-grid");
-      if (reportsSection) {
-        reportsSection.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      navigateToResultsSection("reports");
     });
+
+    const strategyNavBtn = document.getElementById("strategyNavBtn");
+    if (strategyNavBtn) {
+      strategyNavBtn.addEventListener("click", () => {
+        if (currentResultsSection !== "strategy") {
+          navigateToResultsSection("strategy");
+        }
+      });
+    }
+    const dynamicToolsNavBtn = document.getElementById("dynamicToolsNavBtn");
+    if (dynamicToolsNavBtn) {
+      dynamicToolsNavBtn.addEventListener("click", () => {
+        if (currentResultsSection !== "dynamic-tools") {
+          navigateToResultsSection("dynamic-tools");
+        }
+      });
+    }
+    const compareNavBtn = document.getElementById("compareNavBtn");
+    if (compareNavBtn) {
+      compareNavBtn.addEventListener("click", () => {
+        if (currentResultsSection !== "compare") {
+          navigateToResultsSection("compare");
+        }
+      });
+    }
+    const historyNavBtn = document.getElementById("historyNavBtn");
+    if (historyNavBtn) {
+      historyNavBtn.addEventListener("click", () => {
+        if (currentResultsSection !== "history") {
+          navigateToResultsSection("history");
+        }
+      });
+    }
+    const adminUploadNavBtn = document.getElementById("adminUploadNavBtn");
+    if (adminUploadNavBtn) {
+      adminUploadNavBtn.addEventListener("click", () => {
+        if (currentResultsSection !== "admin-upload") {
+          navigateToResultsSection("admin-upload");
+        }
+      });
+    }
+    setStrategyPanelOpen(false);
+    setDynamicToolsPanelOpen(false);
+    setComparePanelOpen(false);
+    setHistoryPanelOpen(false);
+    setAdminUploadPanelOpen(false);
 
     const dynLoadRecordsBtn = document.getElementById("dynLoadRecordsBtn");
     const dynAddRecordBtn = document.getElementById("dynAddRecordBtn");
@@ -5719,10 +6080,14 @@
           contextEl.textContent = "Chart library could not be loaded. Check internet/firewall and reload.";
         }
       }
-      await applyRoleUi();
+      await Promise.all([
+        applyRoleUi(),
+        loadDynamicOptions({ preferCache: true }),
+      ]);
       await loadResults();
+      applyResultsSectionRoute();
       // Load dynamic editor data in background so forecast results render immediately.
-      loadDynamicOptions()
+      loadDynamicOptions({ preferCache: true, forceRefresh: true })
         .then(async () => {
           await Promise.all([
             loadDynamicRecords(),
