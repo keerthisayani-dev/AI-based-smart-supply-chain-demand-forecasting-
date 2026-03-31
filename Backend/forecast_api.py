@@ -22,6 +22,7 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse
 from fastapi.responses import JSONResponse
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -1945,16 +1946,167 @@ def _resolve_city_value(df: pd.DataFrame, city: Optional[str]) -> Optional[str]:
     raise ValueError(f"No rows found for city {city}")
 
 
-def _scope_df_for_forecast(df: pd.DataFrame, category: str, city: Optional[str] = None) -> tuple[pd.DataFrame, str, Optional[str]]:
+def _store_scope_column(df: pd.DataFrame) -> Optional[str]:
+    for col in ("store_name", "store id"):
+        if col in df.columns:
+            return col
+    return None
+
+
+def _resolve_store_value(df: pd.DataFrame, store: Optional[str]) -> Optional[str]:
+    requested = _norm_key(store or "")
+    if not requested:
+        return None
+    store_col = _store_scope_column(df)
+    if store_col is None:
+        raise ValueError("Store data is not available in the dataset")
+    values = df[store_col].dropna().astype(str).map(str.strip)
+    exact = values[values == str(store)]
+    if not exact.empty:
+        return str(exact.iloc[0])
+    lower_map: Dict[str, str] = {}
+    for v in values:
+        k = v.lower()
+        if k not in lower_map:
+            lower_map[k] = v
+    if requested in lower_map:
+        return lower_map[requested]
+    raise ValueError(f"No rows found for store {store}")
+
+
+def _build_valid_scope_maps(df: pd.DataFrame) -> tuple[Dict[str, List[str]], Dict[str, List[str]], Dict[str, List[str]]]:
+    if "city" not in df.columns or PRODUCT_COL not in df.columns or TARGET_COL not in df.columns:
+        return {}, {}, {}
+    store_col = _store_scope_column(df)
+
+    cols = [PRODUCT_COL, "city", TARGET_COL]
+    if store_col:
+        cols.append(store_col)
+    pair_df = df[cols].dropna(subset=[PRODUCT_COL, "city", TARGET_COL]).copy()
+    if pair_df.empty:
+        return {}, {}, {}
+
+    pair_df[PRODUCT_COL] = pair_df[PRODUCT_COL].astype(str).map(str.strip)
+    pair_df["city"] = pair_df["city"].astype(str).map(str.strip)
+    pair_df[TARGET_COL] = pd.to_numeric(pair_df[TARGET_COL], errors="coerce").fillna(0.0)
+    if store_col:
+        pair_df[store_col] = pair_df[store_col].astype(str).map(str.strip)
+    pair_df = pair_df[
+        pair_df[PRODUCT_COL].ne("")
+        & pair_df["city"].ne("")
+    ]
+    if pair_df.empty:
+        return {}, {}, {}
+
+    positive_pairs = (
+        pair_df.groupby([PRODUCT_COL, "city"], as_index=False)[TARGET_COL]
+        .sum()
+    )
+    positive_pairs = positive_pairs[positive_pairs[TARGET_COL] > 0].copy()
+    if positive_pairs.empty:
+        return {}, {}, {}
+
+    category_city_map = {
+        str(category): sorted({str(city) for city in values["city"].tolist()})
+        for category, values in positive_pairs.groupby(PRODUCT_COL)
+    }
+    city_category_map = {
+        str(city): sorted({str(category) for category in values[PRODUCT_COL].tolist()})
+        for city, values in positive_pairs.groupby("city")
+    }
+    category_city_store_map: Dict[str, List[str]] = {}
+    if store_col:
+        store_pairs = pair_df[
+            pair_df[store_col].ne("")
+        ].groupby([PRODUCT_COL, "city", store_col], as_index=False)[TARGET_COL].sum()
+        store_pairs = store_pairs[store_pairs[TARGET_COL] > 0].copy()
+        if not store_pairs.empty:
+            category_city_store_map = {
+                f"{str(category)}|||{str(city)}": sorted({str(store) for store in values[store_col].tolist()})
+                for (category, city), values in store_pairs.groupby([PRODUCT_COL, "city"])
+            }
+    return category_city_map, city_category_map, category_city_store_map
+
+
+def _build_scope_payload(df: pd.DataFrame) -> Dict[str, Any]:
+    values = (
+        df[PRODUCT_COL]
+        .dropna()
+        .astype(str)
+        .map(str.strip)
+    )
+    categories = sorted({v for v in values if v})
+    if categories:
+        has_named_category = any(not _looks_like_product_id(v) for v in categories)
+        if has_named_category:
+            categories = [v for v in categories if not _looks_like_product_id(v)]
+    product_ids: List[str] = []
+    if "product id" in df.columns:
+        pvalues = df["product id"].dropna().astype(str).map(str.strip)
+        product_ids = sorted({v for v in pvalues if v})
+    cities: List[str] = []
+    if "city" in df.columns:
+        cvalues = df["city"].dropna().astype(str).map(str.strip)
+        cities = sorted({v for v in cvalues if v})
+    regions: List[str] = []
+    if "region" in df.columns:
+        rvalues = df["region"].dropna().astype(str).map(str.strip)
+        regions = sorted({v for v in rvalues if v})
+    states: List[str] = []
+    if "state" in df.columns:
+        svalues = df["state"].dropna().astype(str).map(str.strip)
+        states = sorted({v for v in svalues if v})
+    category_city_map, city_category_map, category_city_store_map = _build_valid_scope_maps(df)
+    return {
+        "categories": categories,
+        "product_ids": product_ids,
+        "cities": cities,
+        "regions": regions,
+        "states": states,
+        "category_city_map": category_city_map,
+        "city_category_map": city_category_map,
+        "category_city_store_map": category_city_store_map,
+        "dataset_path": str(CSV_PATH.name),
+    }
+
+
+def _scope_df_for_forecast(
+    df: pd.DataFrame,
+    category: str,
+    city: Optional[str] = None,
+    store: Optional[str] = None,
+) -> tuple[pd.DataFrame, str, Optional[str], Optional[str]]:
     resolved_category = _resolve_category_value(df, category)
-    scoped_df = df[df[PRODUCT_COL].astype(str).str.strip() == resolved_category].copy()
     resolved_city = _resolve_city_value(df, city)
+    resolved_store = _resolve_store_value(df, store)
+    if resolved_city:
+        category_city_map, _, category_city_store_map = _build_valid_scope_maps(df)
+        valid_cities = category_city_map.get(resolved_category, [])
+        if valid_cities and resolved_city not in valid_cities:
+            raise ValueError(
+                f"Category {resolved_category} is not available for city {resolved_city}. "
+                f"Valid cities: {', '.join(valid_cities)}"
+            )
+        if resolved_store:
+            valid_stores = category_city_store_map.get(f"{resolved_category}|||{resolved_city}", [])
+            if valid_stores and resolved_store not in valid_stores:
+                raise ValueError(
+                    f"Store {resolved_store} is not available for category {resolved_category} in city {resolved_city}. "
+                    f"Valid stores: {', '.join(valid_stores)}"
+                )
+
+    scoped_df = df[df[PRODUCT_COL].astype(str).str.strip() == resolved_category].copy()
     if resolved_city:
         scoped_df = scoped_df[scoped_df["city"].astype(str).str.strip() == resolved_city].copy()
+    if resolved_store:
+        store_col = _store_scope_column(scoped_df)
+        if store_col:
+            scoped_df = scoped_df[scoped_df[store_col].astype(str).str.strip() == resolved_store].copy()
     if scoped_df.empty:
         city_msg = f" in city {resolved_city}" if resolved_city else ""
-        raise ValueError(f"No rows found for category {resolved_category}{city_msg}")
-    return scoped_df, resolved_category, resolved_city
+        store_msg = f" for store {resolved_store}" if resolved_store else ""
+        raise ValueError(f"No rows found for category {resolved_category}{city_msg}{store_msg}")
+    return scoped_df, resolved_category, resolved_city, resolved_store
 
 
 def _read_csv_mtime_ns() -> int:
@@ -1979,12 +2131,17 @@ def _get_cached_df() -> pd.DataFrame:
     return _engine_cache.df
 
 
-def _get_trained_model(df: pd.DataFrame, resolved_category: str, city: Optional[str] = None) -> Any:
-    key = f"{PRODUCT_COL}|{_norm_key(resolved_category)}|{_norm_key(city or '')}"
+def _get_trained_model(
+    df: pd.DataFrame,
+    resolved_category: str,
+    city: Optional[str] = None,
+    store: Optional[str] = None,
+) -> Any:
+    key = f"{PRODUCT_COL}|{_norm_key(resolved_category)}|{_norm_key(city or '')}|{_norm_key(store or '')}"
     if key in _engine_cache.trained_by_category:
         return _engine_cache.trained_by_category[key]
 
-    scoped_df, _, _ = _scope_df_for_forecast(df, resolved_category, city=city)
+    scoped_df, _, _, _ = _scope_df_for_forecast(df, resolved_category, city=city, store=store)
     daily = build_daily_series(scoped_df, category=resolved_category, selector_col=PRODUCT_COL)
     trained = train_forecast_model(daily, target=TARGET_COL)
     _engine_cache.trained_by_category[key] = trained
@@ -2075,10 +2232,11 @@ def _forecast_for_category(
     category: str,
     horizon: int,
     city: Optional[str] = None,
+    store: Optional[str] = None,
     anchor_date: Optional[pd.Timestamp] = None,
 ) -> List[Dict[str, Any]]:
-    _, resolved_category, resolved_city = _scope_df_for_forecast(df, category, city=city)
-    trained = _get_trained_model(df, resolved_category, city=resolved_city)
+    _, resolved_category, resolved_city, resolved_store = _scope_df_for_forecast(df, category, city=city, store=store)
+    trained = _get_trained_model(df, resolved_category, city=resolved_city, store=resolved_store)
     forecast_df = forecast_next_days(trained, horizon=horizon, anchor_date=anchor_date)
     return forecast_df.to_dict(orient="records")
 
@@ -2088,16 +2246,18 @@ def _fallback_forecast_for_category(
     category: str,
     horizon: int,
     city: Optional[str] = None,
+    store: Optional[str] = None,
     anchor_date: Optional[pd.Timestamp] = None,
 ) -> List[Dict[str, Any]]:
-    category_rows, resolved_category, resolved_city = _scope_df_for_forecast(df, category, city=city)
+    category_rows, resolved_category, resolved_city, resolved_store = _scope_df_for_forecast(df, category, city=city, store=store)
     category_rows[DATE_COL] = parse_date_series(category_rows[DATE_COL])
     category_rows = category_rows.dropna(subset=[DATE_COL, TARGET_COL]).sort_values(DATE_COL)
     if anchor_date is not None:
         category_rows = category_rows[category_rows[DATE_COL] <= anchor_date]
     if category_rows.empty:
         city_msg = f" in city {resolved_city}" if resolved_city else ""
-        raise ValueError(f"No rows found for category {resolved_category}{city_msg}")
+        store_msg = f" for store {resolved_store}" if resolved_store else ""
+        raise ValueError(f"No rows found for category {resolved_category}{city_msg}{store_msg}")
 
     last_date = pd.to_datetime(category_rows[DATE_COL].max()).normalize()
     last_value = float(pd.to_numeric(category_rows[TARGET_COL], errors="coerce").dropna().iloc[-1])
@@ -2115,10 +2275,11 @@ def _history_for_category(
     df: pd.DataFrame,
     category: str,
     city: Optional[str] = None,
+    store: Optional[str] = None,
     lookback_days: int = 60,
     anchor_date: Optional[pd.Timestamp] = None,
 ) -> List[Dict[str, Any]]:
-    category_rows, _, _ = _scope_df_for_forecast(df, category, city=city)
+    category_rows, _, _, _ = _scope_df_for_forecast(df, category, city=city, store=store)
     if category_rows.empty:
         return []
 
@@ -2170,7 +2331,21 @@ def dashboard(request: Request) -> Response:
             status_code=404,
             detail=f"Dashboard file not found at {FRONTEND_HTML_PATH}",
         )
-    return FileResponse(FRONTEND_HTML_PATH, headers=NO_CACHE_HEADERS)
+    with _engine_lock:
+        df = _get_cached_df()
+        scope_payload = _build_scope_payload(df)
+    html = FRONTEND_HTML_PATH.read_text(encoding="utf-8")
+    bootstrap_script = (
+        "<script>"
+        f"window.__DEMANDIQ_BOOTSTRAP__ = {json.dumps(scope_payload)};"
+        "</script>"
+    )
+    dashboard_script_marker = '<script src="/assets/js/dashboard_redesign.js'
+    if dashboard_script_marker in html:
+        html = html.replace(dashboard_script_marker, f"{bootstrap_script}\n  {dashboard_script_marker}", 1)
+    else:
+        html = html.replace("</body>", f"{bootstrap_script}\n</body>")
+    return HTMLResponse(content=html, headers=NO_CACHE_HEADERS)
 
 
 @app.get("/dashboard/results", include_in_schema=False)
@@ -2592,40 +2767,38 @@ def get_categories(request: Request) -> Dict[str, Any]:
     _require_roles(request, ALLOWED_LOGIN_ROLES)
     with _engine_lock:
         df = _get_cached_df()
-        values = (
-            df[PRODUCT_COL]
-            .dropna()
-            .astype(str)
-            .map(str.strip)
-        )
-        categories = sorted({v for v in values if v})
-        if categories:
-            has_named_category = any(not _looks_like_product_id(v) for v in categories)
-            if has_named_category:
-                categories = [v for v in categories if not _looks_like_product_id(v)]
-        product_ids: List[str] = []
-        if "product id" in df.columns:
-            pvalues = df["product id"].dropna().astype(str).map(str.strip)
-            product_ids = sorted({v for v in pvalues if v})
-        cities: List[str] = []
-        if "city" in df.columns:
-            cvalues = df["city"].dropna().astype(str).map(str.strip)
-            cities = sorted({v for v in cvalues if v})
-        regions: List[str] = []
-        if "region" in df.columns:
-            rvalues = df["region"].dropna().astype(str).map(str.strip)
-            regions = sorted({v for v in rvalues if v})
-        states: List[str] = []
-        if "state" in df.columns:
-            svalues = df["state"].dropna().astype(str).map(str.strip)
-            states = sorted({v for v in svalues if v})
+        return _build_scope_payload(df)
+
+
+@app.get("/categories/{category}/cities")
+def get_cities_for_category(request: Request, category: str) -> Dict[str, Any]:
+    _require_roles(request, ALLOWED_LOGIN_ROLES)
+    with _engine_lock:
+        df = _get_cached_df()
+        resolved_category = _resolve_category_value(df, category)
+        category_city_map, _, _ = _build_valid_scope_maps(df)
+        cities = category_city_map.get(resolved_category, [])
     return {
-        "categories": categories,
-        "product_ids": product_ids,
+        "category": resolved_category,
         "cities": cities,
-        "regions": regions,
-        "states": states,
-        "dataset_path": str(CSV_PATH.name),
+        "count": len(cities),
+    }
+
+
+@app.get("/categories/{category}/cities/{city}/stores")
+def get_stores_for_category_city(request: Request, category: str, city: str) -> Dict[str, Any]:
+    _require_roles(request, ALLOWED_LOGIN_ROLES)
+    with _engine_lock:
+        df = _get_cached_df()
+        resolved_category = _resolve_category_value(df, category)
+        resolved_city = _resolve_city_value(df, city)
+        _, _, category_city_store_map = _build_valid_scope_maps(df)
+        stores = category_city_store_map.get(f"{resolved_category}|||{resolved_city}", [])
+    return {
+        "category": resolved_category,
+        "city": resolved_city,
+        "stores": stores,
+        "count": len(stores),
     }
 
 
@@ -2649,6 +2822,7 @@ def get_forecast(
     request: Request,
     category: str,
     city: Optional[str] = None,
+    store: Optional[str] = None,
     horizon: int = DEFAULT_HORIZON,
     anchor_date: Optional[str] = None,
     history_lookback_days: int = 365,
@@ -2673,6 +2847,7 @@ def get_forecast(
                 df,
                 category=category,
                 city=city,
+                store=store,
                 horizon=horizon,
                 anchor_date=parsed_anchor,
             )
@@ -2683,6 +2858,7 @@ def get_forecast(
                     df,
                     category=category,
                     city=city,
+                    store=store,
                     horizon=horizon,
                     anchor_date=parsed_anchor,
                 )
@@ -2694,6 +2870,7 @@ def get_forecast(
             df,
             category=category,
             city=city,
+            store=store,
             lookback_days=history_lookback_days,
             anchor_date=parsed_anchor,
         )
@@ -2711,6 +2888,7 @@ def get_forecast(
     return {
         "category": category,
         "city": city,
+        "store": store,
         "horizon": horizon,
         "history_lookback_days": history_lookback_days,
         "anchor_date": anchor_date,

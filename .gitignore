@@ -1,10 +1,19 @@
 __pycache__/
+.venv/
 *.py[cod]
 .env
+*.log
+*.tmp
 Backend/auth_runtime.db
 Backend/auth_runtime.db-journal
 Backend/auth.db
 Backend/auth.db-journal
 Backend/forecast_history.db
 Backend/forecast_history.db-journal
+Backend/model_test_predictions.csv
+Backend/test_sqlite.db
+Backend/test_sqlite.db-journal
+uploads/
+Documentation/
+Dataset/*backup*.csv
 

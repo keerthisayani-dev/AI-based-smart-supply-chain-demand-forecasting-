@@ -9,12 +9,20 @@ const cityTriggerTextEl = document.getElementById("cityTriggerText");
 const cityMenuEl = document.getElementById("cityMenu");
 const cityErrorEl = document.getElementById("cityError");
 const cityMetaEl = document.getElementById("cityMeta");
+const storeEl = document.getElementById("store");
+const storeShellEl = document.getElementById("storeShell");
+const storeTriggerEl = document.getElementById("storeTrigger");
+const storeTriggerTextEl = document.getElementById("storeTriggerText");
+const storeMenuEl = document.getElementById("storeMenu");
+const storeErrorEl = document.getElementById("storeError");
+const storeMetaEl = document.getElementById("storeMeta");
 const categoryShellEl = document.getElementById("categoryShell");
 const categoryTriggerEl = document.getElementById("categoryTrigger");
 const categoryTriggerTextEl = document.getElementById("categoryTriggerText");
 const categoryMenuEl = document.getElementById("categoryMenu");
 const categoryErrorEl = document.getElementById("categoryError");
 const categoryMetaEl = document.getElementById("categoryMeta");
+const debugOutputEl = document.getElementById("debugOutput");
 const forecastInputsEl = document.querySelector(".forecast-inputs");
 const fromDateErrorEl = document.getElementById("fromDateError");
 const toDateErrorEl = document.getElementById("toDateError");
@@ -58,9 +66,44 @@ let latestDashboardData = null;
 let renderDebounceTimer = null;
 let renderRunId = 0;
 let latestRenderKey = "";
+const scopeOptionsState = {
+  cities: [],
+  categories: [],
+  categoryCityMap: new Map(),
+  cityCategoryMap: new Map(),
+  categoryCityStoreMap: new Map(),
+};
+const debugLogLines = [];
 
 function apiBase() {
   return window.location.origin;
+}
+
+function debugLog(message, details = null) {
+  const line = details == null
+    ? String(message)
+    : `${String(message)} ${typeof details === "string" ? details : JSON.stringify(details)}`;
+  debugLogLines.push(line);
+  while (debugLogLines.length > 40) debugLogLines.shift();
+  if (debugOutputEl) debugOutputEl.textContent = debugLogLines.join("\n");
+  try {
+    console.debug("[DemandIQ]", message, details ?? "");
+  } catch (_) {
+    // Ignore console issues.
+  }
+}
+
+async function fetchJsonWithDebug(url) {
+  debugLog("fetch:start", url);
+  const resp = await fetch(url, { cache: "no-store" });
+  const text = await resp.text();
+  debugLog("fetch:status", { url, status: resp.status, ok: resp.ok, preview: text.slice(0, 180) });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${text.slice(0, 180)}`);
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    throw new Error(`Invalid JSON from ${url}: ${text.slice(0, 180)}`);
+  }
 }
 
 function setFieldError(inputEl, errorEl, message) {
@@ -68,6 +111,7 @@ function setFieldError(inputEl, errorEl, message) {
   errorEl.classList.add("is-visible");
   inputEl.classList.add("input-error");
   if (inputEl === cityEl && cityTriggerEl) cityTriggerEl.classList.add("input-error");
+  if (inputEl === storeEl && storeTriggerEl) storeTriggerEl.classList.add("input-error");
   if (inputEl === categoryEl && categoryTriggerEl) categoryTriggerEl.classList.add("input-error");
 }
 
@@ -76,11 +120,13 @@ function clearFieldError(inputEl, errorEl) {
   errorEl.classList.remove("is-visible");
   inputEl.classList.remove("input-error");
   if (inputEl === cityEl && cityTriggerEl) cityTriggerEl.classList.remove("input-error");
+  if (inputEl === storeEl && storeTriggerEl) storeTriggerEl.classList.remove("input-error");
   if (inputEl === categoryEl && categoryTriggerEl) categoryTriggerEl.classList.remove("input-error");
 }
 
 function clearAllErrors() {
   clearFieldError(cityEl, cityErrorEl);
+  clearFieldError(storeEl, storeErrorEl);
   clearFieldError(categoryEl, categoryErrorEl);
   clearFieldError(fromDateEl, fromDateErrorEl);
   clearFieldError(toDateEl, toDateErrorEl);
@@ -122,6 +168,187 @@ function formatDecimal(value, fractionDigits = 2) {
   const num = Number(value);
   if (!Number.isFinite(num)) return "-";
   return num.toFixed(fractionDigits);
+}
+
+function normalizeScopeValues(values = []) {
+  return [...new Set(
+    (Array.isArray(values) ? values : [])
+      .map((v) => String(v || "").trim())
+      .filter(Boolean),
+  )].sort();
+}
+
+function normalizeScopeMap(rawMap) {
+  const out = new Map();
+  if (!rawMap || typeof rawMap !== "object") return out;
+  Object.entries(rawMap).forEach(([key, values]) => {
+    const normalizedKey = String(key || "").trim();
+    if (!normalizedKey) return;
+    out.set(normalizedKey, normalizeScopeValues(values));
+  });
+  return out;
+}
+
+function getScopeMapValues(mapObj, key) {
+  const requested = String(key || "").trim();
+  if (!requested || !(mapObj instanceof Map) || !mapObj.size) return [];
+  if (mapObj.has(requested)) return mapObj.get(requested) || [];
+  const requestedLower = requested.toLowerCase();
+  for (const [candidateKey, values] of mapObj.entries()) {
+    if (String(candidateKey || "").trim().toLowerCase() === requestedLower) {
+      return Array.isArray(values) ? values : [];
+    }
+  }
+  return [];
+}
+
+function intersectScopeValues(left = [], right = []) {
+  if (!left.length || !right.length) return [];
+  const rightSet = new Set(right);
+  return left.filter((value) => rightSet.has(value));
+}
+
+function getCitiesForCategory(category) {
+  const key = String(category || "").trim();
+  if (!key) return [...scopeOptionsState.cities];
+  if (!scopeOptionsState.categoryCityMap.size) return [];
+  return getScopeMapValues(scopeOptionsState.categoryCityMap, key);
+}
+
+function getCategoriesForCity(city) {
+  const key = String(city || "").trim();
+  if (!key) return [...scopeOptionsState.categories];
+  if (!scopeOptionsState.cityCategoryMap.size) return [];
+  return getScopeMapValues(scopeOptionsState.cityCategoryMap, key);
+}
+
+function getStoresForCategoryCity(category, city) {
+  const categoryKey = String(category || "").trim();
+  const cityKey = String(city || "").trim();
+  if (!categoryKey || !cityKey) return [];
+  return getScopeMapValues(scopeOptionsState.categoryCityStoreMap, `${categoryKey}|||${cityKey}`);
+}
+
+function populateScopeSelect(selectEl, placeholder, values, selectedValue) {
+  selectEl.innerHTML = `<option value="" selected disabled>${placeholder}</option>`;
+  values.forEach((value) => {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = value;
+    selectEl.appendChild(opt);
+  });
+  if (selectedValue && values.includes(selectedValue)) {
+    selectEl.value = selectedValue;
+  }
+}
+
+function setCategoryFirstMode() {
+  const hasCategory = Boolean(String(categoryEl.value || "").trim());
+  cityEl.disabled = !hasCategory;
+  if (cityTriggerEl) {
+    cityTriggerEl.disabled = !hasCategory;
+    cityTriggerEl.setAttribute("aria-disabled", hasCategory ? "false" : "true");
+    cityTriggerEl.title = hasCategory ? "" : "Select a category first";
+  }
+  if (cityShellEl) cityShellEl.classList.toggle("is-disabled", !hasCategory);
+  if (!hasCategory) {
+    cityEl.value = "";
+    updateCityPlaceholderState();
+  }
+  const hasCity = hasCategory && Boolean(String(cityEl.value || "").trim());
+  storeEl.disabled = !hasCity;
+  if (storeTriggerEl) {
+    storeTriggerEl.disabled = !hasCity;
+    storeTriggerEl.setAttribute("aria-disabled", hasCity ? "false" : "true");
+    storeTriggerEl.title = hasCity ? "" : "Select a city first";
+  }
+  if (storeShellEl) storeShellEl.classList.toggle("is-disabled", !hasCity);
+  if (!hasCity) {
+    storeEl.value = "";
+    updateStorePlaceholderState();
+  }
+  if (cityMetaEl) {
+    const selectedCategory = String(categoryEl.value || "").trim();
+    if (!selectedCategory) {
+      cityMetaEl.textContent = "Select a category to view available cities.";
+    } else {
+      const cities = getCitiesForCategory(selectedCategory);
+      cityMetaEl.textContent = cities.length
+        ? `${cities.length} cities available for ${selectedCategory}`
+        : `No cities available for ${selectedCategory}`;
+    }
+  }
+  if (storeMetaEl) {
+    const selectedCategory = String(categoryEl.value || "").trim();
+    const selectedCity = String(cityEl.value || "").trim();
+    if (!selectedCategory) {
+      storeMetaEl.textContent = "Select a category and city to view available stores.";
+    } else if (!selectedCity) {
+      storeMetaEl.textContent = "Select a city to view available stores.";
+    } else {
+      const stores = getStoresForCategoryCity(selectedCategory, selectedCity);
+      storeMetaEl.textContent = stores.length
+        ? `${stores.length} stores available in ${selectedCity}`
+        : `No stores available in ${selectedCity} for ${selectedCategory}`;
+    }
+  }
+  if (categoryMetaEl) {
+    categoryMetaEl.textContent = scopeOptionsState.categories.length
+      ? `${scopeOptionsState.categories.length} categories available for forecasting`
+      : "No categories available right now";
+  }
+}
+
+function syncScopeSelections(source = "init", preferredCity = "", preferredCategory = "", preferredStore = "") {
+  let selectedCity = String(preferredCity || cityEl.value || "").trim();
+  let selectedCategory = String(preferredCategory || categoryEl.value || "").trim();
+  let selectedStore = String(preferredStore || storeEl.value || "").trim();
+
+  if (source === "category" && selectedCity && selectedCategory) {
+    const validCities = getCitiesForCategory(selectedCategory);
+    if (!validCities.includes(selectedCity)) selectedCity = "";
+  }
+  if (source === "city" && selectedCity && selectedCategory) {
+    const validCategories = getCategoriesForCity(selectedCity);
+    if (!validCategories.includes(selectedCategory)) selectedCategory = "";
+  }
+  if (source === "init" && selectedCity && selectedCategory) {
+    const validCities = getCitiesForCategory(selectedCategory);
+    if (!validCities.includes(selectedCity)) selectedCity = "";
+  }
+  if (selectedStore && (!selectedCategory || !selectedCity)) selectedStore = "";
+
+  let cityValues = [...scopeOptionsState.cities];
+  if (selectedCategory) {
+    const validCities = getCitiesForCategory(selectedCategory);
+    cityValues = cityValues.length
+      ? intersectScopeValues(cityValues, validCities)
+      : [...validCities];
+  }
+
+  let categoryValues = [...scopeOptionsState.categories];
+  if (selectedCity) {
+    const validCategories = getCategoriesForCity(selectedCity);
+    categoryValues = categoryValues.length
+      ? intersectScopeValues(categoryValues, validCategories)
+      : [...validCategories];
+  }
+
+  if (selectedCity && !cityValues.includes(selectedCity)) selectedCity = "";
+  if (selectedCategory && !categoryValues.includes(selectedCategory)) selectedCategory = "";
+  const storeValues = selectedCategory && selectedCity ? getStoresForCategoryCity(selectedCategory, selectedCity) : [];
+  if (selectedStore && !storeValues.includes(selectedStore)) selectedStore = "";
+
+  populateScopeSelect(cityEl, "Select city", cityValues, selectedCity);
+  populateScopeSelect(categoryEl, "Select category", categoryValues, selectedCategory);
+  populateScopeSelect(storeEl, "Select store", storeValues, selectedStore);
+  updateCityPlaceholderState();
+  updateCategoryPlaceholderState();
+  updateStorePlaceholderState();
+  rebuildCityMenu();
+  rebuildCategoryMenu();
+  rebuildStoreMenu();
+  setCategoryFirstMode();
 }
 
 function toIsoDate(dateObj) {
@@ -261,6 +488,8 @@ function updateAdvancedSections(data) {
 
   latestDashboardData = {
     category,
+    city: getSelectedCity(),
+    store: getSelectedStore(),
     from,
     to,
     avgForecast,
@@ -301,11 +530,16 @@ function getSelectedCity() {
   return cityEl.value || "";
 }
 
+function getSelectedStore() {
+  return storeEl.value || "";
+}
+
 function buildRenderKey() {
   const city = getSelectedCity();
   const category = getSelectedOrFirstCategory();
+  const store = getSelectedStore();
   const { from, to } = getResolvedDateRange();
-  return `${city}|${category}|${from}|${to}`;
+  return `${city}|${store}|${category}|${from}|${to}`;
 }
 
 function queueRenderForecastVisualization(options = {}) {
@@ -333,8 +567,8 @@ function queueRenderForecastVisualization(options = {}) {
   return undefined;
 }
 
-async function fetchForecastSnapshot(city, category, fromDate, toDate) {
-  const key = `${city}|${category}|${fromDate}|${toDate}`;
+async function fetchForecastSnapshot(city, store, category, fromDate, toDate) {
+  const key = `${city}|${store}|${category}|${fromDate}|${toDate}`;
   if (vizDataCache.has(key)) return vizDataCache.get(key);
   const promise = (async () => {
     const fromDateObj = new Date(fromDate);
@@ -344,7 +578,7 @@ async function fetchForecastSnapshot(city, category, fromDate, toDate) {
     const anchor = new Date(fromDateObj);
     anchor.setDate(anchor.getDate() - 1);
     const anchorDate = anchor.toISOString().slice(0, 10);
-    const url = `${apiBase()}/forecast/${encodeURIComponent(category)}?city=${encodeURIComponent(city)}&horizon=${periodDays}&history_lookback_days=${lookback}&anchor_date=${anchorDate}`;
+    const url = `${apiBase()}/forecast/${encodeURIComponent(category)}?city=${encodeURIComponent(city)}&store=${encodeURIComponent(store)}&horizon=${periodDays}&history_lookback_days=${lookback}&anchor_date=${anchorDate}`;
     const resp = await fetch(url, { cache: "no-store" });
     if (!resp.ok) throw new Error(`Forecast load failed (${resp.status}).`);
     const data = await resp.json();
@@ -379,15 +613,16 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
   if (typeof Chart === "undefined") return;
   const isStale = () => Number.isFinite(runId) && runId !== renderRunId;
   const city = getSelectedCity();
+  const store = getSelectedStore();
   const category = getSelectedOrFirstCategory();
-  if (!city || !category) {
+  if (!city || !category || !store) {
     if (isStale()) return;
     destroyCharts();
     latestDashboardData = null;
     document.getElementById("avgForecastKpi").textContent = "-";
     document.getElementById("peakDayKpi").textContent = "-";
     document.getElementById("riskLevelKpi").textContent = "-";
-    document.getElementById("summaryHint").textContent = "Select both city and category to preview summary.";
+    document.getElementById("summaryHint").textContent = "Select category, city, and store to preview summary.";
     setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
     setChartEmptyState("categoryComparisonEmpty", true, "No category comparison data.");
     setChartEmptyState("stockRiskEmpty", true, "No risk data available.");
@@ -398,11 +633,11 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
 
   const { from, to } = getResolvedDateRange();
   const subtitleEl = document.getElementById("vizSubtitle");
-  subtitleEl.textContent = `${city} | ${category} | ${from} to ${to}`;
+  subtitleEl.textContent = `${city} | ${store} | ${category} | ${from} to ${to}`;
 
   let snapshot;
   try {
-    snapshot = await fetchForecastSnapshot(city, category, from, to);
+    snapshot = await fetchForecastSnapshot(city, store, category, from, to);
     if (isStale()) return;
   } catch (err) {
     if (isStale()) return;
@@ -715,43 +950,193 @@ async function loadCategories(preferredCategory) {
 
 async function loadScopeOptions(preferredCity, preferredCategory) {
   try {
-    const resp = await fetch(`${apiBase()}/categories`, { cache: "no-store" });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
-    const cities = Array.isArray(data.cities) ? data.cities : [];
-    const categories = Array.isArray(data.categories) ? data.categories : [];
-    const cityValues = [...new Set(cities.map((v) => String(v).trim()).filter(Boolean))].sort();
-    const categoryValues = [...new Set(categories.map((v) => String(v).trim()).filter(Boolean))].sort();
-    cityEl.innerHTML = '<option value="" selected disabled>Select city</option>';
-    cityValues.forEach((city) => {
-      const opt = document.createElement("option");
-      opt.value = city;
-      opt.textContent = city;
-      cityEl.appendChild(opt);
+    const data = window.__DEMANDIQ_BOOTSTRAP__ || await fetchJsonWithDebug(`${apiBase()}/categories`);
+    debugLog("scope:source", window.__DEMANDIQ_BOOTSTRAP__ ? "bootstrap" : "fetch");
+    const initialCities = normalizeScopeValues(data.cities);
+    scopeOptionsState.categories = normalizeScopeValues(data.categories);
+    scopeOptionsState.categoryCityMap = normalizeScopeMap(data.category_city_map);
+    scopeOptionsState.cityCategoryMap = normalizeScopeMap(data.city_category_map);
+    scopeOptionsState.categoryCityStoreMap = normalizeScopeMap(data.category_city_store_map);
+    debugLog("scope:loaded", {
+      categories: scopeOptionsState.categories.length,
+      categoryMapKeys: scopeOptionsState.categoryCityMap.size,
+      cityMapKeys: scopeOptionsState.cityCategoryMap.size,
+      storeMapKeys: scopeOptionsState.categoryCityStoreMap.size,
     });
-    categoryEl.innerHTML = '<option value="" selected disabled>Select category</option>';
-    categoryValues.forEach((cat) => {
-      const opt = document.createElement("option");
-      opt.value = cat;
-      opt.textContent = cat;
-      categoryEl.appendChild(opt);
-    });
-    if (preferredCity && cityValues.includes(preferredCity)) {
-      cityEl.value = preferredCity;
-    }
-    if (preferredCategory && categoryValues.includes(preferredCategory)) {
-      categoryEl.value = preferredCategory;
-    }
-    updateCityPlaceholderState();
-    updateCategoryPlaceholderState();
-    rebuildCityMenu();
-    rebuildCategoryMenu();
+    scopeOptionsState.cities = initialCities.length
+      ? initialCities
+      : normalizeScopeValues(
+          Array.from(scopeOptionsState.categoryCityMap.values()).flat(),
+        );
+    syncScopeSelections("init", preferredCity, preferredCategory);
   } catch (err) {
-    console.error(`Failed to load categories: ${err.message}`);
+    debugLog("scope:error", err?.message || String(err));
     setFieldError(cityEl, cityErrorEl, "Unable to load cities. Please refresh and try again.");
     setFieldError(categoryEl, categoryErrorEl, "Unable to load categories. Please refresh and try again.");
   }
 }
+
+function ensureCityOptionsForCurrentCategory() {
+  const selectedCategory = String(categoryEl.value || "").trim();
+  if (!selectedCategory) return false;
+  const cities = normalizeScopeValues(getCitiesForCategory(selectedCategory));
+  if (!cities.length) return false;
+  const currentOptions = Array.from(cityEl.options || [])
+    .map((opt) => String(opt.value || "").trim())
+    .filter(Boolean);
+  const sameOptions = currentOptions.length === cities.length
+    && currentOptions.every((value, index) => value === cities[index]);
+  if (!sameOptions) {
+    populateScopeSelect(cityEl, "Select city", cities, cityEl.value || "");
+    if (!cities.includes(String(cityEl.value || "").trim())) cityEl.value = "";
+    updateCityPlaceholderState();
+    rebuildCityMenu();
+  }
+  if (cityMetaEl) cityMetaEl.textContent = `${cities.length} cities available for ${selectedCategory}`;
+  return true;
+}
+
+function ensureStoreOptionsForCurrentSelection() {
+  const selectedCategory = String(categoryEl.value || "").trim();
+  const selectedCity = String(cityEl.value || "").trim();
+  if (!selectedCategory || !selectedCity) return false;
+  const stores = normalizeScopeValues(getStoresForCategoryCity(selectedCategory, selectedCity));
+  if (!stores.length) return false;
+  const currentOptions = Array.from(storeEl.options || [])
+    .map((opt) => String(opt.value || "").trim())
+    .filter(Boolean);
+  const sameOptions = currentOptions.length === stores.length
+    && currentOptions.every((value, index) => value === stores[index]);
+  if (!sameOptions) {
+    populateScopeSelect(storeEl, "Select store", stores, storeEl.value || "");
+    if (!stores.includes(String(storeEl.value || "").trim())) storeEl.value = "";
+    updateStorePlaceholderState();
+    rebuildStoreMenu();
+  }
+  if (storeMetaEl) storeMetaEl.textContent = `${stores.length} stores available in ${selectedCity}`;
+  return true;
+}
+
+async function loadCitiesForCategory(category, preferredCity = "") {
+  const selectedCategory = String(category || "").trim();
+  if (!selectedCategory) {
+    syncScopeSelections("category", "", "");
+    return;
+  }
+  const cachedCities = normalizeScopeValues(scopeOptionsState.categoryCityMap.get(selectedCategory) || []);
+  if (cachedCities.length) {
+    populateScopeSelect(cityEl, "Select city", cachedCities, preferredCity);
+    cityEl.value = cachedCities.includes(preferredCity) ? preferredCity : "";
+    populateScopeSelect(storeEl, "Select store", [], "");
+    updateCityPlaceholderState();
+    updateStorePlaceholderState();
+    rebuildCityMenu();
+    rebuildStoreMenu();
+    setCategoryFirstMode();
+    if (cityMetaEl) {
+      cityMetaEl.textContent = `${cachedCities.length} cities available for ${selectedCategory}`;
+    }
+    return;
+  }
+  try {
+    const data = await fetchJsonWithDebug(`${apiBase()}/categories/${encodeURIComponent(selectedCategory)}/cities`);
+    const resolvedCategory = String(data?.category || selectedCategory).trim();
+    const cities = normalizeScopeValues(data?.cities);
+    debugLog("cities:loaded", { category: resolvedCategory, count: cities.length, cities });
+    scopeOptionsState.categoryCityMap.set(resolvedCategory, cities);
+    scopeOptionsState.categoryCityStoreMap.forEach((_, key, map) => {
+      if (key.startsWith(`${resolvedCategory}|||`)) map.delete(key);
+    });
+    cities.forEach((city) => {
+      const categoryList = normalizeScopeValues([
+        ...(scopeOptionsState.cityCategoryMap.get(city) || []),
+        resolvedCategory,
+      ]);
+      scopeOptionsState.cityCategoryMap.set(city, categoryList);
+    });
+    populateScopeSelect(cityEl, "Select city", cities, preferredCity);
+    cityEl.value = cities.includes(preferredCity) ? preferredCity : "";
+    populateScopeSelect(storeEl, "Select store", [], "");
+    updateCityPlaceholderState();
+    updateStorePlaceholderState();
+    rebuildCityMenu();
+    rebuildStoreMenu();
+    setCategoryFirstMode();
+    if (cityMetaEl) {
+      cityMetaEl.textContent = `${cities.length} cities available for ${resolvedCategory}`;
+    }
+  } catch (err) {
+    debugLog("cities:error", { category: selectedCategory, error: err?.message || String(err) });
+    const fallbackCities = normalizeScopeValues(
+      scopeOptionsState.categoryCityMap.get(selectedCategory)
+      || scopeOptionsState.categoryCityMap.get(String(categoryEl.value || "").trim())
+      || [],
+    );
+    if (fallbackCities.length) {
+      scopeOptionsState.categoryCityMap.set(selectedCategory, fallbackCities);
+      populateScopeSelect(cityEl, "Select city", fallbackCities, preferredCity);
+      cityEl.value = fallbackCities.includes(preferredCity) ? preferredCity : "";
+      populateScopeSelect(storeEl, "Select store", [], "");
+      updateCityPlaceholderState();
+      updateStorePlaceholderState();
+      rebuildCityMenu();
+      rebuildStoreMenu();
+      setCategoryFirstMode();
+      if (cityMetaEl) {
+        cityMetaEl.textContent = `${fallbackCities.length} cities available for ${selectedCategory}`;
+      }
+      return;
+    }
+    syncScopeSelections("category", "", selectedCategory);
+    setFieldError(cityEl, cityErrorEl, "Unable to load cities for this category. Please refresh and try again.");
+  }
+}
+
+async function loadStoresForCategoryCity(category, city, preferredStore = "") {
+  const selectedCategory = String(category || "").trim();
+  const selectedCity = String(city || "").trim();
+  if (!selectedCategory || !selectedCity) {
+    syncScopeSelections("store", selectedCity, selectedCategory, "");
+    return;
+  }
+  try {
+    const data = await fetchJsonWithDebug(
+      `${apiBase()}/categories/${encodeURIComponent(selectedCategory)}/cities/${encodeURIComponent(selectedCity)}/stores`,
+    );
+    const resolvedCategory = String(data?.category || selectedCategory).trim();
+    const resolvedCity = String(data?.city || selectedCity).trim();
+    const stores = normalizeScopeValues(data?.stores);
+    debugLog("stores:loaded", { category: resolvedCategory, city: resolvedCity, count: stores.length, stores });
+    scopeOptionsState.categoryCityStoreMap.set(`${resolvedCategory}|||${resolvedCity}`, stores);
+    const nextStore = stores.length === 1 && !preferredStore ? stores[0] : preferredStore;
+    populateScopeSelect(storeEl, "Select store", stores, nextStore);
+    storeEl.value = stores.includes(nextStore) ? nextStore : "";
+    updateStorePlaceholderState();
+    rebuildStoreMenu();
+    setCategoryFirstMode();
+  } catch (err) {
+    debugLog("stores:error", { category: selectedCategory, city: selectedCity, error: err?.message || String(err) });
+    scopeOptionsState.categoryCityStoreMap.set(`${selectedCategory}|||${selectedCity}`, []);
+    populateScopeSelect(storeEl, "Select store", [], "");
+    updateStorePlaceholderState();
+    rebuildStoreMenu();
+    setCategoryFirstMode();
+    setFieldError(storeEl, storeErrorEl, "Unable to load stores for this city. Please refresh and try again.");
+  }
+}
+
+window.addEventListener("error", (event) => {
+  debugLog("window:error", {
+    message: event.message,
+    source: event.filename,
+    line: event.lineno,
+    column: event.colno,
+  });
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  debugLog("promise:error", String(event.reason || "Unknown rejection"));
+});
 
 function clearInputState() {
   cityEl.innerHTML = "";
@@ -759,6 +1144,11 @@ function clearInputState() {
   if (cityTriggerTextEl) cityTriggerTextEl.textContent = "Select city";
   if (cityTriggerEl) cityTriggerEl.classList.remove("has-value");
   if (cityMenuEl) cityMenuEl.innerHTML = "";
+  storeEl.innerHTML = "";
+  storeEl.classList.remove("has-value");
+  if (storeTriggerTextEl) storeTriggerTextEl.textContent = "Select store";
+  if (storeTriggerEl) storeTriggerEl.classList.remove("has-value");
+  if (storeMenuEl) storeMenuEl.innerHTML = "";
   categoryEl.innerHTML = "";
   categoryEl.classList.remove("has-value");
   if (categoryTriggerTextEl) categoryTriggerTextEl.textContent = "Select category";
@@ -796,6 +1186,20 @@ function updateCategoryPlaceholderState() {
   }
 }
 
+function updateStorePlaceholderState() {
+  const hasValue = Boolean(String(storeEl.value || "").trim());
+  storeEl.classList.toggle("has-value", hasValue);
+  if (storeTriggerEl) storeTriggerEl.classList.toggle("has-value", hasValue);
+  if (storeTriggerTextEl) {
+    if (!hasValue) {
+      storeTriggerTextEl.textContent = "Select store";
+    } else {
+      const selectedOption = storeEl.options[storeEl.selectedIndex];
+      storeTriggerTextEl.textContent = String(selectedOption?.textContent || storeEl.value || "Select store");
+    }
+  }
+}
+
 function closeCityMenu() {
   if (!cityShellEl || !cityTriggerEl) return;
   cityShellEl.classList.remove("is-open");
@@ -820,6 +1224,18 @@ function openCategoryMenu() {
   categoryTriggerEl.setAttribute("aria-expanded", "true");
 }
 
+function closeStoreMenu() {
+  if (!storeShellEl || !storeTriggerEl) return;
+  storeShellEl.classList.remove("is-open");
+  storeTriggerEl.setAttribute("aria-expanded", "false");
+}
+
+function openStoreMenu() {
+  if (!storeShellEl || !storeTriggerEl) return;
+  storeShellEl.classList.add("is-open");
+  storeTriggerEl.setAttribute("aria-expanded", "true");
+}
+
 function rebuildCategoryMenu() {
   if (!categoryMenuEl) return;
   const options = Array.from(categoryEl.options || [])
@@ -831,11 +1247,6 @@ function rebuildCategoryMenu() {
     .filter((opt) => opt.value && !opt.disabled);
 
   categoryMenuEl.innerHTML = "";
-  if (categoryMetaEl) {
-    categoryMetaEl.textContent = options.length
-      ? `${options.length} categories available for forecasting`
-      : "No categories available right now";
-  }
   if (!options.length) {
     const empty = document.createElement("div");
     empty.className = "category-empty";
@@ -894,15 +1305,11 @@ function rebuildCityMenu() {
     .filter((opt) => opt.value && !opt.disabled);
 
   cityMenuEl.innerHTML = "";
-  if (cityMetaEl) {
-    cityMetaEl.textContent = options.length
-      ? `${options.length} cities available for forecasting`
-      : "No cities available right now";
-  }
+  const hasCategory = Boolean(String(categoryEl.value || "").trim());
   if (!options.length) {
     const empty = document.createElement("div");
     empty.className = "category-empty";
-    empty.textContent = "No cities available";
+    empty.textContent = hasCategory ? "No cities available for this category" : "Select a category first";
     cityMenuEl.appendChild(empty);
     return;
   }
@@ -929,8 +1336,49 @@ function rebuildCityMenu() {
   if (cityShellEl?.classList.contains("is-open")) openCityMenu();
 }
 
+function rebuildStoreMenu() {
+  if (!storeMenuEl) return;
+  const options = Array.from(storeEl.options || [])
+    .map((opt) => ({
+      value: String(opt.value || ""),
+      label: String(opt.textContent || "").trim(),
+      disabled: Boolean(opt.disabled),
+    }))
+    .filter((opt) => opt.value && !opt.disabled);
+
+  storeMenuEl.innerHTML = "";
+  const hasCity = Boolean(String(cityEl.value || "").trim());
+  if (!options.length) {
+    const empty = document.createElement("div");
+    empty.className = "category-empty";
+    empty.textContent = hasCity ? "No stores available for this city" : "Select a city first";
+    storeMenuEl.appendChild(empty);
+    return;
+  }
+
+  const listWrap = document.createElement("div");
+  listWrap.className = "category-menu-list";
+  storeMenuEl.appendChild(listWrap);
+
+  options.forEach((opt) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `category-option${opt.value === storeEl.value ? " is-selected" : ""}`;
+    btn.dataset.value = opt.value;
+    btn.textContent = opt.label;
+    btn.addEventListener("click", () => {
+      storeEl.value = opt.value;
+      storeEl.dispatchEvent(new Event("change", { bubbles: true }));
+      closeStoreMenu();
+    });
+    listWrap.appendChild(btn);
+  });
+
+  if (storeShellEl?.classList.contains("is-open")) openStoreMenu();
+}
+
 function saveDashboardState() {
-  const state = { city: cityEl.value || "", category: categoryEl.value || "", fromDate: fromDateEl.value || "", toDate: toDateEl.value || "" };
+  const state = { city: cityEl.value || "", category: categoryEl.value || "", store: storeEl.value || "", fromDate: fromDateEl.value || "", toDate: toDateEl.value || "" };
   sessionStorage.setItem(DASHBOARD_STATE_KEY, JSON.stringify(state));
 }
 
@@ -946,6 +1394,7 @@ function readDashboardState() {
     return {
       category: String(parsed?.category || ""),
       city: String(parsed?.city || ""),
+      store: String(parsed?.store || ""),
       fromDate: String(parsed?.fromDate || ""),
       toDate: String(parsed?.toDate || ""),
     };
@@ -975,8 +1424,12 @@ async function initializeDefaults() {
   clearInputState();
   initDatePickers();
   await loadScopeOptions(savedState?.city || "", savedState?.category || "");
+  if (savedState?.category && savedState?.city) {
+    await loadStoresForCategoryCity(savedState.category, savedState.city, savedState?.store || "");
+  }
   const hasSavedCity = Boolean(savedState?.city);
   const hasSavedCategory = Boolean(savedState?.category);
+  const hasSavedStore = Boolean(savedState?.store);
   if (hasSavedCity && hasSavedCategory && savedState?.fromDate) {
     fromPicker.setDate(savedState.fromDate, true, "Y-m-d");
   }
@@ -989,6 +1442,7 @@ async function initializeDefaults() {
   const savedTo = String(savedState?.toDate || "");
   const hasValidSavedRange = hasSavedCity
     && hasSavedCategory
+    && hasSavedStore
     && savedFrom && savedTo
     && savedFrom >= minAllowedStr
     && savedTo <= maxAllowedStr
@@ -1008,16 +1462,21 @@ async function initializeDefaults() {
 function validateInputs() {
   clearAllErrors();
   const city = cityEl.value;
+  const store = storeEl.value;
   const category = categoryEl.value;
   const fromDate = fromDateEl.value;
   const toDate = toDateEl.value;
   let hasError = false;
-  if (!city) {
-    setFieldError(cityEl, cityErrorEl, "Please select a city.");
+  if (!category) {
+    setFieldError(categoryEl, categoryErrorEl, "Please select a category first.");
     hasError = true;
   }
-  if (!category) {
-    setFieldError(categoryEl, categoryErrorEl, "Please select a category.");
+  if (!city) {
+    setFieldError(cityEl, cityErrorEl, category ? "Please select a city for this category." : "Select a category first to view cities.");
+    hasError = true;
+  }
+  if (!store) {
+    setFieldError(storeEl, storeErrorEl, city ? "Please select a store for this city." : "Select a city first to view stores.");
     hasError = true;
   }
   if (!fromDate) {
@@ -1051,7 +1510,7 @@ function validateInputs() {
 function goToResults(mode) {
   if (!validateInputs()) return;
   saveDashboardState();
-  const resultUrl = `/dashboard/results?city=${encodeURIComponent(cityEl.value)}&category=${encodeURIComponent(categoryEl.value)}&from=${encodeURIComponent(fromDateEl.value)}&to=${encodeURIComponent(toDateEl.value)}&mode=${encodeURIComponent(mode)}`;
+  const resultUrl = `/dashboard/results?city=${encodeURIComponent(cityEl.value)}&store=${encodeURIComponent(storeEl.value)}&category=${encodeURIComponent(categoryEl.value)}&from=${encodeURIComponent(fromDateEl.value)}&to=${encodeURIComponent(toDateEl.value)}&mode=${encodeURIComponent(mode)}`;
   window.location.href = resultUrl;
 }
 
@@ -1069,11 +1528,11 @@ async function logoutAndGoLogin() {
 
 function exportForecastCsv() {
   if (!latestDashboardData || !Array.isArray(latestDashboardData.rows) || !latestDashboardData.rows.length) return;
-  const header = "date,city,category,actual_demand,forecast_demand\n";
+  const header = "date,city,store,category,actual_demand,forecast_demand\n";
   const lines = latestDashboardData.rows.map((row) => {
     const actual = row.actual == null ? "" : Number(row.actual).toFixed(2);
     const forecast = row.forecast == null ? "" : Number(row.forecast).toFixed(2);
-    return `${row.date},${latestDashboardData.city},${latestDashboardData.category},${actual},${forecast}`;
+    return `${row.date},${latestDashboardData.city},${latestDashboardData.store},${latestDashboardData.category},${actual},${forecast}`;
   });
   const csv = `${header}${lines.join("\n")}`;
   const safeCategory = String(latestDashboardData.category || "forecast").replace(/\s+/g, "_").toLowerCase();
@@ -1105,6 +1564,7 @@ function exportForecastPdf() {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.text(`City: ${latestDashboardData.city}`, marginX, y); y += 16;
+  doc.text(`Store: ${latestDashboardData.store}`, marginX, y); y += 16;
   doc.text(`Category: ${latestDashboardData.category}`, marginX, y); y += 16;
   doc.text(`Period: ${latestDashboardData.from} to ${latestDashboardData.to}`, marginX, y); y += 16;
   doc.text(`Reorder Point: ${formatUnits(latestDashboardData.reorderPoint)}`, marginX, y); y += 16;
@@ -1134,17 +1594,28 @@ function exportForecastPdf() {
   doc.save(`forecast_report_${Date.now()}.pdf`);
 }
 
-cityEl.addEventListener("change", () => {
+cityEl.addEventListener("change", async () => {
   clearFieldError(cityEl, cityErrorEl);
-  updateCityPlaceholderState();
-  rebuildCityMenu();
+  clearFieldError(storeEl, storeErrorEl);
+  syncScopeSelections("city");
+  await loadStoresForCategoryCity(categoryEl.value || "", cityEl.value || "", storeEl.value || "");
   saveDashboardState();
   queueRenderForecastVisualization();
 });
-categoryEl.addEventListener("change", () => {
+categoryEl.addEventListener("change", async () => {
   clearFieldError(categoryEl, categoryErrorEl);
+  clearFieldError(cityEl, cityErrorEl);
   updateCategoryPlaceholderState();
   rebuildCategoryMenu();
+  await loadCitiesForCategory(categoryEl.value || "", cityEl.value || "");
+  ensureCityOptionsForCurrentCategory();
+  saveDashboardState();
+  queueRenderForecastVisualization();
+});
+storeEl.addEventListener("change", () => {
+  clearFieldError(storeEl, storeErrorEl);
+  updateStorePlaceholderState();
+  rebuildStoreMenu();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
@@ -1197,21 +1668,41 @@ if (categoryTriggerEl) {
 }
 if (cityTriggerEl) {
   cityTriggerEl.addEventListener("click", () => {
+    if (cityTriggerEl.disabled) {
+      setFieldError(cityEl, cityErrorEl, "Select a category first to view available cities.");
+      return;
+    }
+    ensureCityOptionsForCurrentCategory();
     if (!cityShellEl) return;
     const isOpen = cityShellEl.classList.contains("is-open");
     if (isOpen) closeCityMenu();
     else openCityMenu();
   });
 }
+if (storeTriggerEl) {
+  storeTriggerEl.addEventListener("click", () => {
+    if (storeTriggerEl.disabled) {
+      setFieldError(storeEl, storeErrorEl, "Select a city first to view available stores.");
+      return;
+    }
+    ensureStoreOptionsForCurrentSelection();
+    if (!storeShellEl) return;
+    const isOpen = storeShellEl.classList.contains("is-open");
+    if (isOpen) closeStoreMenu();
+    else openStoreMenu();
+  });
+}
 document.addEventListener("click", (event) => {
   const target = event.target;
   if (target instanceof Node && categoryShellEl && !categoryShellEl.contains(target)) closeCategoryMenu();
   if (target instanceof Node && cityShellEl && !cityShellEl.contains(target)) closeCityMenu();
+  if (target instanceof Node && storeShellEl && !storeShellEl.contains(target)) closeStoreMenu();
 });
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     closeCategoryMenu();
     closeCityMenu();
+    closeStoreMenu();
   }
 });
 if (exportCsvBtnEl) exportCsvBtnEl.addEventListener("click", exportForecastCsv);

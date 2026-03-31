@@ -48,7 +48,7 @@
         </span>
       </h1>
       <p class="hero-sub">Smart Supply Chain Demand Forecasting</p>
-      <p class="hero-desc">Choose both a city and a category, then select a date range to generate demand projections.</p>
+      <p class="hero-desc">Choose a category first, then pick from the cities where that category exists to generate demand projections.</p>
       <p class="hero-meta">Target Variable: <strong>Units Sold</strong></p>
       <p id="roleHint" class="hero-meta">Loading access level...</p>
     </section>
@@ -56,20 +56,6 @@
     <section id="forecastPanel" class="forecast-panel">
       <article class="surface-card forecast-inputs">
         <div class="date-grid">
-          <div class="field">
-            <label for="city">City</label>
-            <div class="select-shell" id="cityShell">
-              <select id="city" autocomplete="off" aria-hidden="true" tabindex="-1">
-                <option value="" selected disabled>Select city</option>
-              </select>
-              <button id="cityTrigger" class="category-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
-                <span id="cityTriggerText">Select city</span>
-              </button>
-              <div id="cityMenu" class="category-menu" role="listbox" aria-label="City options"></div>
-            </div>
-            <p id="cityMeta" class="field-meta">Loading cities...</p>
-            <div id="cityError" class="field-error" role="alert" aria-live="polite"></div>
-          </div>
           <div class="field">
             <label for="category">Category</label>
             <div class="select-shell" id="categoryShell">
@@ -84,6 +70,20 @@
             <p id="categoryMeta" class="field-meta">Loading categories...</p>
             <div id="categoryError" class="field-error" role="alert" aria-live="polite"></div>
           </div>
+          <div class="field">
+            <label for="city">City</label>
+            <div class="select-shell" id="cityShell">
+              <select id="city" autocomplete="off" aria-hidden="true" tabindex="-1">
+                <option value="" selected disabled>Select city</option>
+              </select>
+              <button id="cityTrigger" class="category-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                <span id="cityTriggerText">Select city</span>
+              </button>
+              <div id="cityMenu" class="category-menu" role="listbox" aria-label="City options"></div>
+            </div>
+            <p id="cityMeta" class="field-meta">Select a category to view available cities.</p>
+            <div id="cityError" class="field-error" role="alert" aria-live="polite"></div>
+          </div>
         </div>
         <div class="date-grid">
           <div class="field">
@@ -92,17 +92,35 @@
             <div id="fromDateError" class="field-error" role="alert" aria-live="polite"></div>
           </div>
           <div class="field">
+            <label for="store">Store</label>
+            <div class="select-shell" id="storeShell">
+              <select id="store" autocomplete="off" aria-hidden="true" tabindex="-1">
+                <option value="" selected disabled>Select store</option>
+              </select>
+              <button id="storeTrigger" class="category-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                <span id="storeTriggerText">Select store</span>
+              </button>
+              <div id="storeMenu" class="category-menu" role="listbox" aria-label="Store options"></div>
+            </div>
+            <p id="storeMeta" class="field-meta">Select a city to view available stores.</p>
+            <div id="storeError" class="field-error" role="alert" aria-live="polite"></div>
+          </div>
+          <div class="field">
             <label for="toDate">To Date</label>
             <input id="toDate" type="text" autocomplete="off" placeholder="Select end date" />
             <div id="toDateError" class="field-error" role="alert" aria-live="polite"></div>
           </div>
         </div>
         <button id="generateBtn" class="btn-primary" type="button">Generate Forecast</button>
+        <details id="debugPanel" class="field" style="margin-top:12px;">
+          <summary style="cursor:pointer;color:#6f8751;font-weight:700;">Debug Panel</summary>
+          <pre id="debugOutput" style="white-space:pre-wrap;word-break:break-word;font-size:12px;color:#6b7280;margin-top:10px;">Debug ready.</pre>
+        </details>
       </article>
 
       <article class="surface-card assistant-card" aria-label="Forecast assistant">
         <h2>Forecast Assistant</h2>
-        <p class="assistant-copy">Pick both a city and a category with your date range, then generate projected demand to support planning.</p>
+        <p class="assistant-copy">Pick a category first, choose one of its available cities, then use the date range to generate projected demand.</p>
         <div class="assistant-bars" aria-hidden="true">
           <span style="height:22px;"></span>
           <span style="height:34px;"></span>
@@ -188,7 +206,7 @@
   <footer class="page-footer">&copy; DemandIQ - AI Demand Forecasting System</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="/assets/js/dashboard_redesign.js?v=20260305-2"></script>
+  <script src="/assets/js/dashboard_redesign.js?v=20260331-11"></script>
 </body>
 </html>
 

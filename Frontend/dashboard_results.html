@@ -4574,6 +4574,7 @@
       const requestId = ++latestLoadRequestId;
       const params = new URLSearchParams(window.location.search);
       const city = params.get("city") || "";
+      const store = params.get("store") || "";
       const category = params.get("category") || "";
       const fromDate = params.get("from") || "";
       const toDate = params.get("to") || "";
@@ -4603,18 +4604,19 @@
       }
       modeToggleBtn.textContent = currentMode === "past" ? "Forecast View" : "Past Demand View";
 
-      if (!city || !category || !fromDate || !toDate) {
+      if (!city || !store || !category || !fromDate || !toDate) {
         contextEl.textContent = "Scope: Missing";
         periodTextEl.textContent = "Period: Missing";
         roleTextEl.textContent = roleAccessNote;
-        resetXaiPanel("Select city, category, and date range to run strategy simulation.");
+        resetXaiPanel("Select category, city, store, and date range to run strategy simulation.");
         return;
       }
 
-      contextEl.textContent = `Scope: ${city} | ${category}`;
+      contextEl.textContent = `Scope: ${city} | ${store} | ${category}`;
       periodTextEl.textContent = `Period: ${formatDisplayDate(fromDate)} - ${formatDisplayDate(toDate)}`;
       roleTextEl.textContent = roleAccessNote;
       exportState.city = city;
+      exportState.store = store;
       exportState.category = category;
       exportState.fromDate = fromDate;
       exportState.toDate = toDate;
@@ -4654,7 +4656,7 @@
       try {
         resetXaiPanel("Demand Strategy Simulator is ready. Set strategy inputs and run.");
         async function fetchForecastPayload(anchorDate, horizonDays) {
-          const url = `${apiBase()}/forecast/${encodeURIComponent(category)}?city=${encodeURIComponent(city)}&horizon=${horizonDays}&history_lookback_days=${lookback}&anchor_date=${anchorDate}`;
+          const url = `${apiBase()}/forecast/${encodeURIComponent(category)}?city=${encodeURIComponent(city)}&store=${encodeURIComponent(store)}&horizon=${horizonDays}&history_lookback_days=${lookback}&anchor_date=${anchorDate}`;
           const resp = await fetch(url);
           if (!resp.ok) {
             let detail = `HTTP ${resp.status}`;
