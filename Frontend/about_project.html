@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="/assets/css/unified_theme.css?v=20260401-01" />
   <style>
     :root {
       --bg: #f4f7fb;
@@ -88,7 +89,7 @@
       border-radius: 10px;
       border: 1px solid var(--line-soft);
       background: rgba(255, 255, 255, 0.03);
-      color: #7d9360;
+      color: #5f84b8;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -208,7 +209,7 @@
       padding: 0 10px;
       font-size: 11px;
       font-weight: 600;
-      color: #7d9360;
+      color: #5f84b8;
       border: 1px solid var(--line);
       background: rgba(255, 255, 255, 0.03);
       width: auto;
@@ -223,7 +224,7 @@
       width: 100%;
       justify-content: space-between;
       cursor: pointer;
-      color: #556b2f;
+      color: #1f4f8a;
       font-size: 14px;
       font-weight: 500;
     }
@@ -346,7 +347,7 @@
       padding: 11px 12px;
       font-size: 14px;
     }
-    .cell.key { color: #7d9360; background: rgba(255, 255, 255, 0.24); }
+    .cell.key { color: #5f84b8; background: rgba(255, 255, 255, 0.24); }
 
     .page-footer {
       width: calc(100% - 298px - 32px);
@@ -378,7 +379,7 @@
     }
   </style>
 </head>
-<body>
+<body class="about-layout">
   <div class="mesh-bg" aria-hidden="true"></div>
 
   <nav class="top-nav">
@@ -401,26 +402,26 @@
 
     <div class="sidebar-content">
       <div class="menu-group">
-        <p class="group-title">MAIN</p>
+        <p class="group-title">FORECAST BRANCH</p>
         <a href="/dashboard" class="menu-item">
           <i data-lucide="layout-dashboard" class="menu-icon"></i>
-          <span class="menu-text">Dashboard</span>
+          <span class="menu-text">Prediction Dashboard</span>
         </a>
         <a href="/dashboard/results" class="menu-item">
           <i data-lucide="file-text" class="menu-icon"></i>
-          <span class="menu-text">Reports</span>
+          <span class="menu-text">Results Report</span>
         </a>
       </div>
 
       <div class="menu-group">
-        <p class="group-title">ANALYTICS</p>
+        <p class="group-title">ANALYTICS BRANCH</p>
         <a href="/dashboard/results?mode=past" class="menu-item">
           <i data-lucide="line-chart" class="menu-icon"></i>
-          <span class="menu-text">Forecast View</span>
+          <span class="menu-text">Past Demand Report</span>
         </a>
         <div class="download-dropdown" id="downloadDropdown">
           <button class="download-toggle menu-item" id="downloadToggleBtn" type="button" aria-haspopup="menu" aria-expanded="false">
-            <span class="menu-text"><i data-lucide="download" class="menu-icon"></i>Download</span>
+            <span class="menu-text"><i data-lucide="download" class="menu-icon"></i>Download Center</span>
             <span class="download-caret" aria-hidden="true"></span>
           </button>
           <div class="download-menu" id="downloadMenu" role="menu" aria-label="Download menu">
@@ -431,18 +432,18 @@
       </div>
 
       <div class="menu-group">
-        <p class="group-title">PROJECT</p>
+        <p class="group-title">SUPPORT BRANCH</p>
         <a href="/about-project" class="menu-item active">
           <i data-lucide="info" class="menu-icon"></i>
-          <span class="menu-text">About Project</span>
+          <span class="menu-text">Project Overview</span>
         </a>
         <button class="menu-item" id="backBtn" type="button">
           <i data-lucide="arrow-left" class="menu-icon"></i>
-          <span class="menu-text">Back</span>
+          <span class="menu-text">Back To Dashboard</span>
         </button>
         <button class="menu-item" id="adminDashBtn" type="button" style="display:none;">
           <i data-lucide="shield-check" class="menu-icon"></i>
-          <span class="menu-text">Admin Dashboard</span>
+          <span class="menu-text">Admin Control</span>
         </button>
       </div>
       <div class="sidebar-divider"></div>
@@ -457,81 +458,85 @@
 
   <main class="page-shell">
     <section class="glass-card">
-      <h1>About This Project</h1>
+      <h1>Project Overview Branch</h1>
       <p>
-        DemandIQ is an AI-assisted demand forecasting system for retail inventory planning. It predicts upcoming demand using historical sales trends and provides operational insights for stocking, reorder planning, and performance tracking.
+        DemandIQ is an AI-assisted retail demand prediction and analytics system designed for inventory planning and operational decision support. It combines predicted reporting with past demand review, strategy simulation, dataset editing, platform comparison, recent history tracking, and admin upload workflows in one dashboard.
       </p>
       <div class="meta-grid">
         <div class="meta-tile">
           <div class="meta-k">Primary Goal</div>
-          <div class="meta-v">Demand Forecast</div>
+          <div class="meta-v">Demand Planning</div>
         </div>
         <div class="meta-tile">
           <div class="meta-k">Scope</div>
-          <div class="meta-v">Category-Level</div>
+          <div class="meta-v">City, Store, Product</div>
         </div>
         <div class="meta-tile">
           <div class="meta-k">Output Horizon</div>
-          <div class="meta-v">Daily/Weekly/Monthly</div>
+          <div class="meta-v">Predicted And Analysis Views</div>
         </div>
       </div>
     </section>
 
     <section class="glass-card">
-      <h2>How The Project Works</h2>
+      <h2>Workflow Sub-Branch</h2>
       <ul>
-        <li>Loads historical retail records and aggregates time-series demand by city or category.</li>
-        <li>Trains forecast models on cleaned demand signals.</li>
-        <li>Generates future demand predictions for a chosen date range.</li>
-        <li>Compares forecast and recent actuals through charts and tabular outputs.</li>
-        <li>Supports admin-controlled retraining and dataset upload workflows.</li>
+        <li>Loads cleaned retail inventory and sales data across city, store, category, and product dimensions.</li>
+        <li>Builds predicted outputs for a selected business scope and date window using historical demand signals.</li>
+        <li>Shows predicted results, past demand view, inventory insights, profitability metrics, and recent history in separate analytics pages.</li>
+        <li>Supports demand strategy simulation for price and discount changes on selected products and platforms.</li>
+        <li>Includes dynamic dataset editing, platform comparison, and admin-controlled upload and retraining workflows.</li>
       </ul>
     </section>
 
     <section class="glass-card">
-      <h2>Data Used By The Model</h2>
-      <p>Current dataset: <code>Dataset/retail_store_inventory_city_level.csv</code> with fallback to <code>Dataset/retail_store_inventory.csv</code></p>
+      <h2>Data Foundation Sub-Branch</h2>
+      <p>Current dataset: <code>Dataset/retail_store_inventory_city_level_cleaned.csv</code></p>
       <p><strong>Target Variable:</strong> <code>units sold</code></p>
       <div class="table-like">
         <div class="row"><div class="cell key">Date & Identity</div><div class="cell">date, store id, product id, category, location, region, city, state, country, store_name</div></div>
-        <div class="row"><div class="cell key">Inventory & Demand</div><div class="cell">inventory level, units sold, units ordered, demand forecast</div></div>
+        <div class="row"><div class="cell key">Inventory & Demand</div><div class="cell">inventory level, units sold, units ordered, demand predicted</div></div>
         <div class="row"><div class="cell key">Pricing Signals</div><div class="cell">price, discount, competitor pricing</div></div>
         <div class="row"><div class="cell key">External Factors</div><div class="cell">weather condition, holiday/promotion, seasonality</div></div>
       </div>
     </section>
 
     <section class="glass-card">
-      <h2>How To Measure "How Much Better"</h2>
+      <h2>Performance Review Sub-Branch</h2>
       <p>
-        Improvement should be measured against a baseline method (for example, previous-month average or simple moving average), using the same period.
+        Improvement should be measured against a baseline planning method using the same category, store, and time period.
       </p>
       <ul>
-        <li>Track forecast error metrics: MAPE, MAE, and RMSE.</li>
-        <li>Compare stock-out and overstock incidents before vs after using forecasts.</li>
-        <li>Track planning impact: reorder timing quality and service-level stability.</li>
+        <li>Track predicted error metrics: MAPE, MAE, and RMSE.</li>
+        <li>Compare stock-out and overstock incidents before and after using predicted-driven planning.</li>
+        <li>Track planning impact through reorder timing, stock coverage, and service-level stability.</li>
+        <li>Measure business lift from strategy simulation and comparison outputs such as demand change, revenue change, and profit impact.</li>
       </ul>
       <p>
-        In this project, the "better" value is determined by lower forecast error and improved inventory decisions over historical operation.
+        In this project, "better" means lower predicted error, faster planning decisions, and stronger inventory and revenue outcomes.
       </p>
     </section>
 
     <section class="glass-card">
-      <h2>Explainable AI (XAI) Module</h2>
+      <h2>Analytics Branch Modules</h2>
       <p>
-        Many AI models are black boxes. This module explains why demand predictions move up or down so managers can trust operational decisions.
+        The current dashboard is organized into focused analytics pages that open from the sidebar so users can move quickly between predicted views and operational analysis.
       </p>
       <ul>
-        <li>SHAP values: shows feature-level contribution to the next forecasted demand value.</li>
-        <li>Feature importance: ranks model drivers using coefficient magnitude.</li>
-        <li>Forecast explanation dashboard: summarizes top positive/negative drivers with clear tables.</li>
+        <li>Predicted Results: demand chart, predicted table, inventory insights, and profitability metrics.</li>
+        <li>Past Demand View: recent actual demand review for the selected scope.</li>
+        <li>Demand Strategy: simulation page for price and discount changes with demand and revenue impact.</li>
+        <li>Dynamic Dataset Editor: load, edit, add, and delete product-level records.</li>
+        <li>Compare Platforms: side-by-side comparison of the same product across platforms.</li>
+        <li>Recent History and Admin Upload: historical result tracking plus admin data management workflows.</li>
       </ul>
       <p>
-        Explainable models help managers understand why demand predictions change.
+        These modules help managers move from predicted insights to action without leaving the reporting environment.
       </p>
     </section>
   </main>
 
-  <footer class="page-footer">� DemandIQ - AI Demand Forecasting System</footer>
+  <footer class="page-footer">DemandIQ - AI Demand Prediction System</footer>
 
   <script>
     const SIDEBAR_COLLAPSED_KEY = "about_sidebar_collapsed_v1";

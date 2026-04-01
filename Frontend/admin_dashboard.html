@@ -13,19 +13,21 @@
   <link rel="stylesheet" href="/assets/css/dashboard_glass.css" />
   <style>
     html, body {
-      height: 100%;
-      overflow: hidden;
+      min-height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
     .admin-shell {
       width: min(1500px, calc(100% - 24px));
       margin: 0 auto;
-      height: calc(100vh - 92px);
+      min-height: calc(100vh - 92px);
+      height: auto;
       padding: 16px 0 12px;
       display: grid;
       grid-template-rows: auto auto 1fr;
       gap: 14px;
       overflow-x: hidden;
-      overflow-y: hidden;
+      overflow-y: visible;
     }
     .summary-grid {
       display: grid;
@@ -42,9 +44,9 @@
     .user-badge {
       min-height: 38px;
       border-radius: 999px;
-      border: 1px solid rgba(85, 128, 121, 0.24);
-      background: rgba(244, 250, 246, 0.76);
-      color: #556b2f;
+      border: 1px solid rgba(96, 165, 250, 0.24);
+      background: rgba(244, 249, 255, 0.76);
+      color: #1f4f8a;
       font-size: 13px;
       font-weight: 700;
       display: inline-flex;
@@ -57,13 +59,13 @@
       min-height: 112px;
       padding: 14px 16px;
       border-radius: 16px;
-      border: 1px solid rgba(85, 128, 121, 0.16);
-      background: rgba(244, 250, 246, 0.76);
+      border: 1px solid rgba(96, 165, 250, 0.16);
+      background: rgba(244, 249, 255, 0.76);
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
       gap: 8px;
-      box-shadow: 0 10px 24px rgba(96, 121, 118, 0.16);
+      box-shadow: 0 10px 24px rgba(59, 130, 246, 0.16);
       backdrop-filter: blur(10px);
     }
     .summary-head {
@@ -85,7 +87,7 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1' stroke='%238fd2ff' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='9' cy='7' r='3' stroke='%238fd2ff' stroke-width='2'/%3E%3Cpath d='M22 19v-1a4 4 0 0 0-3-3.87' stroke='%238fd2ff' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M16 4.13a3 3 0 0 1 0 5.74' stroke='%238fd2ff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
     }
     .summary-icon-login {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4' stroke='%2397ffc9' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M10 17l5-5-5-5' stroke='%2397ffc9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M15 12H3' stroke='%2397ffc9' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4' stroke='%238fd2ff' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M10 17l5-5-5-5' stroke='%238fd2ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M15 12H3' stroke='%238fd2ff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
     }
     .summary-icon-created {
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect x='3' y='4' width='18' height='16' rx='2' stroke='%23b7c8ff' stroke-width='2'/%3E%3Cpath d='M8 2v4M16 2v4M3 10h18' stroke='%23b7c8ff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -94,12 +96,12 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M12 2l3 6 6 .9-4.5 4.4 1 6.2L12 17l-5.5 2.5 1-6.2L3 8.9 9 8l3-6z' stroke='%23ffd29b' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E");
     }
     .summary-k {
-      color: #7d9360;
+      color: #5f84b8;
       font-size: 12px;
       margin: 0;
     }
     .summary-v {
-      color: #556b2f;
+      color: #1f4f8a;
       font-size: 40px;
       font-weight: 800;
       line-height: 1;
@@ -107,8 +109,9 @@
     }
     .two-col {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto;
+      gap: 10px;
       min-height: 0;
       align-items: stretch;
     }
@@ -117,9 +120,9 @@
     }
     .admin-panel {
       border-radius: 16px;
-      border: 1px solid rgba(85, 128, 121, 0.16);
-      background: rgba(244, 250, 246, 0.78);
-      box-shadow: 0 10px 24px rgba(96, 121, 118, 0.16);
+      border: 1px solid rgba(96, 165, 250, 0.16);
+      background: rgba(244, 249, 255, 0.78);
+      box-shadow: 0 10px 24px rgba(59, 130, 246, 0.16);
       padding: 14px;
       max-height: none;
       overflow: hidden;
@@ -130,29 +133,122 @@
       flex-direction: column;
       min-height: 0;
     }
+    .audit-panel {
+      order: 1;
+      overflow: hidden;
+    }
+    .audit-panel .panel-content,
+    .audit-panel .table-wrap {
+      min-height: 0;
+    }
+    .audit-panel .panel-content {
+      flex: 1;
+    }
+    .audit-panel .table-wrap {
+      flex: 1;
+      max-height: 520px;
+      overflow: auto;
+    }
+    .user-panel {
+      order: 2;
+    }
+    .user-panel.is-hidden {
+      display: none !important;
+    }
+    .account-panel-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-y: auto;
+      background: rgba(11, 22, 40, 0.28);
+      backdrop-filter: blur(6px);
+    }
+    .account-panel-overlay.is-open {
+      display: flex;
+    }
+    .account-panel-overlay .user-panel {
+      width: min(1320px, calc(100vw - 48px));
+      max-height: calc(100vh - 48px);
+      overflow: hidden;
+      margin: 0;
+      order: initial;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      box-shadow: 0 24px 60px rgba(29, 78, 216, 0.18);
+    }
+    .panel-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
     .panel-header {
       display: grid;
       gap: 3px;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
     .panel-title {
       margin: 0;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 800;
       letter-spacing: 0.01em;
-      color: #556b2f;
+      color: #1f4f8a;
     }
     .panel-subtitle {
       margin: 0;
       font-size: 12px;
-      color: #7d9360;
+      color: #5f84b8;
+    }
+    .panel-header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
     }
     .panel-content {
       flex: 1;
       min-height: 0;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
+    }
+    .user-panel .panel-content {
+      overflow-y: auto;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      padding-right: 6px;
+      position: relative;
+    }
+    .account-scroll-btn {
+      position: sticky;
+      align-self: flex-end;
+      bottom: 14px;
+      right: 0;
+      z-index: 3;
+      margin-top: auto;
+      margin-right: 8px;
+      min-width: 108px;
+      min-height: 38px;
+      border: 1px solid rgba(96, 165, 250, 0.42);
+      border-radius: 999px;
+      padding: 0 14px;
+      background: linear-gradient(180deg, rgba(96, 165, 250, 0.96) 0%, rgba(59, 130, 246, 0.92) 100%);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 14px 28px rgba(59, 130, 246, 0.22);
+    }
+    .account-scroll-btn:hover {
+      background: linear-gradient(180deg, rgba(118, 177, 255, 0.98) 0%, rgba(78, 145, 246, 0.94) 100%);
+    }
+    .account-scroll-btn:focus-visible {
+      outline: 2px solid rgba(191, 219, 254, 0.95);
+      outline-offset: 2px;
     }
     .table-wrap {
       width: 100%;
@@ -160,11 +256,11 @@
       min-height: 0;
       max-height: none;
       overflow: auto;
-      border: 1px solid rgba(159, 190, 115, 0.16);
+      border: 1px solid rgba(96, 165, 250, 0.16);
       border-radius: 12px;
-      background: rgba(242, 236, 217, 0.86);
+      background: rgba(240, 247, 255, 0.86);
       scrollbar-width: thin;
-      scrollbar-color: rgba(159, 190, 115, 0.62) rgba(242, 236, 217, 0.92);
+      scrollbar-color: rgba(96, 165, 250, 0.62) rgba(240, 247, 255, 0.92);
     }
     .table-wrap::-webkit-scrollbar,
     body::-webkit-scrollbar {
@@ -173,19 +269,19 @@
     }
     .table-wrap::-webkit-scrollbar-track,
     body::-webkit-scrollbar-track {
-      background: rgba(242, 236, 217, 0.9);
+      background: rgba(240, 247, 255, 0.9);
       border-radius: 10px;
-      border: 1px solid rgba(159, 190, 115, 0.14);
+      border: 1px solid rgba(96, 165, 250, 0.14);
     }
     .table-wrap::-webkit-scrollbar-thumb,
     body::-webkit-scrollbar-thumb {
-      background: linear-gradient(180deg, rgba(159, 190, 115, 0.82) 0%, rgba(125, 147, 96, 0.74) 100%);
+      background: linear-gradient(180deg, rgba(96, 165, 250, 0.82) 0%, rgba(59, 130, 246, 0.74) 100%);
       border-radius: 10px;
       border: 1px solid rgba(247, 244, 236, 0.24);
     }
     .table-wrap::-webkit-scrollbar-thumb:hover,
     body::-webkit-scrollbar-thumb:hover {
-      background: linear-gradient(180deg, rgba(175, 203, 126, 0.92) 0%, rgba(145, 170, 110, 0.86) 100%);
+      background: linear-gradient(180deg, rgba(125, 180, 255, 0.92) 0%, rgba(90, 145, 235, 0.86) 100%);
     }
     table {
       width: 100%;
@@ -195,10 +291,10 @@
     .users-table {
       table-layout: fixed;
     }
-    .users-table th:nth-child(1), .users-table td:nth-child(1) { width: 16%; }
-    .users-table th:nth-child(2), .users-table td:nth-child(2) { width: 23%; }
-    .users-table th:nth-child(3), .users-table td:nth-child(3) { width: 14%; }
-    .users-table th:nth-child(4), .users-table td:nth-child(4) { width: 20%; }
+    .users-table th:nth-child(1), .users-table td:nth-child(1) { width: 18%; }
+    .users-table th:nth-child(2), .users-table td:nth-child(2) { width: 25%; }
+    .users-table th:nth-child(3), .users-table td:nth-child(3) { width: 13%; }
+    .users-table th:nth-child(4), .users-table td:nth-child(4) { width: 17%; }
     .users-table th:nth-child(5), .users-table td:nth-child(5) { width: 27%; }
     th, td {
       text-align: left;
@@ -207,6 +303,60 @@
       vertical-align: top;
       overflow-wrap: normal;
       word-break: normal;
+    }
+    .users-table td {
+      padding: 12px 10px;
+      color: #183b6b;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    .users-table tbody tr {
+      background: rgba(255, 255, 255, 0.78);
+    }
+    .users-table tbody tr:nth-child(even) {
+      background: rgba(246, 250, 255, 0.86);
+    }
+    .users-table tbody tr:hover {
+      background: rgba(235, 244, 255, 0.72);
+    }
+    .users-table td:nth-child(1) {
+      font-weight: 700;
+      color: #17386b;
+      text-transform: capitalize;
+    }
+    .users-table td:nth-child(2) {
+      color: #355987;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .users-table td:nth-child(3) {
+      color: #2a5f9e;
+      font-weight: 700;
+    }
+    .users-table td:nth-child(4) {
+      color: #5f7f9e;
+      font-size: 13px;
+    }
+    .user-name {
+      display: block;
+      line-height: 1.25;
+    }
+    .user-email {
+      display: block;
+      line-height: 1.35;
+    }
+    .created-at {
+      display: grid;
+      gap: 2px;
+      white-space: nowrap;
+    }
+    .created-at-date {
+      color: #476b99;
+      font-weight: 600;
+    }
+    .created-at-time {
+      color: #7d97b8;
+      font-size: 12px;
     }
     #usersTableBody td:nth-child(4),
     #auditTableBody td:nth-child(1),
@@ -246,14 +396,14 @@
       position: sticky;
       top: 0;
       z-index: 1;
-      background: rgba(125, 147, 96, 0.96);
+      background: rgba(59, 130, 246, 0.96);
       color: #f7f4ec;
       font-size: 12px;
       letter-spacing: 0.02em;
       text-transform: uppercase;
     }
     .muted {
-      color: #7d9360;
+      color: #5f84b8;
       font-size: 12px;
     }
     .toolbar {
@@ -265,30 +415,50 @@
     }
     .table-note {
       text-align: left;
-      margin: 0 2px 8px 0;
-      font-size: 12px;
-      color: #7d9360;
+      margin: 0 2px 10px 0;
+      font-size: 13px;
+      color: #5f84b8;
     }
     .badge-pill {
       display: inline-flex;
       align-items: center;
-      padding: 2px 8px;
+      padding: 3px 9px;
       border-radius: 999px;
       font-size: 11px;
       font-weight: 700;
-      color: #556b2f;
-      border: 1px solid rgba(159, 190, 115, 0.3);
-      background: rgba(248, 245, 235, 0.88);
+      line-height: 1;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(96, 165, 250, 0.3);
     }
-    .event-login_success { border-color: rgba(86, 210, 145, 0.44); color: #b9f0cd; }
-    .event-login_failed { border-color: rgba(235, 122, 122, 0.5); color: #ffd3d3; }
-    .event-account_created { border-color: rgba(80, 186, 255, 0.5); color: #bde7ff; }
-    .event-role_changed { border-color: rgba(248, 205, 120, 0.5); color: #ffe8b9; }
-    .event-logout { border-color: rgba(160, 171, 196, 0.5); color: #e8edf8; }
+    .event-login_success {
+      border-color: rgba(34, 197, 94, 0.34);
+      background: rgba(240, 253, 244, 0.98);
+      color: #16a34a;
+    }
+    .event-login_failed {
+      border-color: rgba(239, 68, 68, 0.34);
+      background: rgba(254, 242, 242, 0.98);
+      color: #dc2626;
+    }
+    .event-account_created {
+      border-color: rgba(59, 130, 246, 0.34);
+      background: rgba(239, 246, 255, 0.98);
+      color: #2563eb;
+    }
+    .event-role_changed {
+      border-color: rgba(245, 158, 11, 0.34);
+      background: rgba(255, 251, 235, 0.98);
+      color: #d97706;
+    }
+    .event-logout {
+      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(254, 242, 242, 0.96);
+      color: #ef4444;
+    }
     .role-edit {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 6px;
+      gap: 8px;
       align-items: start;
       width: 100%;
       min-width: 0;
@@ -297,38 +467,41 @@
       width: 100%;
       min-width: 0;
       max-width: 100%;
-      border-radius: 8px;
-      border: 1px solid rgba(159, 190, 115, 0.3);
-      background: rgba(248, 245, 235, 0.98);
-      color: #556b2f;
-      padding: 6px 24px 6px 10px;
-      font-size: 12px;
+      min-height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(96, 165, 250, 0.3);
+      background: rgba(248, 252, 255, 0.96);
+      color: #24518b;
+      padding: 8px 30px 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
       font-family: inherit;
       line-height: 1.2;
       -webkit-appearance: none;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%237d9360' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%235f84b8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 7px center;
+      background-position: right 12px center;
       background-size: 12px 8px;
     }
     .role-actions {
       position: relative;
-      display: inline-flex;
+      display: flex;
       align-items: center;
       gap: 8px;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
     }
     .promote-btn {
-      border: 1px solid rgba(159, 190, 115, 0.45);
-      background: linear-gradient(92deg, #9fbe73 0%, #b8cb7e 55%, #7d9360 100%);
+      border: 1px solid rgba(96, 165, 250, 0.45);
+      background: linear-gradient(92deg, #6ea8ff 0%, #8fc0ff 55%, #5f84b8 100%);
       color: #ffffff;
-      border-radius: 8px;
-      padding: 5px 10px;
-      font-size: 12px;
+      border-radius: 10px;
+      padding: 0 12px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
-      min-height: 30px;
+      min-height: 34px;
+      box-shadow: 0 8px 16px rgba(96, 165, 250, 0.16);
     }
     .promote-btn:disabled {
       opacity: 0.6;
@@ -338,12 +511,15 @@
       border: 1px solid rgba(235, 122, 122, 0.5);
       background: rgba(130, 36, 52, 0.72);
       color: #ffd3d3;
-      border-radius: 8px;
-      padding: 5px 10px;
-      font-size: 12px;
+      border-radius: 10px;
+      padding: 0 12px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
-      min-height: 30px;
+      min-height: 34px;
+    }
+    .users-table td:last-child {
+      padding-right: 14px;
     }
     .add-user-grid {
       display: grid;
@@ -367,9 +543,9 @@
     }
     .add-input, .add-select {
       border-radius: 8px;
-      border: 1px solid rgba(159, 190, 115, 0.3);
-      background: rgba(248, 245, 235, 0.98);
-      color: #556b2f;
+      border: 1px solid rgba(96, 165, 250, 0.3);
+      background: rgba(255, 255, 255, 0.98);
+      color: #1f4f8a;
       padding: 8px 10px;
       font-size: 13px;
       min-height: 46px;
@@ -395,15 +571,15 @@
       border-radius: 6px;
       padding: 0;
       background: transparent;
-      color: #7d9360;
+      color: #5f84b8;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
     }
     .password-toggle:hover {
-      color: #556b2f;
-      background: rgba(219, 233, 154, 0.16);
+      color: #1f4f8a;
+      background: rgba(219, 234, 254, 0.16);
     }
     .password-toggle svg {
       width: 14px;
@@ -421,19 +597,19 @@
       margin-top: 0;
     }
     .add-select {
-      color: #7d9360;
+      color: #5f84b8;
       font-size: 13px;
       font-weight: 400;
       line-height: 1.2;
       -webkit-appearance: none;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%237d9360' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%235f84b8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 12px center;
       padding-right: 34px;
     }
     .add-select.has-value {
-      color: #556b2f;
+      color: #1f4f8a;
     }
     .add-input.input-error, .add-select.input-error {
       border-color: rgba(235, 122, 122, 0.85);
@@ -452,9 +628,9 @@
     .row-delete-error {
       display: none;
       position: absolute;
-      right: calc(100% + 8px);
-      top: 50%;
-      transform: translateY(-50%);
+      left: 0;
+      top: calc(100% + 6px);
+      transform: none;
       font-size: 11px;
       line-height: 1.2;
       color: #ffb4b4;
@@ -463,7 +639,7 @@
       border-radius: 7px;
       padding: 4px 7px;
       width: max-content;
-      max-width: 240px;
+      max-width: 220px;
       word-break: break-word;
       z-index: 5;
       box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
@@ -541,13 +717,237 @@
 
     @media (max-width: 1100px) {
       .summary-grid { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
-      .two-col { grid-template-columns: 1fr; min-height: 0; }
+      .two-col { grid-template-columns: 1fr; grid-template-rows: auto auto; min-height: 0; }
       .admin-panel { min-height: 0; max-height: none; }
       .add-user-grid { grid-template-columns: 1fr; }
+      .users-table { min-width: 880px; }
+    }
+
+    body.admin-layout {
+      background:
+        radial-gradient(900px 420px at 0% 0%, rgba(209, 243, 255, 0.85), transparent 60%),
+        radial-gradient(700px 360px at 100% 8%, rgba(214, 250, 243, 0.82), transparent 62%),
+        linear-gradient(180deg, #f8fcff 0%, #eaf3ff 52%, #edf5ff 100%);
+    }
+    body.admin-layout .mesh-bg {
+      inset: -12%;
+      background:
+        radial-gradient(420px 220px at 12% 12%, rgba(152, 227, 249, 0.32), transparent 70%),
+        radial-gradient(360px 200px at 88% 18%, rgba(178, 243, 232, 0.28), transparent 72%),
+        radial-gradient(420px 240px at 56% 88%, rgba(213, 231, 255, 0.36), transparent 75%);
+      filter: blur(18px);
+    }
+    body.admin-layout .top-nav,
+    body.admin-layout .admin-shell {
+      position: relative;
+      z-index: 2;
+    }
+    body.admin-layout .top-nav {
+      width: min(1740px, calc(100% - 44px));
+      margin: 14px auto 0;
+      padding: 12px 18px;
+      border-radius: 28px;
+      border: 1px solid rgba(149, 183, 202, 0.18);
+      background: rgba(255, 255, 255, 0.76);
+      box-shadow: 0 16px 38px rgba(115, 152, 181, 0.14);
+      backdrop-filter: blur(16px);
+    }
+    body.admin-layout .logo-wordmark {
+      color: #17386b;
+    }
+    body.admin-layout .logo-wordmark .iq {
+      background: linear-gradient(90deg, #12356f 0%, #2e7cc9 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    body.admin-layout .top-nav-actions {
+      gap: 10px;
+    }
+    body.admin-layout .user-badge,
+    body.admin-layout .nav-btn {
+      min-height: 40px;
+      border-color: rgba(149, 183, 202, 0.22);
+      background: rgba(255, 255, 255, 0.86);
+      color: #26446f;
+    }
+    body.admin-layout .nav-btn-logout {
+      color: #ffffff;
+      background: linear-gradient(135deg, #8c1821 0%, #c6352a 100%);
+      border-color: rgba(183, 62, 66, 0.28);
+      box-shadow: 0 14px 24px rgba(181, 56, 55, 0.2);
+    }
+    body.admin-layout .admin-shell {
+      width: min(1510px, calc(100% - 44px));
+      min-height: calc(100vh - 108px);
+      height: auto;
+      padding: 14px 0 12px;
+      gap: 12px;
+    }
+    body.admin-layout .glass-card,
+    body.admin-layout .summary-card,
+    body.admin-layout .admin-panel {
+      border-radius: 28px;
+      border: 1px solid rgba(191, 214, 255, 0.42);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(247, 251, 255, 0.9) 100%);
+      box-shadow: 0 14px 34px rgba(154, 181, 214, 0.18);
+      backdrop-filter: blur(16px);
+    }
+    body.admin-layout .admin-hero {
+      padding: 22px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      background:
+        radial-gradient(540px 240px at 100% 0%, rgba(194, 247, 239, 0.55), transparent 70%),
+        radial-gradient(360px 220px at 0% 0%, rgba(213, 239, 255, 0.48), transparent 72%),
+        rgba(255, 255, 255, 0.78);
+    }
+    body.admin-layout .admin-eyebrow {
+      margin: 0 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 11px;
+      font-weight: 800;
+      color: #6d8dad;
+    }
+    body.admin-layout .admin-hero h2,
+    body.admin-layout .panel-title {
+      color: #17386b;
+    }
+    body.admin-layout .admin-hero-desc,
+    body.admin-layout .panel-subtitle,
+    body.admin-layout .muted,
+    body.admin-layout .summary-k,
+    body.admin-layout .table-note {
+      color: #5f7f9e;
+    }
+    body.admin-layout .admin-hero-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    body.admin-layout .summary-grid {
+      gap: 12px;
+    }
+    body.admin-layout .summary-card {
+      min-height: 102px;
+      padding: 14px 16px;
+      background:
+        radial-gradient(220px 120px at 100% 0%, rgba(214, 244, 255, 0.34), transparent 72%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 251, 255, 0.92) 100%);
+    }
+    body.admin-layout .summary-v,
+    body.admin-layout .panel-title,
+    body.admin-layout th {
+      color: #17386b;
+    }
+    body.admin-layout .summary-head {
+      margin-bottom: 6px;
+    }
+    body.admin-layout .summary-icon {
+      opacity: 1;
+    }
+    body.admin-layout .admin-panel {
+      padding: 14px 14px 12px;
+      background:
+        radial-gradient(260px 120px at 100% 0%, rgba(210, 243, 255, 0.28), transparent 72%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(246, 250, 255, 0.93) 100%);
+    }
+    body.admin-layout .panel-header {
+      margin-bottom: 6px;
+      gap: 3px;
+    }
+    body.admin-layout .panel-title {
+      font-size: 15px;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+    body.admin-layout .panel-content {
+      gap: 5px;
+    }
+    body.admin-layout .table-wrap {
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(241, 247, 255, 0.9) 0%, rgba(235, 243, 255, 0.82) 100%);
+      border: 1px solid rgba(191, 214, 255, 0.58);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+    body.admin-layout .users-table tbody tr,
+    body.admin-layout .audit-table tbody tr {
+      background: rgba(255, 255, 255, 0.7);
+    }
+    body.admin-layout .users-table tbody tr:nth-child(even),
+    body.admin-layout .audit-table tbody tr:nth-child(even) {
+      background: rgba(242, 247, 255, 0.94);
+    }
+    body.admin-layout .users-table tbody tr:hover,
+    body.admin-layout .audit-table tbody tr:hover {
+      background: rgba(232, 242, 255, 0.96);
+    }
+    body.admin-layout th {
+      background: linear-gradient(180deg, rgba(87, 142, 239, 0.96) 0%, rgba(69, 128, 232, 0.94) 100%);
+      color: #f9fbff;
+      border-bottom-color: rgba(132, 174, 243, 0.42);
+    }
+    body.admin-layout .add-user-grid {
+      grid-template-columns: minmax(180px, 1.1fr) minmax(180px, 1.1fr) minmax(150px, 1fr) minmax(170px, 1fr) auto;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+    body.admin-layout .add-input,
+    body.admin-layout .add-select,
+    body.admin-layout .role-select {
+      background: linear-gradient(180deg, rgba(250, 246, 234, 0.82) 0%, rgba(248, 250, 255, 0.92) 100%);
+      border-color: rgba(187, 214, 255, 0.72);
+      color: #315d98;
+      border-radius: 14px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+    body.admin-layout .add-input,
+    body.admin-layout .add-select {
+      min-height: 44px;
+      padding: 8px 12px;
+    }
+    body.admin-layout .role-select {
+      min-height: 44px;
+      padding: 9px 34px 9px 12px;
+    }
+    body.admin-layout .add-input::placeholder {
+      color: #8aa0bf;
+    }
+    body.admin-layout .table-note {
+      margin-bottom: 2px;
+    }
+    body.admin-layout .promote-btn {
+      background: linear-gradient(135deg, #5e9eff 0%, #96c5ff 100%);
+      border-color: rgba(96, 165, 250, 0.45);
+      box-shadow: 0 10px 20px rgba(96, 165, 250, 0.18);
+    }
+    body.admin-layout .danger-btn {
+      background: linear-gradient(135deg, #ae5c64 0%, #cb7178 100%);
+      border-color: rgba(191, 104, 114, 0.35);
+      color: #fff1f3;
+    }
+    body.admin-layout .password-toggle:hover {
+      background: rgba(219, 234, 254, 0.16);
+    }
+    @media (max-width: 1100px) {
+      body.admin-layout .admin-hero {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px;
+      }
+      body.admin-layout .admin-shell {
+        width: calc(100% - 24px);
+      }
+      body.admin-layout .top-nav {
+        width: calc(100% - 24px);
+      }
     }
   </style>
 </head>
-<body>
+<body class="admin-layout">
   <div class="mesh-bg" aria-hidden="true"></div>
   <nav class="top-nav">
     <a class="logo-link" href="/dashboard" aria-label="DemandIQ Home">
@@ -565,9 +965,16 @@
   </nav>
 
   <main class="admin-shell preload">
-    <section class="glass-card">
-      <h2 style="margin:0 0 6px;">Admin Dashboard</h2>
-      <p id="statusText" class="muted" style="margin:0; display:none;" aria-hidden="true"></p>
+    <section class="admin-hero glass-card">
+      <div class="admin-hero-copy">
+        <p class="admin-eyebrow">Admin Control</p>
+        <h2 style="margin:0 0 8px;">Admin Dashboard</h2>
+        <p class="admin-hero-desc">Monitor login activity from one admin workspace. Open account management only when you need to create, promote, or delete admin accounts.</p>
+        <p id="statusText" class="muted admin-status-text" style="margin:0; display:none;" aria-hidden="true"></p>
+      </div>
+      <div class="admin-hero-actions">
+        <button id="toggleAccountPanelBtn" class="nav-btn" type="button" aria-expanded="false">Manage Accounts</button>
+      </div>
     </section>
 
     <section class="summary-grid">
@@ -588,78 +995,23 @@
       <article class="summary-card">
         <div class="summary-head">
           <span class="summary-icon summary-icon-created" aria-hidden="true"></span>
-          <div class="summary-k">Accounts Created (Recent)</div>
+          <div class="summary-k">Logouts (Recent)</div>
         </div>
         <div id="createdCount" class="summary-v">0</div>
       </article>
       <article class="summary-card">
         <div class="summary-head">
           <span class="summary-icon summary-icon-role" aria-hidden="true"></span>
-          <div class="summary-k">Role Promotions/Changes</div>
+          <div class="summary-k">Failed Logins (Recent)</div>
         </div>
         <div id="roleChangedCount" class="summary-v">0</div>
       </article>
     </section>
 
     <section class="two-col">
-      <article class="glass-card admin-panel">
+      <article class="glass-card admin-panel audit-panel">
         <div class="panel-header">
-          <h3 class="panel-title">User Accounts</h3>
-        </div>
-        <div class="panel-content">
-        <div class="add-user-grid">
-          <input class="autofill-decoy" type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true" />
-          <input class="autofill-decoy" type="password" name="password" autocomplete="current-password" tabindex="-1" aria-hidden="true" />
-          <div class="add-field">
-            <input id="addFullName" class="add-input" type="text" placeholder="Full name" autocomplete="off" />
-            <div id="addFullNameError" class="add-field-error" role="alert" aria-live="polite"></div>
-          </div>
-          <div class="add-field">
-            <input id="addEmail" class="add-input" type="text" inputmode="email" placeholder="name@gmail.com" name="new_user_contact" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" readonly />
-            <div id="addEmailError" class="add-field-error" role="alert" aria-live="polite"></div>
-          </div>
-          <div class="add-field">
-            <div class="password-wrap">
-              <input id="addPassword" class="add-input password-mask" type="text" placeholder="Password" name="new_user_secret" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" readonly />
-              <button id="addPasswordToggle" class="password-toggle" type="button" aria-label="Show password" title="Show password">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-              </button>
-            </div>
-            <div id="addPasswordError" class="add-field-error" role="alert" aria-live="polite"></div>
-          </div>
-          <div class="add-field">
-            <select id="addRole" class="add-select">
-              <option value="" selected disabled hidden>Select role</option>
-              <option value="admin">Admin</option>
-            </select>
-            <div id="addRoleError" class="add-field-error" role="alert" aria-live="polite"></div>
-          </div>
-          <button id="addUserBtn" class="promote-btn" type="button">Add User</button>
-        </div>
-        <p class="table-note panel-subtitle">Latest registered users and roles</p>
-        <div class="table-wrap">
-          <table class="users-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Created</th>
-                <th>Promote / Role</th>
-              </tr>
-            </thead>
-            <tbody id="usersTableBody"></tbody>
-          </table>
-        </div>
-        </div>
-      </article>
-
-      <article class="glass-card admin-panel">
-        <div class="panel-header">
-          <h3 class="panel-title">Audit Activity</h3>
+          <h3 class="panel-title">Login Activity</h3>
         </div>
         <div class="panel-content">
         <div class="table-wrap">
@@ -679,8 +1031,74 @@
         </div>
         </div>
       </article>
+
     </section>
   </main>
+  <div id="accountPanelOverlay" class="account-panel-overlay" aria-hidden="true">
+    <article id="accountManagementPanel" class="glass-card admin-panel user-panel is-hidden" role="dialog" aria-modal="true" aria-labelledby="accountPanelTitle">
+      <div class="panel-header">
+        <div class="panel-header-row">
+          <div>
+            <h3 id="accountPanelTitle" class="panel-title">Account Management</h3>
+            <p class="panel-subtitle">Create admins, promote users, or remove accounts only when needed.</p>
+          </div>
+          <div class="panel-actions">
+            <button id="closeAccountPanelBtn" class="nav-btn" type="button">Close</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel-content">
+      <div class="add-user-grid">
+        <input class="autofill-decoy" type="text" name="username" autocomplete="username" tabindex="-1" aria-hidden="true" />
+        <input class="autofill-decoy" type="password" name="password" autocomplete="current-password" tabindex="-1" aria-hidden="true" />
+        <div class="add-field">
+          <input id="addFullName" class="add-input" type="text" placeholder="Full name" autocomplete="off" />
+          <div id="addFullNameError" class="add-field-error" role="alert" aria-live="polite"></div>
+        </div>
+        <div class="add-field">
+          <input id="addEmail" class="add-input" type="text" inputmode="email" placeholder="name@gmail.com" name="new_user_contact" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other" readonly />
+          <div id="addEmailError" class="add-field-error" role="alert" aria-live="polite"></div>
+        </div>
+        <div class="add-field">
+          <div class="password-wrap">
+            <input id="addPassword" class="add-input password-mask" type="text" placeholder="Password" name="new_user_secret" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" readonly />
+            <button id="addPasswordToggle" class="password-toggle" type="button" aria-label="Show password" title="Show password">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+          <div id="addPasswordError" class="add-field-error" role="alert" aria-live="polite"></div>
+        </div>
+        <div class="add-field">
+          <select id="addRole" class="add-select">
+            <option value="" selected disabled hidden>Select role</option>
+            <option value="admin">Admin</option>
+          </select>
+          <div id="addRoleError" class="add-field-error" role="alert" aria-live="polite"></div>
+        </div>
+        <button id="addUserBtn" class="promote-btn" type="button">Add User</button>
+      </div>
+      <p class="table-note panel-subtitle">Available accounts and admin controls</p>
+      <div class="table-wrap">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Created</th>
+              <th>Promote / Role</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+      <button id="accountScrollBtn" class="account-scroll-btn" type="button" aria-label="Scroll down in account management">Scroll Down</button>
+      </div>
+    </article>
+  </div>
   <div id="confirmOverlay" class="confirm-overlay" aria-hidden="true">
     <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
       <h4 id="confirmTitle" class="confirm-title">Confirm Deletion</h4>
@@ -694,6 +1112,7 @@
 
   <script>
     let currentAdminEmail = "";
+    const LOGIN_ACTIVITY_EVENTS = new Set(["login_success", "login_failed", "logout"]);
     const addUserFieldConfig = {
       addFullName: "addFullNameError",
       addEmail: "addEmailError",
@@ -947,7 +1366,7 @@
 
     async function loadAdminData() {
       const statusEl = document.getElementById("statusText");
-      statusEl.textContent = "Loading audit and user details...";
+      statusEl.textContent = "Loading login activity and account controls...";
 
       const [users, logs] = await Promise.all([
         fetchJson("/admin/users?limit=500"),
@@ -956,19 +1375,27 @@
 
       const userRows = Array.isArray(users?.items) ? users.items : [];
       const logRows = Array.isArray(logs?.items) ? logs.items : [];
+      const loginActivityRows = logRows.filter((x) => LOGIN_ACTIVITY_EVENTS.has(String(x?.event_type || "").toLowerCase()));
 
       document.getElementById("totalUsers").textContent = String(userRows.length);
-      document.getElementById("loginSuccessCount").textContent = String(logRows.filter((x) => x.event_type === "login_success").length);
-      document.getElementById("createdCount").textContent = String(logRows.filter((x) => x.event_type === "account_created").length);
-      document.getElementById("roleChangedCount").textContent = String(logRows.filter((x) => x.event_type === "role_changed").length);
+      document.getElementById("loginSuccessCount").textContent = String(loginActivityRows.filter((x) => x.event_type === "login_success").length);
+      document.getElementById("createdCount").textContent = String(loginActivityRows.filter((x) => x.event_type === "logout").length);
+      document.getElementById("roleChangedCount").textContent = String(loginActivityRows.filter((x) => x.event_type === "login_failed").length);
 
       const usersBody = document.getElementById("usersTableBody");
-      usersBody.innerHTML = userRows.map((u) => `
+      usersBody.innerHTML = userRows.map((u) => {
+        const created = splitDateTimeParts(u.created_at);
+        return `
         <tr>
-          <td>${escapeHtml(u.full_name)}</td>
-          <td>${escapeHtml(u.email)}</td>
+          <td><span class="user-name">${escapeHtml(u.full_name)}</span></td>
+          <td><span class="user-email">${escapeHtml(u.email)}</span></td>
           <td>${escapeHtml(formatRole(u.role))}</td>
-          <td>${escapeHtml(u.created_at || "-")}</td>
+          <td>
+            <div class="created-at">
+              <span class="created-at-date">${escapeHtml(created.date)}</span>
+              <span class="created-at-time">${escapeHtml(created.time)}</span>
+            </div>
+          </td>
           <td>
             <div class="role-edit">
               <select class="role-select" data-role-email="${escapeHtml(u.email)}">
@@ -991,10 +1418,11 @@
             </div>
           </td>
         </tr>
-      `).join("");
+      `;
+      }).join("");
 
       const auditBody = document.getElementById("auditTableBody");
-      auditBody.innerHTML = logRows.map((e) => {
+      auditBody.innerHTML = loginActivityRows.map((e) => {
         const actor = e.actor_email || "-";
         const target = e.target_email || "-";
         const dt = splitDateTimeParts(e.created_at);
@@ -1013,12 +1441,43 @@
         `;
       }).join("");
 
-      statusEl.textContent = `Loaded ${logRows.length} audit events and ${userRows.length} users.`;
+      statusEl.textContent = `Loaded ${loginActivityRows.length} login events and ${userRows.length} accounts.`;
       requestAnimationFrame(() => {
+        syncAccountScrollButton();
         const shell = document.querySelector(".admin-shell");
         shell.classList.remove("preload");
         shell.classList.add("ready");
       });
+    }
+
+    function setAccountPanelOpen(open) {
+      const overlay = document.getElementById("accountPanelOverlay");
+      const panel = document.getElementById("accountManagementPanel");
+      const toggleBtn = document.getElementById("toggleAccountPanelBtn");
+      if (!overlay || !panel || !toggleBtn) return;
+      overlay.classList.toggle("is-open", open);
+      overlay.setAttribute("aria-hidden", open ? "false" : "true");
+      panel.classList.toggle("is-hidden", !open);
+      toggleBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      toggleBtn.textContent = open ? "Hide Account Management" : "Manage Accounts";
+      if (open) {
+        requestAnimationFrame(() => {
+          syncAccountScrollButton();
+          const firstInput = document.getElementById("addFullName");
+          if (firstInput) firstInput.focus();
+        });
+      }
+    }
+
+    function syncAccountScrollButton() {
+      const panelContent = document.querySelector("#accountManagementPanel .panel-content");
+      const scrollBtn = document.getElementById("accountScrollBtn");
+      if (!panelContent || !scrollBtn) return;
+      const maxScrollTop = Math.max(0, panelContent.scrollHeight - panelContent.clientHeight);
+      const nearBottom = maxScrollTop > 0 && panelContent.scrollTop >= Math.max(0, maxScrollTop - 24);
+      scrollBtn.textContent = nearBottom ? "Back to Top" : "Scroll Down";
+      scrollBtn.setAttribute("aria-label", nearBottom ? "Scroll to the top of account management" : "Scroll down in account management");
+      scrollBtn.hidden = maxScrollTop <= 12;
     }
 
     document.getElementById("usersTableBody").addEventListener("click", async (e) => {
@@ -1154,6 +1613,40 @@
     document.getElementById("toDashboardBtn").addEventListener("click", () => {
       window.location.href = "/dashboard";
     });
+    document.getElementById("toggleAccountPanelBtn").addEventListener("click", () => {
+      const panel = document.getElementById("accountManagementPanel");
+      const isOpen = panel && !panel.classList.contains("is-hidden");
+      setAccountPanelOpen(!isOpen);
+    });
+    document.getElementById("closeAccountPanelBtn").addEventListener("click", () => {
+      setAccountPanelOpen(false);
+    });
+    document.getElementById("accountScrollBtn").addEventListener("click", () => {
+      const panelContent = document.querySelector("#accountManagementPanel .panel-content");
+      if (!panelContent) return;
+      const maxScrollTop = Math.max(0, panelContent.scrollHeight - panelContent.clientHeight);
+      const nearBottom = maxScrollTop > 0 && panelContent.scrollTop >= Math.max(0, maxScrollTop - 24);
+      panelContent.scrollTo({
+        top: nearBottom ? 0 : Math.min(maxScrollTop, panelContent.scrollTop + Math.max(320, Math.round(panelContent.clientHeight * 0.82))),
+        behavior: "smooth",
+      });
+    });
+    document.querySelector("#accountManagementPanel .panel-content").addEventListener("scroll", () => {
+      syncAccountScrollButton();
+    });
+    document.getElementById("accountPanelOverlay").addEventListener("click", (e) => {
+      if (e.target && e.target.id === "accountPanelOverlay") {
+        setAccountPanelOpen(false);
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const panel = document.getElementById("accountManagementPanel");
+        if (panel && !panel.classList.contains("is-hidden")) {
+          setAccountPanelOpen(false);
+        }
+      }
+    });
     document.getElementById("logoutBtn").addEventListener("click", async () => {
       try {
         await fetch("/auth/logout", { method: "POST", credentials: "same-origin" });
@@ -1166,11 +1659,13 @@
 
     (async () => {
       try {
+        setAccountPanelOpen(false);
         resetAddUserForm(true);
         setTimeout(() => resetAddUserForm(false), 120);
         const user = await ensureAdmin();
         if (!user) return;
         await loadAdminData();
+        syncAccountScrollButton();
       } catch (err) {
         document.getElementById("statusText").textContent = err.message || "Unable to load admin dashboard.";
       }

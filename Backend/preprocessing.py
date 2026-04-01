@@ -4,9 +4,15 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
 BASE_DIR = Path(__file__).resolve().parents[1]
+CLEANED_CITY_LEVEL_CSV_PATH = BASE_DIR / "Dataset" / "retail_store_inventory_city_level_cleaned.csv"
 CITY_LEVEL_CSV_PATH = BASE_DIR / "Dataset" / "retail_store_inventory_city_level.csv"
 LEGACY_CSV_PATH = BASE_DIR / "Dataset" / "retail_store_inventory.csv"
-INPUT_CSV_PATH = CITY_LEVEL_CSV_PATH if CITY_LEVEL_CSV_PATH.exists() else LEGACY_CSV_PATH
+if CLEANED_CITY_LEVEL_CSV_PATH.exists():
+    INPUT_CSV_PATH = CLEANED_CITY_LEVEL_CSV_PATH
+elif CITY_LEVEL_CSV_PATH.exists():
+    INPUT_CSV_PATH = CITY_LEVEL_CSV_PATH
+else:
+    INPUT_CSV_PATH = LEGACY_CSV_PATH
 READABLE_OUTPUT_CSV_PATH = BASE_DIR / "Dataset" / f"{INPUT_CSV_PATH.stem}_cleaned.csv"
 ENCODED_OUTPUT_CSV_PATH = BASE_DIR / "Dataset" / f"{INPUT_CSV_PATH.stem}_encoded.csv"
 

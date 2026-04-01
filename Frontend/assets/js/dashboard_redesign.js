@@ -29,6 +29,12 @@ const toDateErrorEl = document.getElementById("toDateError");
 const userMetaChipEl = document.getElementById("userMetaChip");
 const roleMetaChipEl = document.getElementById("roleMetaChip");
 const roleHintEl = document.getElementById("roleHint");
+const topUserNameEl = document.getElementById("topUserName");
+const dashboardTimeEl = document.getElementById("dashboardTime");
+const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
+const refreshBtnEl = document.getElementById("refreshBtn");
+const syncBtnEl = document.getElementById("syncBtn");
+const topLogoutBtnEl = document.getElementById("topLogoutBtn");
 const aiInsightTextEl = document.getElementById("aiInsightText");
 const avgDemandValueEl = document.getElementById("avgDemandValue");
 const leadTimeValueEl = document.getElementById("leadTimeValue");
@@ -55,6 +61,7 @@ const DEFAULT_LEAD_TIME_DAYS = 5;
 const DEFAULT_SAFETY_STOCK = 150;
 const DEFAULT_PERFORMANCE_METRICS = { mae: 8.41, rmse: 10.26, r2: 0.89 };
 const RENDER_DEBOUNCE_MS = 180;
+const SIDEBAR_COLLAPSED_KEY = "dashboard_sidebar_collapsed_v1";
 
 let fromPicker = null;
 let toPicker = null;
@@ -153,6 +160,36 @@ function formatRole(role) {
   };
   const key = String(role || "").toLowerCase();
   return mapping[key] || "Unknown";
+}
+
+function formatTimeDisplay(dateObj = new Date()) {
+  return dateObj.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+}
+
+function updateDashboardClock() {
+  if (dashboardTimeEl) dashboardTimeEl.textContent = formatTimeDisplay(new Date());
+}
+
+function applySidebarState(collapsed) {
+  document.body.classList.toggle("sidebar-collapsed", Boolean(collapsed));
+  if (sidebarToggleBtn) {
+    sidebarToggleBtn.setAttribute("aria-pressed", collapsed ? "true" : "false");
+    sidebarToggleBtn.setAttribute("title", collapsed ? "Expand sidebar" : "Collapse sidebar");
+  }
+}
+
+function initializeSidebarState() {
+  try {
+    const collapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
+    applySidebarState(collapsed);
+  } catch (_) {
+    applySidebarState(false);
+  }
 }
 
 function formatUnits(value, fractionDigits = 0) {
@@ -294,7 +331,7 @@ function setCategoryFirstMode() {
   }
   if (categoryMetaEl) {
     categoryMetaEl.textContent = scopeOptionsState.categories.length
-      ? `${scopeOptionsState.categories.length} categories available for forecasting`
+      ? `${scopeOptionsState.categories.length} categories available for prediction`
       : "No categories available right now";
   }
 }
@@ -411,7 +448,7 @@ function resetAdvancedSections(message) {
   if (aiInsightTextEl) {
     aiInsightTextEl.innerHTML = `
       <div class="insight-grid">
-        <div class="insight-row"><span>Summary</span><strong>${message || "Generate a forecast to view AI insight."}</strong></div>
+        <div class="insight-row"><span>Summary</span><strong>${message || "Generate a prediction to view AI insight."}</strong></div>
         <div class="insight-row"><span>Demand Window</span><strong>-</strong></div>
         <div class="insight-row"><span>Peak Demand</span><strong>-</strong></div>
         <div class="insight-row"><span>Risk Level</span><strong>-</strong></div>
@@ -424,7 +461,7 @@ function resetAdvancedSections(message) {
   if (safetyStockValueEl) safetyStockValueEl.textContent = formatUnits(DEFAULT_SAFETY_STOCK);
   if (reorderPointValueEl) reorderPointValueEl.textContent = "-";
   if (recommendedOrderValueEl) recommendedOrderValueEl.textContent = "-";
-  if (inventoryAlertsListEl) inventoryAlertsListEl.innerHTML = '<li class="alert-item safe">Inventory alerts will appear after forecast generation.</li>';
+  if (inventoryAlertsListEl) inventoryAlertsListEl.innerHTML = '<li class="alert-item safe">Inventory alerts will appear after prediction generation.</li>';
   setAlertSeverityCounts([]);
   if (maeValueEl) maeValueEl.textContent = "-";
   if (rmseValueEl) rmseValueEl.textContent = "-";
@@ -478,7 +515,7 @@ function updateAdvancedSections(data) {
     if (Array.isArray(alerts) && alerts.length) {
       inventoryAlertsListEl.innerHTML = alerts.map((alert) => `<li class="alert-item ${alert.level}">${alert.text}</li>`).join("");
     } else {
-      inventoryAlertsListEl.innerHTML = '<li class="alert-item safe">Inventory levels are stable for the selected forecast.</li>';
+      inventoryAlertsListEl.innerHTML = '<li class="alert-item safe">Inventory levels are stable for the selected predicted view.</li>';
     }
   }
   setAlertSeverityCounts(alerts);
@@ -580,7 +617,7 @@ async function fetchForecastSnapshot(city, store, category, fromDate, toDate) {
     const anchorDate = anchor.toISOString().slice(0, 10);
     const url = `${apiBase()}/forecast/${encodeURIComponent(category)}?city=${encodeURIComponent(city)}&store=${encodeURIComponent(store)}&horizon=${periodDays}&history_lookback_days=${lookback}&anchor_date=${anchorDate}`;
     const resp = await fetch(url, { cache: "no-store" });
-    if (!resp.ok) throw new Error(`Forecast load failed (${resp.status}).`);
+    if (!resp.ok) throw new Error(`Predicted load failed (${resp.status}).`);
     const data = await resp.json();
     const history = Array.isArray(data.history) ? data.history : [];
     const forecast = Array.isArray(data.forecast) ? data.forecast : [];
@@ -626,7 +663,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
     setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
     setChartEmptyState("categoryComparisonEmpty", true, "No category comparison data.");
     setChartEmptyState("stockRiskEmpty", true, "No risk data available.");
-    resetAdvancedSections("Generate a forecast to view AI insight.");
+    resetAdvancedSections("Generate a prediction to view AI insight.");
     latestRenderKey = requestedKey || buildRenderKey();
     return;
   }
@@ -698,7 +735,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
   document.getElementById("peakDayKpi").textContent = peakDayRow?.date ? formatShortDate(peakDayRow.date) : "-";
   document.getElementById("riskLevelKpi").textContent = riskLabel;
   document.getElementById("summaryHint").textContent = peakDayRow?.date
-    ? `Peak forecast on ${formatShortDate(peakDayRow.date)} with ${Number(peakDayRow.forecast_units_sold || 0).toFixed(1)} units.`
+    ? `Peak predicted value on ${formatShortDate(peakDayRow.date)} with ${Number(peakDayRow.forecast_units_sold || 0).toFixed(1)} units.`
     : "Summary updates when city, category, or date changes.";
 
   const lineCtx = document.getElementById("actualForecastChart").getContext("2d");
@@ -718,7 +755,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
         labels: labels.map(formatShortDate),
         datasets: [
           { label: "Actual Demand", data: actualSeries, borderColor: lineBlue, backgroundColor: "rgba(59, 130, 246, 0.18)", tension: 0.35, borderWidth: 2, pointRadius: 1.6, spanGaps: true },
-          { label: "Forecast Demand", data: forecastSeries, borderColor: linePurple, backgroundColor: "rgba(139, 92, 246, 0.18)", tension: 0.35, borderWidth: 2, pointRadius: 1.6, spanGaps: true },
+          { label: "Predicted Demand", data: forecastSeries, borderColor: linePurple, backgroundColor: "rgba(139, 92, 246, 0.18)", tension: 0.35, borderWidth: 2, pointRadius: 1.6, spanGaps: true },
           {
             label: "Weekend",
             data: weekendSeries,
@@ -897,13 +934,14 @@ async function applyRoleUi() {
     const roleTitle = formatRole(role);
     if (userMetaChipEl) userMetaChipEl.textContent = `User: ${fullName}`;
     if (roleMetaChipEl) roleMetaChipEl.textContent = `Role: ${roleTitle}`;
+    if (topUserNameEl) topUserNameEl.textContent = fullName;
 
     const adminDashBtn = document.getElementById("adminDashBtn");
     if (adminDashBtn) adminDashBtn.style.display = role === "admin" ? "" : "none";
 
     if (role === "admin") roleHintEl.textContent = "Admin access: full system operations enabled.";
     if (role === "inventory_manager") roleHintEl.textContent = "Inventory Manager access: operational inventory insights enabled.";
-    if (role === "viewer") roleHintEl.textContent = "Viewer access: read-only dashboard and forecasts. Export and inventory insights are restricted.";
+    if (role === "viewer") roleHintEl.textContent = "Viewer access: read-only dashboard and predicted views. Export and inventory insights are restricted.";
 
     const downloadBtn = document.getElementById("downloadBtn");
     if (downloadBtn) {
@@ -1559,7 +1597,7 @@ function exportForecastPdf() {
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text("DemandIQ Forecast Report", marginX, y);
+  doc.text("DemandIQ Predicted Report", marginX, y);
   y += 22;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
@@ -1640,24 +1678,62 @@ toDateEl.addEventListener("change", () => {
   queueRenderForecastVisualization();
 });
 
-document.getElementById("generateBtn").addEventListener("click", () => goToResults("forecast"));
-document.getElementById("downloadBtn").addEventListener("click", () => goToResults("forecast"));
-document.getElementById("navReports").addEventListener("click", () => {
-  goToResults("forecast");
-});
-document.getElementById("pastDemandBtn").addEventListener("click", () => {
-  goToResults("past");
-});
-document.getElementById("backBtn").addEventListener("click", () => {
-  // Use a fixed route so Back does not reopen admin dashboard from history.
-  window.location.href = "/login";
-});
-document.getElementById("adminDashBtn").addEventListener("click", () => {
-  window.location.href = "/admin/dashboard";
-});
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  logoutAndGoLogin();
-});
+const generateBtnEl = document.getElementById("generateBtn");
+const downloadBtnEl = document.getElementById("downloadBtn");
+const navReportsBtnEl = document.getElementById("navReports");
+const pastDemandBtnEl = document.getElementById("pastDemandBtn");
+const adminDashBtnEl = document.getElementById("adminDashBtn");
+const logoutBtnEl = document.getElementById("logoutBtn");
+
+if (generateBtnEl) generateBtnEl.addEventListener("click", () => goToResults("forecast"));
+if (downloadBtnEl) downloadBtnEl.addEventListener("click", () => goToResults("forecast"));
+if (navReportsBtnEl) {
+  navReportsBtnEl.addEventListener("click", () => {
+    goToResults("forecast");
+  });
+}
+if (pastDemandBtnEl) {
+  pastDemandBtnEl.addEventListener("click", () => {
+    goToResults("past");
+  });
+}
+if (adminDashBtnEl) {
+  adminDashBtnEl.addEventListener("click", () => {
+    window.location.href = "/admin/dashboard";
+  });
+}
+if (logoutBtnEl) {
+  logoutBtnEl.addEventListener("click", () => {
+    logoutAndGoLogin();
+  });
+}
+if (topLogoutBtnEl) {
+  topLogoutBtnEl.addEventListener("click", () => {
+    logoutAndGoLogin();
+  });
+}
+if (refreshBtnEl) {
+  refreshBtnEl.addEventListener("click", () => {
+    queueRenderForecastVisualization({ immediate: true });
+  });
+}
+if (syncBtnEl) {
+  syncBtnEl.addEventListener("click", async () => {
+    clearDashboardState();
+    await initializeDefaults();
+  });
+}
+if (sidebarToggleBtn) {
+  sidebarToggleBtn.addEventListener("click", () => {
+    const next = !document.body.classList.contains("sidebar-collapsed");
+    applySidebarState(next);
+    try {
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
+    } catch (_) {
+      // Ignore storage failures.
+    }
+  });
+}
 if (categoryTriggerEl) {
   categoryTriggerEl.addEventListener("click", () => {
     if (!categoryShellEl) return;
@@ -1710,4 +1786,7 @@ if (exportPngBtnEl) exportPngBtnEl.addEventListener("click", exportChartPng);
 if (exportPdfBtnEl) exportPdfBtnEl.addEventListener("click", exportForecastPdf);
 
 initializeDefaults();
+initializeSidebarState();
+updateDashboardClock();
+window.setInterval(updateDashboardClock, 1000);
 window.addEventListener("pageshow", initializeDefaults);

@@ -8,6 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>DemandIQ AI Chat</title>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="/assets/css/unified_theme.css?v=20260401-01" />
   <style>
     :root {
       --bg: #f4f7fb;
@@ -160,7 +161,7 @@
       display: inline-flex;
       align-items: center;
       padding: 0 12px;
-      color: #7d9360;
+      color: #5f84b8;
       font-size: 12px;
       font-weight: 700;
     }
@@ -169,7 +170,7 @@
       margin: 0 2px 2px;
       font-size: 11px;
       letter-spacing: 1px;
-      color: #7d9360;
+      color: #5f84b8;
       font-weight: 700;
     }
 
@@ -234,7 +235,7 @@
 
     .hero-card p {
       margin: 0;
-      color: #7d9360;
+      color: #5f84b8;
       line-height: 1.6;
       max-width: 760px;
     }
@@ -253,8 +254,8 @@
       padding: 0 12px;
       border-radius: 999px;
       background: var(--accent-soft);
-      border: 1px solid rgba(159, 190, 115, 0.22);
-      color: #556b2f;
+      border: 1px solid rgba(96, 165, 250, 0.22);
+      color: #1f4f8a;
       font-size: 12px;
       font-weight: 700;
     }
@@ -279,7 +280,7 @@
     }
 
     .field label {
-      color: #7d9360;
+      color: #5f84b8;
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.08em;
@@ -291,7 +292,7 @@
       border-radius: 12px;
       border: 1px solid var(--line);
       background: rgba(248, 245, 235, 0.96);
-      color: #556b2f;
+      color: #1f4f8a;
       font-family: inherit;
       outline: none;
     }
@@ -310,9 +311,9 @@
 
     .prompt-chip {
       border-radius: 999px;
-      border: 1px solid rgba(159, 190, 115, 0.24);
-      background: rgba(219, 233, 154, 0.18);
-      color: #556b2f;
+      border: 1px solid rgba(96, 165, 250, 0.24);
+      background: rgba(219, 234, 254, 0.18);
+      color: #1f4f8a;
       padding: 8px 12px;
       font-size: 12px;
       font-weight: 700;
@@ -340,20 +341,20 @@
 
     .message.user {
       justify-self: end;
-      background: linear-gradient(135deg, rgba(219, 233, 154, 0.42), rgba(159, 190, 115, 0.34));
-      border: 1px solid rgba(159, 190, 115, 0.34);
+      background: linear-gradient(135deg, rgba(219, 234, 254, 0.42), rgba(96, 165, 250, 0.34));
+      border: 1px solid rgba(96, 165, 250, 0.34);
     }
 
     .message.assistant {
       justify-self: start;
       background: rgba(255, 255, 255, 0.34);
-      border: 1px solid rgba(159, 190, 115, 0.16);
+      border: 1px solid rgba(96, 165, 250, 0.16);
     }
 
     .message-meta {
       display: block;
       margin-bottom: 8px;
-      color: #7d9360;
+      color: #5f84b8;
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.08em;
@@ -384,7 +385,7 @@
     }
 
     .composer-note {
-      color: #7d9360;
+      color: #5f84b8;
       font-size: 12px;
     }
 
@@ -424,7 +425,7 @@
     }
   </style>
 </head>
-<body>
+<body class="ai-chat-layout">
   <nav class="top-nav">
     <div class="logo-section">
       <a class="logo-link" href="/dashboard">
@@ -442,15 +443,15 @@
       <span id="userRoleBadge" class="meta-chip">Role: ...</span>
     </div>
     <div class="menu-group">
-      <p class="group-title">MAIN</p>
-      <a href="/dashboard" class="menu-item"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
-      <a href="/dashboard/results" class="menu-item"><i data-lucide="file-text"></i><span>Reports</span></a>
+      <p class="group-title">FORECAST BRANCH</p>
+      <a href="/dashboard" class="menu-item"><i data-lucide="layout-dashboard"></i><span>Prediction Dashboard</span></a>
+      <a href="/dashboard/results" class="menu-item"><i data-lucide="file-text"></i><span>Results Report</span></a>
     </div>
     <div class="menu-group">
-      <p class="group-title">TOOLS</p>
-      <a href="/ai-chat" class="menu-item active"><i data-lucide="messages-square"></i><span>AI Chat</span></a>
-      <a href="/about-project" class="menu-item"><i data-lucide="info"></i><span>About Project</span></a>
-      <button class="menu-item" id="adminDashBtn" type="button" style="display:none;"><i data-lucide="shield-check"></i><span>Admin Dashboard</span></button>
+      <p class="group-title">SUPPORT BRANCH</p>
+      <a href="/ai-chat" class="menu-item active"><i data-lucide="messages-square"></i><span>AI Assistant</span></a>
+      <a href="/about-project" class="menu-item"><i data-lucide="info"></i><span>Project Overview</span></a>
+      <button class="menu-item" id="adminDashBtn" type="button" style="display:none;"><i data-lucide="shield-check"></i><span>Admin Control</span></button>
     </div>
     <div class="sidebar-divider"></div>
     <div class="logout-section">
@@ -460,11 +461,11 @@
 
   <main class="page-shell">
     <section class="hero-card">
-      <h1>AI Product Chat</h1>
-      <p>Ask DemandIQ about a product or category and get dataset-backed details on demand, pricing, discounts, forecast signals, and inventory behavior. You can also ask basic general questions, and the assistant will answer with ChatGPT <code>gpt-4o-mini</code>.</p>
+      <h1>AI Assistant Branch</h1>
+      <p>Ask DemandIQ about a product or category and get dataset-backed details on demand, pricing, discounts, predicted signals, and inventory behavior. You can also ask basic general questions, and the assistant will answer with ChatGPT <code>gpt-4o-mini</code>.</p>
       <div class="hero-metrics">
         <span class="hero-pill">Dataset-aware answers</span>
-        <span class="hero-pill">Demand, price, discount, and forecast insights</span>
+        <span class="hero-pill">Demand, price, discount, and predicted insights</span>
         <span class="hero-pill">Powered by ChatGPT 4o mini</span>
         <span class="hero-pill">Built into your project</span>
       </div>
@@ -493,12 +494,12 @@
           - "How is demand changing?"
           - "What is the average price?"
           - "Which platform is strongest?"
-          - "What is demand forecasting?"
+          - "What is demand prediction?"
         </div>
       </div>
 
       <div class="composer">
-        <textarea id="chatInput" placeholder="Ask about demand, price, discounts, forecast, inventory, product details, or basic general questions..."></textarea>
+        <textarea id="chatInput" placeholder="Ask about demand, price, discounts, predicted values, inventory, product details, or basic general questions..."></textarea>
         <div class="composer-row">
           <span class="composer-note" id="chatStatus">Ready to chat.</span>
           <button class="send-btn" id="chatSendBtn" type="button">Ask AI</button>

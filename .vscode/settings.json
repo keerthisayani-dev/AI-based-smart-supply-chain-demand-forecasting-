@@ -1,0 +1,12 @@
+{
+  "files.exclude": {
+    "**/__pycache__": true,
+    ".venv": true,
+    "Backend/auth.db": true,
+    "Backend/forecast_history.db": true
+  },
+  "search.exclude": {
+    "**/__pycache__": true,
+    ".venv": true
+  }
+}

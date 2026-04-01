@@ -6,51 +6,105 @@
   <meta http-equiv="Cache-Control" content="no-store" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>DemandIQ - Smart Supply Chain Demand Forecasting</title>
+  <title>DemandIQ - Smart Supply Chain Demand Prediction</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-  <link rel="stylesheet" href="/assets/css/dashboard_glass.css?v=20260304-19" />
+  <link rel="stylesheet" href="/assets/css/dashboard_glass.css?v=20260401-01" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
-<body>
+<body class="dashboard-layout">
   <div class="mesh-bg" aria-hidden="true"></div>
 
   <nav class="top-nav">
-    <a class="logo-link" href="/dashboard" aria-label="DemandIQ Home">
-      <img class="logo-icon" src="/assets/img/demandiq_icon.svg" alt="" aria-hidden="true" />
-      <span class="logo-wordmark">Demand<span class="iq">IQ</span></span>
-    </a>
-    <div class="top-nav-right">
-      <div class="top-nav-meta">
-        <span id="userMetaChip" class="meta-chip user-pill" title="Signed-in user">User: ...</span>
-        <span id="roleMetaChip" class="meta-chip role-pill" title="Signed-in role">Role: ...</span>
+    <div class="logo-section">
+      <a class="logo-link" href="/dashboard" aria-label="DemandIQ Home">
+        <img class="logo-icon" src="/assets/img/demandiq_icon.svg" alt="" aria-hidden="true" />
+        <span class="logo-wordmark">Demand<span class="iq">IQ</span></span>
+      </a>
+    </div>
+    <div class="sidebar-toggle-row">
+      <button id="sidebarToggleBtn" class="hamburger-btn" type="button" aria-label="Toggle sidebar" title="Toggle sidebar">
+        <span class="bars"><span></span></span>
+      </button>
+    </div>
+    <div class="sidebar-meta">
+      <span id="userMetaChip" class="meta-chip user-pill" title="Signed-in user">User: ...</span>
+      <span id="roleMetaChip" class="meta-chip role-pill" title="Signed-in role">Role: ...</span>
+    </div>
+    <div class="sidebar-content">
+      <section class="platform-card">
+        <p class="platform-label">Main Branch</p>
+        <strong class="platform-title">Forecast Workspace</strong>
+        <span id="dashboardTime" class="platform-time">--:--:--</span>
+      </section>
+      <div class="menu-group">
+        <p class="group-title">Forecast Branch</p>
+        <a href="/dashboard" class="menu-item active">
+          <span class="menu-text">Prediction Dashboard</span>
+        </a>
+        <button id="navReports" class="menu-item" type="button">
+          <span class="menu-text">Results Report</span>
+        </button>
+        <button id="pastDemandBtn" class="menu-item" type="button">
+          <span class="menu-text">Past Demand Report</span>
+        </button>
       </div>
-      <div class="top-nav-actions">
-        <button id="adminDashBtn" class="nav-btn nav-pill" type="button" style="display:none;">Admin Dashboard</button>
-        <button id="pastDemandBtn" class="nav-btn nav-pill" type="button">Past Demand View</button>
-        <button id="navReports" class="nav-btn nav-pill" type="button">Reports</button>
-        <button id="downloadBtn" class="nav-btn nav-pill" type="button">Download</button>
-        <button id="backBtn" class="nav-btn nav-pill" type="button">Back</button>
-        <button id="logoutBtn" class="nav-btn nav-btn-logout" type="button">Logout</button>
+      <div class="menu-group">
+        <p class="group-title">Support Branch</p>
+        <button id="downloadBtn" class="menu-item" type="button">Download Center</button>
+        <a href="/about-project" class="menu-item">
+          <span class="menu-text">Project Overview</span>
+        </a>
+        <a href="/ai-chat" class="menu-item">
+          <span class="menu-text">AI Assistant</span>
+        </a>
+        <button id="adminDashBtn" class="menu-item" type="button" style="display:none;">Admin Control</button>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="logout-section">
+        <button id="logoutBtn" class="menu-item nav-btn-logout" type="button">Logout</button>
       </div>
     </div>
   </nav>
 
   <main class="page-shell preload">
-    <section class="hero">
-      <h1>
-        <span class="hero-title">
-          <img class="title-icon" src="/assets/img/demandiq_icon.svg" alt="" aria-hidden="true" />
-          Demand<span class="iq">IQ</span>
-        </span>
-      </h1>
-      <p class="hero-sub">Smart Supply Chain Demand Forecasting</p>
-      <p class="hero-desc">Choose a category first, then pick from the cities where that category exists to generate demand projections.</p>
-      <p class="hero-meta">Target Variable: <strong>Units Sold</strong></p>
-      <p id="roleHint" class="hero-meta">Loading access level...</p>
+    <section class="dashboard-topbar">
+      <div class="dashboard-branding">
+        <div class="dashboard-logo-mark">
+          <img class="dashboard-mini-icon" src="/assets/img/demandiq_icon.svg" alt="" aria-hidden="true" />
+        </div>
+        <div>
+          <p class="dashboard-top-label">Forecast Branch</p>
+          <h2 class="dashboard-top-title">DemandIQ Branch Console</h2>
+        </div>
+      </div>
+      <div class="dashboard-top-actions">
+        <div class="signed-in-card">
+          <div class="signed-in-avatar">DI</div>
+          <div>
+            <p class="signed-in-label">Signed In</p>
+            <strong id="topUserName">Loading user...</strong>
+          </div>
+        </div>
+        <button id="topLogoutBtn" class="top-action-btn top-action-btn-danger" type="button">Logout</button>
+      </div>
+    </section>
+
+    <section class="dashboard-hero-card">
+      <div class="dashboard-hero-copy">
+        <p class="dashboard-eyebrow">Prediction Sub-Branch</p>
+        <h1>Forecast Workspace Dashboard</h1>
+        <p class="dashboard-hero-desc">Choose a category, city, store, and date range to generate demand projections, compare movement, and monitor inventory risk in one place.</p>
+        <p class="dashboard-hero-meta">Target Variable: <strong>Units Sold</strong></p>
+        <p id="roleHint" class="dashboard-hero-meta">Loading access level...</p>
+      </div>
+      <div class="dashboard-hero-actions">
+        <button id="syncBtn" class="top-action-btn" type="button">Sync</button>
+        <button id="refreshBtn" class="top-action-btn top-action-btn-primary" type="button">Refresh</button>
+      </div>
     </section>
 
     <section id="forecastPanel" class="forecast-panel">
@@ -111,15 +165,15 @@
             <div id="toDateError" class="field-error" role="alert" aria-live="polite"></div>
           </div>
         </div>
-        <button id="generateBtn" class="btn-primary" type="button">Generate Forecast</button>
+        <button id="generateBtn" class="btn-primary" type="button">Generate Prediction</button>
         <details id="debugPanel" class="field" style="margin-top:12px;">
           <summary style="cursor:pointer;color:#6f8751;font-weight:700;">Debug Panel</summary>
           <pre id="debugOutput" style="white-space:pre-wrap;word-break:break-word;font-size:12px;color:#6b7280;margin-top:10px;">Debug ready.</pre>
         </details>
       </article>
 
-      <article class="surface-card assistant-card" aria-label="Forecast assistant">
-        <h2>Forecast Assistant</h2>
+      <article class="surface-card assistant-card" aria-label="Predicted assistant">
+        <h2>Predicted Assistant</h2>
         <p class="assistant-copy">Pick a category first, choose one of its available cities, then use the date range to generate projected demand.</p>
         <div class="assistant-bars" aria-hidden="true">
           <span style="height:22px;"></span>
@@ -132,25 +186,25 @@
           <span style="height:66px;"></span>
         </div>
         <div class="assistant-points">
-          <div class="assistant-stat"><span>Average forecast</span><strong id="avgForecastKpi">-</strong></div>
+          <div class="assistant-stat"><span>Average predicted</span><strong id="avgForecastKpi">-</strong></div>
           <div class="assistant-stat"><span>Peak day</span><strong id="peakDayKpi">-</strong></div>
           <div class="assistant-stat"><span>Risk level</span><strong id="riskLevelKpi">-</strong></div>
         </div>
-        <canvas id="summarySparkline" class="assistant-sparkline" aria-label="Forecast summary sparkline"></canvas>
+        <canvas id="summarySparkline" class="assistant-sparkline" aria-label="Predicted summary sparkline"></canvas>
         <p id="summaryHint" class="summary-hint">Summary updates when city, category, or date changes.</p>
       </article>
     </section>
 
     <section id="forecastVisualization" class="surface-card viz-panel">
       <div class="viz-head">
-        <h2>Forecast Visualization</h2>
+        <h2>Predicted Visualization</h2>
         <span id="vizSubtitle" class="viz-meta-line">Live city and category projection view</span>
       </div>
       <div class="viz-grid">
         <article class="surface-card viz-card viz-card-wide">
-          <h3>Actual vs Forecast Demand</h3>
+          <h3>Actual vs Predicted Demand</h3>
           <div class="chart-wrap">
-            <canvas id="actualForecastChart" aria-label="Actual vs Forecast Demand chart"></canvas>
+            <canvas id="actualForecastChart" aria-label="Actual vs Predicted Demand chart"></canvas>
             <p id="actualForecastEmpty" class="chart-empty is-hidden">No chart data available.</p>
           </div>
         </article>
@@ -158,7 +212,7 @@
           <h3>Scope Demand Comparison</h3>
           <div class="chart-wrap">
             <canvas id="categoryComparisonChart" aria-label="Category demand comparison chart"></canvas>
-            <p id="categoryComparisonEmpty" class="chart-empty is-hidden">No forecast scope comparison data.</p>
+            <p id="categoryComparisonEmpty" class="chart-empty is-hidden">No predicted scope comparison data.</p>
           </div>
         </article>
         <article class="surface-card viz-card">
@@ -173,14 +227,14 @@
 
     <section id="advancedAnalytics" class="analytics-stack">
       <article class="surface-card analytics-card">
-        <h3>AI Forecast Insight</h3>
-        <p id="aiInsightText" class="analytics-text">Generate a forecast to view AI insight.</p>
+        <h3>AI Predicted Insight</h3>
+        <p id="aiInsightText" class="analytics-text">Generate a prediction to view AI insight.</p>
       </article>
 
       <article class="surface-card analytics-card">
         <h3>Reorder Recommendation</h3>
         <div class="metric-grid">
-          <div class="metric-row"><span>Average Forecast Demand</span><strong id="avgDemandValue">-</strong></div>
+          <div class="metric-row"><span>Average Predicted Demand</span><strong id="avgDemandValue">-</strong></div>
           <div class="metric-row"><span>Lead Time</span><strong id="leadTimeValue">5 days</strong></div>
           <div class="metric-row"><span>Safety Stock</span><strong id="safetyStockValue">150 units</strong></div>
           <div class="metric-row"><span>Suggested Reorder Point</span><strong id="reorderPointValue">-</strong></div>
@@ -191,7 +245,7 @@
       <article class="surface-card analytics-card inventory-alerts-card">
         <h3>Inventory Alerts</h3>
         <ul id="inventoryAlertsList" class="alerts-list">
-          <li class="alert-item safe">Inventory alerts will appear after forecast generation.</li>
+          <li class="alert-item safe">Inventory alerts will appear after prediction generation.</li>
         </ul>
         <div class="severity-points" aria-label="Alert severity counts">
           <span class="severity-point critical"><span class="point-dot"></span>Critical <strong id="criticalCount">0</strong></span>
@@ -203,10 +257,10 @@
     </section>
   </main>
 
-  <footer class="page-footer">&copy; DemandIQ - AI Demand Forecasting System</footer>
+  <footer class="page-footer">&copy; DemandIQ - AI Demand Prediction System</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="/assets/js/dashboard_redesign.js?v=20260331-11"></script>
+  <script src="/assets/js/dashboard_redesign.js?v=20260401-01"></script>
 </body>
 </html>
 

@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/css/unified_theme.css?v=20260401-01" />
   <style>
     :root {
       --bg: #f4f7fb;
@@ -418,8 +419,8 @@
       pointer-events: none;
       z-index: 0;
       background:
-        radial-gradient(620px 320px at 14% 8%, rgba(219, 233, 154, 0.12), transparent 70%),
-        radial-gradient(540px 300px at 88% 14%, rgba(159, 190, 115, 0.1), transparent 72%);
+        radial-gradient(620px 320px at 14% 8%, rgba(219, 234, 254, 0.12), transparent 70%),
+        radial-gradient(540px 300px at 88% 14%, rgba(96, 165, 250, 0.1), transparent 72%);
       filter: blur(16px);
     }
 
@@ -494,7 +495,7 @@
       border-radius: 14px;
       border: 1px solid var(--line-soft);
       background: rgba(248, 245, 235, 0.58);
-      color: #556b2f;
+      color: #1f4f8a;
       font-size: 17px;
       font-family: inherit;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
@@ -505,8 +506,8 @@
       -moz-appearance: none;
       appearance: none;
       background-image:
-        linear-gradient(45deg, transparent 50%, #7d9360 50%),
-        linear-gradient(135deg, #7d9360 50%, transparent 50%);
+        linear-gradient(45deg, transparent 50%, #5f84b8 50%),
+        linear-gradient(135deg, #5f84b8 50%, transparent 50%);
       background-position:
         calc(100% - 18px) calc(50% - 3px),
         calc(100% - 12px) calc(50% - 3px);
@@ -519,8 +520,8 @@
     input:focus,
     select:focus {
       outline: none;
-      border-color: rgba(159, 190, 115, 0.72);
-      box-shadow: 0 0 0 3px rgba(159, 190, 115, 0.16);
+      border-color: rgba(96, 165, 250, 0.72);
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.16);
     }
     .input-error {
       border-color: rgba(248, 113, 113, 0.92) !important;
@@ -550,7 +551,7 @@
       border-radius: 14px;
       border: 1px solid var(--line-soft);
       background: rgba(248, 245, 235, 0.58);
-      color: #556b2f;
+      color: #1f4f8a;
       font-size: 17px;
       font-family: inherit;
       text-align: left;
@@ -566,8 +567,8 @@
       top: 50%;
       width: 8px;
       height: 8px;
-      border-right: 2px solid #7d9360;
-      border-bottom: 2px solid #7d9360;
+      border-right: 2px solid #5f84b8;
+      border-bottom: 2px solid #5f84b8;
       transform: translateY(-65%) rotate(45deg);
       pointer-events: none;
     }
@@ -582,11 +583,11 @@
       right: 0;
       top: calc(100% + 8px);
       background: rgba(248, 245, 235, 0.94);
-      border: 1px solid rgba(159, 190, 115, 0.26);
+      border: 1px solid rgba(96, 165, 250, 0.26);
       border-radius: 12px;
       box-shadow:
         0 14px 28px rgba(120, 138, 88, 0.14),
-        0 0 0 1px rgba(159, 190, 115, 0.1) inset;
+        0 0 0 1px rgba(96, 165, 250, 0.1) inset;
       padding: 6px;
       display: none;
       z-index: 40;
@@ -598,9 +599,9 @@
 
     .custom-select-item {
       width: 100%;
-      border: 1px solid rgba(159, 190, 115, 0.12);
+      border: 1px solid rgba(96, 165, 250, 0.12);
       background: transparent;
-      color: #556b2f;
+      color: #1f4f8a;
       text-align: left;
       font-size: 14px;
       border-radius: 8px;
@@ -610,8 +611,8 @@
     }
 
     .custom-select-item:hover {
-      border-color: rgba(159, 190, 115, 0.24);
-      background: rgba(219, 233, 154, 0.18);
+      border-color: rgba(96, 165, 250, 0.24);
+      background: rgba(219, 234, 254, 0.18);
     }
 
     .native-role-select {
@@ -633,14 +634,14 @@
     input:-webkit-autofill:hover,
     input:-webkit-autofill:focus,
     input:-webkit-autofill:active {
-      -webkit-text-fill-color: #556b2f;
+      -webkit-text-fill-color: #1f4f8a;
       box-shadow: 0 0 0px 1000px rgba(248, 245, 235, 0.96) inset;
       transition: background-color 5000s ease-in-out 0s;
-      caret-color: #556b2f;
+      caret-color: #1f4f8a;
     }
 
     select option {
-      color: #556b2f;
+      color: #1f4f8a;
       background: #f8f5eb;
     }
 
@@ -698,18 +699,18 @@
       border: none;
       border-radius: 8px;
       background: transparent;
-      color: #7d9360;
+      color: #5f84b8;
       display: grid;
       place-items: center;
       cursor: pointer;
       padding: 0;
     }
     .password-toggle:hover {
-      color: #556b2f;
-      background: rgba(219, 233, 154, 0.18);
+      color: #1f4f8a;
+      background: rgba(219, 234, 254, 0.18);
     }
     .password-toggle:focus-visible {
-      outline: 2px solid rgba(159, 190, 115, 0.55);
+      outline: 2px solid rgba(96, 165, 250, 0.55);
       outline-offset: 1px;
     }
     .password-toggle svg {
@@ -728,10 +729,10 @@
       right: 0;
       top: calc(100% + 8px);
       z-index: 30;
-      background: linear-gradient(180deg, rgba(248, 245, 235, 0.94), rgba(242, 236, 217, 0.92));
-      border: 1px solid rgba(159, 190, 115, 0.24);
+      background: linear-gradient(180deg, rgba(248, 245, 235, 0.94), rgba(240, 247, 255, 0.92));
+      border: 1px solid rgba(96, 165, 250, 0.24);
       border-radius: 12px;
-      box-shadow: 0 14px 28px rgba(120, 138, 88, 0.14), 0 0 0 1px rgba(159, 190, 115, 0.08) inset;
+      box-shadow: 0 14px 28px rgba(120, 138, 88, 0.14), 0 0 0 1px rgba(96, 165, 250, 0.08) inset;
       max-height: none;
       overflow: visible;
       display: none;
@@ -744,9 +745,9 @@
 
     .email-suggestion-item {
       width: 100%;
-      border: 1px solid rgba(159, 190, 115, 0.12);
+      border: 1px solid rgba(96, 165, 250, 0.12);
       background: transparent;
-      color: #556b2f;
+      color: #1f4f8a;
       text-align: left;
       font-size: 14px;
       border-radius: 8px;
@@ -756,8 +757,8 @@
     }
 
     .email-suggestion-item:hover {
-      border-color: rgba(159, 190, 115, 0.24);
-      background: rgba(219, 233, 154, 0.18);
+      border-color: rgba(96, 165, 250, 0.24);
+      background: rgba(219, 234, 254, 0.18);
     }
 
     .row {
@@ -771,7 +772,7 @@
     }
 
     .row a {
-      color: #6d8350;
+      color: #4f76ad;
       text-decoration: none;
       font-weight: 600;
     }
@@ -806,7 +807,7 @@
       border-radius: 12px;
       border: 1px solid var(--line-soft);
       background: rgba(248, 245, 235, 0.88);
-      color: #556b2f;
+      color: #1f4f8a;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
@@ -816,8 +817,8 @@
 
     .sso-btn:hover {
       transform: scale(1.02);
-      border-color: rgba(159, 190, 115, 0.42);
-      background: rgba(219, 233, 154, 0.18);
+      border-color: rgba(96, 165, 250, 0.42);
+      background: rgba(219, 234, 254, 0.18);
     }
 
     .note {
@@ -864,16 +865,16 @@
       border-radius: 12px;
       border: 1px solid var(--line-soft);
       background: rgba(248, 245, 235, 0.88);
-      color: #6d8350;
+      color: #4f76ad;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
     }
 
     .mode-btn.active {
-      border-color: rgba(159, 190, 115, 0.46);
-      background: rgba(219, 233, 154, 0.28);
-      color: #556b2f;
+      border-color: rgba(96, 165, 250, 0.46);
+      background: rgba(219, 234, 254, 0.28);
+      color: #1f4f8a;
     }
 
     .is-hidden {
@@ -929,7 +930,7 @@
     }
   </style>
 </head>
-<body>
+<body class="login-theme">
   <div class="scene" aria-hidden="true">
     <div class="scene-grid-sweep"></div>
     <div class="shelf shelf-left"></div>
@@ -964,7 +965,7 @@
       <img class="brand-icon" src="/assets/img/demandiq_icon.svg" alt="" aria-hidden="true" />
       <h1 class="brand-title">Demand<span class="iq">IQ</span></h1>
     </div>
-    <p class="subtitle">Smart Supply Chain Demand Forecasting</p>
+    <p class="subtitle">Smart Supply Chain Demand Prediction</p>
     <div class="mode-switch">
       <button id="modeSignIn" class="mode-btn active" type="button">Sign In</button>
       <button id="modeCreate" class="mode-btn" type="button">Create Account</button>

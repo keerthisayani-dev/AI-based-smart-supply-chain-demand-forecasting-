@@ -61,9 +61,15 @@ except ImportError:  # Allows running as a script from Backend/
 
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = BASE_DIR.parent
+CLEANED_CITY_LEVEL_CSV_PATH = PROJECT_DIR / "Dataset" / "retail_store_inventory_city_level_cleaned.csv"
 CITY_LEVEL_CSV_PATH = PROJECT_DIR / "Dataset" / "retail_store_inventory_city_level.csv"
 LEGACY_CSV_PATH = PROJECT_DIR / "Dataset" / "retail_store_inventory.csv"
-CSV_PATH = CITY_LEVEL_CSV_PATH if CITY_LEVEL_CSV_PATH.exists() else LEGACY_CSV_PATH
+if CLEANED_CITY_LEVEL_CSV_PATH.exists():
+    CSV_PATH = CLEANED_CITY_LEVEL_CSV_PATH
+elif CITY_LEVEL_CSV_PATH.exists():
+    CSV_PATH = CITY_LEVEL_CSV_PATH
+else:
+    CSV_PATH = LEGACY_CSV_PATH
 FRONTEND_LOGIN_HTML_PATH = PROJECT_DIR / "Frontend" / "login.html"
 FRONTEND_HTML_PATH = PROJECT_DIR / "Frontend" / "dashboard.html"
 FRONTEND_RESULTS_HTML_PATH = PROJECT_DIR / "Frontend" / "dashboard_results.html"
