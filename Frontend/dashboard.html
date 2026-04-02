@@ -239,6 +239,18 @@
             <p id="actualForecastEmpty" class="chart-empty is-hidden">No chart data available.</p>
           </div>
         </article>
+        <article class="surface-card viz-card viz-card-wide">
+          <h3>Daily Trends</h3>
+          <div class="metric-grid compact" aria-label="Daily trend summary">
+            <div class="metric-row"><span>Visible Days</span><strong id="trendWindowValue">-</strong></div>
+            <div class="metric-row"><span>Peak Trend Day</span><strong id="trendPeakValue">-</strong></div>
+            <div class="metric-row emphasize"><span>Trend Direction</span><strong id="trendDirectionValue">-</strong></div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="dailyTrendChart" aria-label="Daily demand trend chart"></canvas>
+            <p id="dailyTrendEmpty" class="chart-empty is-hidden">No daily trend data available.</p>
+          </div>
+        </article>
         <article class="surface-card viz-card">
           <h3>Scope Demand Comparison</h3>
           <div class="chart-wrap">

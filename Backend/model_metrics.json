@@ -1,12 +1,12 @@
 {
   "input_dataset": "retail_store_inventory_city_level_cleaned_features.csv",
-  "train_rows": 77612,
-  "test_rows": 19403,
+  "train_rows": 789120,
+  "test_rows": 197281,
   "feature_count": 35,
-  "fit_seconds": 9.790070533752441,
-  "mae": 5.235959812049034,
-  "mse": 43.91126928425983,
-  "rmse": 6.626557876021293,
-  "r2": 0.7778423632357245,
-  "train_mae": 13.322684865213843
+  "fit_seconds": 169.8431477546692,
+  "mae": 4.172059008939866,
+  "mse": 27.77228314463905,
+  "rmse": 5.269941474498465,
+  "r2": 0.9401218223332365,
+  "train_mae": 7.009341543666955
 }

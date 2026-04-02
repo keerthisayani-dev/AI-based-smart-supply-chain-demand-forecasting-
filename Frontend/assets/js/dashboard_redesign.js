@@ -75,6 +75,7 @@ const SIDEBAR_COLLAPSED_KEY = "dashboard_sidebar_collapsed_v1";
 let fromPicker = null;
 let toPicker = null;
 let actualForecastChart = null;
+let dailyTrendChart = null;
 let categoryComparisonChart = null;
 let stockRiskGaugeChart = null;
 const vizDataCache = new Map();
@@ -801,9 +802,11 @@ async function fetchForecastSnapshot(city, store, category, fromDate, toDate, op
 
 function destroyCharts() {
   if (actualForecastChart) actualForecastChart.destroy();
+  if (dailyTrendChart) dailyTrendChart.destroy();
   if (categoryComparisonChart) categoryComparisonChart.destroy();
   if (stockRiskGaugeChart) stockRiskGaugeChart.destroy();
   actualForecastChart = null;
+  dailyTrendChart = null;
   categoryComparisonChart = null;
   stockRiskGaugeChart = null;
 }
@@ -820,8 +823,12 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
     document.getElementById("avgForecastKpi").textContent = "-";
     document.getElementById("peakDayKpi").textContent = "-";
     document.getElementById("riskLevelKpi").textContent = "-";
+    document.getElementById("trendWindowValue").textContent = "-";
+    document.getElementById("trendPeakValue").textContent = "-";
+    document.getElementById("trendDirectionValue").textContent = "-";
     document.getElementById("summaryHint").textContent = "Select city, store, category, and date range to preview summary.";
     setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
+    setChartEmptyState("dailyTrendEmpty", true, "No daily trend data available.");
     setChartEmptyState("categoryComparisonEmpty", true, "No category comparison data.");
     setChartEmptyState("stockRiskEmpty", true, "No risk data available.");
     resetAdvancedSections("Generate a prediction to view AI insight.");
@@ -849,6 +856,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
     latestDashboardData = null;
     subtitleEl.textContent = `Visualization unavailable: ${err.message}`;
     setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
+    setChartEmptyState("dailyTrendEmpty", true, "No daily trend data available.");
     setChartEmptyState("categoryComparisonEmpty", true, "No category comparison data.");
     setChartEmptyState("stockRiskEmpty", true, "No risk data available.");
     resetAdvancedSections(`Unable to generate AI insight: ${err.message}`);
@@ -866,6 +874,11 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
   const forecastMap = new Map(forecast.map((r) => [r.date, Number(r.forecast_units_sold || 0)]));
   const actualSeries = labels.map((d) => (actualMap.has(d) ? actualMap.get(d) : null));
   const forecastSeries = labels.map((d) => (forecastMap.has(d) ? forecastMap.get(d) : null));
+  const trendBaseSeries = labels.map((d) => {
+    if (actualMap.has(d)) return Number(actualMap.get(d) || 0);
+    if (forecastMap.has(d)) return Number(forecastMap.get(d) || 0);
+    return null;
+  });
   const weekendSeries = labels.map((d) => {
     const ts = new Date(`${d}T00:00:00`);
     const day = ts.getDay();
@@ -950,6 +963,78 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
     });
   } else {
     setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
+  }
+
+  const rollingTrendSeries = trendBaseSeries.map((_, idx) => {
+    const window = trendBaseSeries.slice(Math.max(0, idx - 6), idx + 1).filter((v) => Number.isFinite(v));
+    if (!window.length) return null;
+    const avg = window.reduce((sum, value) => sum + Number(value || 0), 0) / window.length;
+    return Number(avg.toFixed(2));
+  });
+  const trendPoints = labels
+    .map((date, idx) => ({ date, value: trendBaseSeries[idx] }))
+    .filter((point) => Number.isFinite(point.value));
+  const peakTrendPoint = trendPoints.reduce((best, point) => {
+    if (!best) return point;
+    return point.value > best.value ? point : best;
+  }, null);
+  const trendStart = trendPoints.length ? Number(trendPoints[0].value || 0) : 0;
+  const trendEnd = trendPoints.length ? Number(trendPoints[trendPoints.length - 1].value || 0) : 0;
+  let trendDirection = "Stable";
+  if (trendPoints.length >= 2) {
+    if (trendEnd > trendStart) trendDirection = "Rising";
+    else if (trendEnd < trendStart) trendDirection = "Falling";
+  }
+  document.getElementById("trendWindowValue").textContent = labels.length ? `${labels.length} days` : "-";
+  document.getElementById("trendPeakValue").textContent = peakTrendPoint?.date ? formatShortDate(peakTrendPoint.date) : "-";
+  document.getElementById("trendDirectionValue").textContent = trendDirection;
+
+  const dailyTrendCtx = document.getElementById("dailyTrendChart").getContext("2d");
+  if (dailyTrendChart) dailyTrendChart.destroy();
+  if (labels.length) {
+    setChartEmptyState("dailyTrendEmpty", false);
+    dailyTrendChart = new Chart(dailyTrendCtx, {
+      type: "bar",
+      data: {
+        labels: labels.map(formatShortDate),
+        datasets: [
+          {
+            label: "Daily Units",
+            data: trendBaseSeries,
+            backgroundColor: "rgba(59, 130, 246, 0.24)",
+            borderColor: "rgba(59, 130, 246, 0.86)",
+            borderWidth: 1,
+            borderRadius: 8,
+          },
+          {
+            label: "7-Day Trend",
+            data: rollingTrendSeries,
+            type: "line",
+            borderColor: "#f59e0b",
+            backgroundColor: "rgba(245, 158, 11, 0.18)",
+            borderWidth: 2.2,
+            pointRadius: 1.6,
+            pointHoverRadius: 3,
+            tension: 0.32,
+            spanGaps: true,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1100, easing: "easeOutQuart" },
+        plugins: {
+          legend: { labels: { color: "#dbe7ff", boxWidth: 12, boxHeight: 2, usePointStyle: true } },
+        },
+        scales: {
+          x: { ticks: { color: "#9cb0d8" }, grid: { display: false } },
+          y: { ticks: { color: "#9cb0d8" }, grid: { color: "rgba(148, 163, 184, 0.12)" } },
+        },
+      },
+    });
+  } else {
+    setChartEmptyState("dailyTrendEmpty", true, "No daily trend data available.");
   }
 
   const centerTextPlugin = {
