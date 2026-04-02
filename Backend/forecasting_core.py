@@ -119,8 +119,7 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def load_sales_data(csv_path: str | Path) -> pd.DataFrame:
-    df = pd.read_csv(csv_path)
+def prepare_sales_data(df: pd.DataFrame) -> pd.DataFrame:
     df = normalize_columns(df)
 
     if CATEGORY_COL not in df.columns and "product id" in df.columns:
@@ -145,6 +144,11 @@ def load_sales_data(csv_path: str | Path) -> pd.DataFrame:
     df[DATE_COL] = parse_date_series(df[DATE_COL])
     df = df.dropna(subset=[DATE_COL, PRODUCT_COL, TARGET_COL]).sort_values(DATE_COL)
     return df
+
+
+def load_sales_data(csv_path: str | Path) -> pd.DataFrame:
+    df = pd.read_csv(csv_path)
+    return prepare_sales_data(df)
 
 
 def build_daily_series(df: pd.DataFrame, category: str, selector_col: str = PRODUCT_COL) -> pd.DataFrame:

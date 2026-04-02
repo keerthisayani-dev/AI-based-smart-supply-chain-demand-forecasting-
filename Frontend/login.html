@@ -929,6 +929,7 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="/assets/css/portfolio_dark_theme.css?v=20260402-02" />
 </head>
 <body class="login-theme">
   <div class="scene" aria-hidden="true">
@@ -1552,25 +1553,11 @@
           authErrorEl.textContent = msg;
           return;
         }
-        await resp.json();
-        let latestEmail = email;
-        let latestRole = role;
-        let latestFullName = fullName;
-        try {
-          const meResp = await fetch("/auth/me", {
-            method: "GET",
-            credentials: "same-origin",
-            cache: "no-store",
-          });
-          if (meResp.ok) {
-            const me = await meResp.json();
-            latestEmail = String(me?.user?.email || latestEmail).trim().toLowerCase() || latestEmail;
-            latestRole = String(me?.user?.role || latestRole).trim() || latestRole;
-            latestFullName = String(me?.user?.full_name || latestFullName).trim() || latestFullName;
-          }
-        } catch (_) {
-          // Fallback to submitted values if profile refresh fails.
-        }
+        const data = await resp.json();
+        const latestUser = data?.user && typeof data.user === "object" ? data.user : {};
+        const latestEmail = String(latestUser.email || email).trim().toLowerCase() || email;
+        const latestRole = String(latestUser.role || role).trim() || role;
+        const latestFullName = String(latestUser.full_name || fullName).trim() || fullName;
         upsertSavedLoginProfile({
           email: latestEmail,
           role: latestRole,
@@ -1699,9 +1686,7 @@
     syncRoleTriggerText();
     consumeLogoutClearFlag();
     clearCredentialFields();
-    renderSavedEmailSuggestions();
     window.addEventListener("pageshow", clearCredentialFields);
-    ensureAuthState();
   </script>
 </body>
 </html>

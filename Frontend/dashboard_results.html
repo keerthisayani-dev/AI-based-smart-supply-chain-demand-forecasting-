@@ -589,6 +589,29 @@
       letter-spacing: 0.2px;
     }
 
+    .metric-delta {
+      margin-top: 8px;
+      min-height: 18px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #5f84b8;
+      letter-spacing: 0.02em;
+      transition: color 180ms ease, transform 180ms ease;
+    }
+
+    .metric-delta.up {
+      color: #15803d;
+    }
+
+    .metric-delta.down {
+      color: #b91c1c;
+    }
+
+    .metric.flash {
+      box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.24), 0 14px 28px rgba(59, 130, 246, 0.22);
+      transform: translateY(-1px);
+    }
+
     .chart-head {
       display: flex;
       justify-content: space-between;
@@ -2174,6 +2197,15 @@
     .table-wrap::-webkit-scrollbar-corner {
       background: rgba(240, 247, 255, 0.92);
     }
+    #historyTable .table-wrap tbody tr {
+      background: rgba(255, 255, 255, 0.7);
+    }
+    #historyTable .table-wrap tbody tr:nth-child(even) {
+      background: rgba(242, 247, 255, 0.94);
+    }
+    #historyTable .table-wrap tbody tr:hover {
+      background: rgba(232, 242, 255, 0.96);
+    }
 
     table {
       width: 100%;
@@ -2404,6 +2436,12 @@
         backdrop-filter: blur(16px);
         flex-direction: column;
         align-items: stretch;
+        transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+      }
+      body.results-layout .top-nav:hover {
+        transform: translateY(-3px);
+        border-color: rgba(129, 176, 220, 0.34);
+        box-shadow: 0 22px 46px rgba(115, 152, 181, 0.22);
       }
 
       body.results-layout .logo-section {
@@ -2413,6 +2451,13 @@
         background: rgba(255, 255, 255, 0.76);
         border: 1px solid rgba(174, 205, 220, 0.22);
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease, background 0.24s ease;
+      }
+      body.results-layout .logo-section:hover {
+        transform: translateX(3px);
+        border-color: rgba(129, 176, 220, 0.32);
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 14px 28px rgba(115, 152, 181, 0.16);
       }
 
       body.results-layout .logo-wordmark {
@@ -2500,8 +2545,16 @@
       }
 
       body.results-layout .menu-item:hover {
+        transform: translateX(6px);
         background: rgba(243, 252, 255, 0.96);
         border-color: rgba(102, 180, 207, 0.24);
+        box-shadow: 0 10px 22px rgba(115, 152, 181, 0.14);
+      }
+      body.results-layout .menu-item.active:hover {
+        transform: translateX(4px);
+        background: linear-gradient(135deg, #0d75be 0%, #25bae6 100%);
+        color: #ffffff;
+        border-color: rgba(45, 158, 215, 0.28);
       }
 
       body.results-layout .menu-item {
@@ -2510,6 +2563,8 @@
         padding: 12px 14px;
         font-weight: 600;
         white-space: normal;
+        transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+        will-change: transform;
       }
 
       body.results-layout #logoutBtn {
@@ -2525,7 +2580,9 @@
       }
 
       body.results-layout #logoutBtn:hover {
+        transform: translateY(-2px) scale(1.01);
         background: linear-gradient(135deg, #0c81cf 0%, #35c7ef 100%);
+        box-shadow: 0 18px 30px rgba(45, 158, 215, 0.24);
       }
 
       body.results-layout .page-shell {
@@ -2744,7 +2801,8 @@
           width: 100%;
         }
       }
-    </style>
+  </style>
+  <link rel="stylesheet" href="/assets/css/portfolio_dark_theme.css?v=20260402-02" />
 </head>
 <body class="results-layout">
   <div class="mesh-bg" aria-hidden="true"></div>
@@ -2853,16 +2911,19 @@
         <i data-lucide="box" class="metric-icon"></i>
         <div class="k" id="kTotalLabel">Total Unit Solds</div>
         <div class="v" id="mTotal">0</div>
+        <div class="metric-delta" id="mTotalDelta">Waiting for live update</div>
       </article>
       <article class="glass-card metric">
         <i data-lucide="trending-up" class="metric-icon"></i>
         <div class="k" id="kAvgLabel">Average Daily Prediction</div>
         <div class="v" id="mAvg">0</div>
+        <div class="metric-delta" id="mAvgDelta">Waiting for live update</div>
       </article>
       <article class="glass-card metric">
         <i data-lucide="activity" class="metric-icon"></i>
         <div class="k">Latest Actual Units</div>
         <div class="v" id="mActual">0</div>
+        <div class="metric-delta" id="mActualDelta">Waiting for live update</div>
       </article>
     </section>
 
@@ -3301,12 +3362,18 @@
     const resultsPayloadCache = new Map();
     const resultsPayloadInflight = new Map();
     const RESULTS_PAYLOAD_CACHE_TTL_MS = 10 * 60 * 1000;
+    const RESULTS_BOOTSTRAP = window.__DEMANDIQ_RESULTS_BOOTSTRAP__ || {};
     const DYNAMIC_OPTIONS_CACHE_KEY = "results_dynamic_options_cache_v1";
     const DYNAMIC_OPTIONS_CACHE_TTL_MS = 10 * 60 * 1000;
     let strategyCacheWarmStarted = false;
     let strategyPanelOpen = false;
     let dynamicToolsPanelOpen = false;
     let comparePanelOpen = false;
+    const RESULTS_AUTO_REFRESH_MS = 1000;
+    let resultsAutoRefreshTimer = null;
+    let resultsAutoRefreshBusy = false;
+    let latestLiveStatus = { running: false, tick_count: 0, latest_data_date: "", live_dataset_rows: 0, interval_seconds: 1, last_tick_at: "" };
+    let previousMetricSnapshot = { total: null, avg: null, actual: null };
     let historyPanelOpen = false;
     let adminUploadPanelOpen = false;
     let currentResultsSection = "reports";
@@ -5278,6 +5345,17 @@
     async function fetchForecastPayloadCached({ category, city, store, anchorDate, horizonDays, lookback, forceRefresh = false }) {
       const key = buildResultsCacheKey({ category, city, store, anchorDate, horizonDays, lookback });
       const now = Date.now();
+      const bootstrapForecast = RESULTS_BOOTSTRAP?.forecast_payload;
+      if (!forceRefresh && bootstrapForecast) {
+        const sameCategory = String(bootstrapForecast.category || "") === String(category || "");
+        const sameCity = String(bootstrapForecast.city || "") === String(city || "");
+        const sameStore = String(bootstrapForecast.store || "") === String(store || "");
+        const sameAnchor = String(bootstrapForecast.anchor_date || "") === String(anchorDate || "");
+        if (sameCategory && sameCity && sameStore && sameAnchor) {
+          resultsPayloadCache.set(key, { ts: now, payload: bootstrapForecast });
+          return bootstrapForecast;
+        }
+      }
       const cached = resultsPayloadCache.get(key);
       if (!forceRefresh && cached && (now - cached.ts) < RESULTS_PAYLOAD_CACHE_TTL_MS) {
         return cached.payload;
@@ -5288,7 +5366,7 @@
 
       const requestPromise = (async () => {
         const url = `${apiBase()}/forecast/${encodeURIComponent(category)}?city=${encodeURIComponent(city)}&store=${encodeURIComponent(store)}&horizon=${horizonDays}&history_lookback_days=${lookback}&anchor_date=${anchorDate}`;
-        const resp = await fetch(url);
+        const resp = await authFetch(url, { cache: "no-store" });
         if (!resp.ok) {
           let detail = `HTTP ${resp.status}`;
           try {
@@ -5314,14 +5392,69 @@
       }
     }
 
-    async function loadResults() {
+    async function fetchLiveStatus() {
+      const resp = await authFetch(`${apiBase()}/live-data/status`, { cache: "no-store" });
+      if (!resp.ok) {
+        throw new Error(`Live status failed (${resp.status})`);
+      }
+      const payload = await resp.json();
+      latestLiveStatus = {
+        ...latestLiveStatus,
+        ...(payload && typeof payload === "object" ? payload : {}),
+      };
+      return latestLiveStatus;
+    }
+
+    function buildLiveDateWindow(latestIsoDate, horizonDays) {
+      const latest = normalizeToIsoDate(latestIsoDate);
+      if (!latest) return null;
+      const fromDate = latest;
+      const toDateObj = new Date(`${latest}T00:00:00Z`);
+      toDateObj.setUTCDate(toDateObj.getUTCDate() + Math.max(0, Number(horizonDays || 1) - 1));
+      return {
+        fromDate,
+        toDate: toDateObj.toISOString().slice(0, 10),
+      };
+    }
+
+    function flashMetricCard(valueEl) {
+      const card = valueEl?.closest?.(".metric");
+      if (!card) return;
+      card.classList.add("flash");
+      window.setTimeout(() => card.classList.remove("flash"), 320);
+    }
+
+    function updateMetricDelta(deltaEl, valueEl, previousValue, nextValue, suffix = "") {
+      if (!deltaEl || !valueEl || previousValue == null || !Number.isFinite(previousValue) || !Number.isFinite(nextValue)) {
+        if (deltaEl) {
+          deltaEl.textContent = "Waiting for live update";
+          deltaEl.className = "metric-delta";
+        }
+        return;
+      }
+      const delta = Number(nextValue) - Number(previousValue);
+      if (Math.abs(delta) < 1e-9) {
+        deltaEl.textContent = "No change this tick";
+        deltaEl.className = "metric-delta";
+        return;
+      }
+      const direction = delta > 0 ? "up" : "down";
+      const prefix = delta > 0 ? "+" : "";
+      deltaEl.textContent = `${prefix}${fmtWholeNumber(delta)}${suffix} since last tick`;
+      deltaEl.className = `metric-delta ${direction}`;
+      flashMetricCard(valueEl);
+    }
+
+    async function loadResults(options = {}) {
       const requestId = ++latestLoadRequestId;
+      const forceRefresh = Boolean(options?.forceRefresh);
+      const liveStatus = options?.liveStatus && typeof options.liveStatus === "object" ? options.liveStatus : null;
       const params = new URLSearchParams(window.location.search);
       const city = params.get("city") || "";
       const store = params.get("store") || "";
       const category = params.get("category") || "";
-      const fromDate = params.get("from") || "";
-      const toDate = params.get("to") || "";
+      const originalFromDate = params.get("from") || "";
+      const originalToDate = params.get("to") || "";
       const mode = (params.get("mode") || "forecast").toLowerCase();
       currentMode = mode === "past" ? "past" : "forecast";
       const contextEl = document.getElementById("contextText");
@@ -5361,7 +5494,7 @@
     });
       modeToggleBtn.textContent = currentMode === "past" ? "Predicted View" : "Past Demand View";
 
-      if (!city || !store || !category || !fromDate || !toDate) {
+      if (!city || !store || !category || !originalFromDate || !originalToDate) {
         if (contextEl) contextEl.textContent = "Scope: Missing";
         if (periodTextEl) periodTextEl.textContent = "Period: Missing";
         if (roleTextEl) roleTextEl.textContent = roleAccessNote;
@@ -5369,11 +5502,28 @@
         return;
       }
 
+      const originalFromIso = normalizeToIsoDate(originalFromDate);
+      const originalToIso = normalizeToIsoDate(originalToDate);
+      const basePeriodDays = (originalFromIso && originalToIso)
+        ? Math.max(1, Math.floor((new Date(`${originalToIso}T00:00:00Z`) - new Date(`${originalFromIso}T00:00:00Z`)) / 86400000) + 1)
+        : 14;
+      const liveWindow = currentMode === "forecast" && liveStatus?.running
+        ? buildLiveDateWindow(liveStatus.latest_data_date, basePeriodDays)
+        : null;
+      const fromDate = liveWindow?.fromDate || originalFromDate;
+      const toDate = liveWindow?.toDate || originalToDate;
+
       if (contextEl) contextEl.textContent = `Scope: ${city} | ${store} | ${category}`;
-      if (periodTextEl) periodTextEl.textContent = `Period: ${formatDisplayDate(fromDate)} - ${formatDisplayDate(toDate)}`;
+      if (periodTextEl) {
+        periodTextEl.textContent = liveWindow
+          ? `Period: Live rolling window ${formatDisplayDate(fromDate)} - ${formatDisplayDate(toDate)}`
+          : `Period: ${formatDisplayDate(fromDate)} - ${formatDisplayDate(toDate)}`;
+      }
       if (roleTextEl) roleTextEl.textContent = roleAccessNote;
       if (resultsHeroMetaEl) {
-        resultsHeroMetaEl.textContent = `${currentMode === "past" ? "Past demand" : "Predicted"} view for ${category} in ${city}, ${store}.`;
+        resultsHeroMetaEl.textContent = liveWindow
+          ? `Live view for ${category} in ${city}, ${store} | tick ${Number(liveStatus?.tick_count || 0)} | ${Number(liveStatus?.live_dataset_rows || 0)} live rows | updated ${String(liveStatus?.last_tick_at || "").replace("T", " ").replace("Z", " UTC")}`
+          : `${currentMode === "past" ? "Past demand" : "Predicted"} view for ${category} in ${city}, ${store}.`;
       }
       exportState.city = city;
       exportState.store = store;
@@ -5386,20 +5536,11 @@
       const strategyProductEl = document.getElementById("strategyProduct");
       const strategyFromEl = document.getElementById("strategyFromDate");
       const strategyToEl = document.getElementById("strategyToDate");
-      let strategyProductChanged = false;
       if (strategyProductEl && category && Array.isArray(dynamicProductOptions) && dynamicProductOptions.includes(category)) {
-        strategyProductChanged = String(strategyProductEl.value || "") !== category;
         strategyProductEl.value = category;
       }
       if (strategyFromEl && fromIso) strategyFromEl.value = fromIso;
       if (strategyToEl && toIso) strategyToEl.value = toIso;
-      if (strategyProductChanged) {
-        try {
-          await syncStrategyInputsForProductChange();
-        } catch (_) {
-          // Non-fatal: simulator fallback logic still handles missing sync data.
-        }
-      }
       if (!fromIso || !toIso) {
         contextEl.textContent = "Invalid date range selected.";
         resetXaiPanel("Invalid date range for predicted request.");
@@ -5423,6 +5564,7 @@
           anchorDate: requestAnchor,
           horizonDays: periodDays,
           lookback,
+          forceRefresh,
         });
         if (requestId !== latestLoadRequestId) return;
 
@@ -5467,9 +5609,20 @@
           roleTextEl.textContent = `${roleAccessNote} Note: No predicted values generated for selected period.`;
         }
 
-        document.getElementById("mTotal").textContent = fmtWholeNumber(exportState.total);
-        document.getElementById("mAvg").textContent = fmtWholeNumber(exportState.avg);
-        document.getElementById("mActual").textContent = fmtWholeNumber(latestActual);
+        const mTotalEl = document.getElementById("mTotal");
+        const mAvgEl = document.getElementById("mAvg");
+        const mActualEl = document.getElementById("mActual");
+        if (mTotalEl) mTotalEl.textContent = fmtWholeNumber(exportState.total);
+        if (mAvgEl) mAvgEl.textContent = fmtWholeNumber(exportState.avg);
+        if (mActualEl) mActualEl.textContent = fmtWholeNumber(latestActual);
+        updateMetricDelta(document.getElementById("mTotalDelta"), mTotalEl, previousMetricSnapshot.total, exportState.total);
+        updateMetricDelta(document.getElementById("mAvgDelta"), mAvgEl, previousMetricSnapshot.avg, exportState.avg);
+        updateMetricDelta(document.getElementById("mActualDelta"), mActualEl, previousMetricSnapshot.actual, latestActual);
+        previousMetricSnapshot = {
+          total: exportState.total,
+          avg: exportState.avg,
+          actual: latestActual,
+        };
 
         const selectedFromTs = new Date(`${fromIso}T00:00:00Z`).getTime();
         const selectedToTs = new Date(`${toIso}T23:59:59Z`).getTime();
@@ -5586,73 +5739,85 @@
           : toDate;
         const forecastStartDate = filteredForecast.length ? filteredForecast[0].date : null;
 
-        if (!window.Plotly || typeof window.Plotly.newPlot !== "function") {
-          throw new Error("Chart library failed to load (Plotly unavailable).");
-        }
         const chartEl = document.getElementById("chart");
-        Plotly.newPlot("chart", series, {
-          title: mode === "past" ? `Past Demand Trend: ${category}` : `Demand Trend vs Predicted: ${category}`,
-          paper_bgcolor: "rgba(0,0,0,0)",
-          plot_bgcolor: "rgba(0,0,0,0)",
-          font: { color: "#2b5378" },
-          titlefont: { color: "#1f4f8a" },
-          hovermode: "x unified",
-          hoverlabel: {
-            bgcolor: "rgba(248, 253, 255, 0.96)",
-            bordercolor: "rgba(106, 163, 222, 0.34)",
-            font: { color: "#1f4f8a" }
-          },
-          xaxis: {
-            title: "Date",
-            tickfont: { color: "#5f84b8" },
-            titlefont: { color: "#4f76ad" },
-            gridcolor: "rgba(96, 165, 250, 0.15)",
-            zerolinecolor: "rgba(96, 165, 250, 0.18)",
-            range: [chartFrom, chartTo],
-            tickformat: "%b %-d",
-            nticks: 10,
-            tickangle: 0,
-            automargin: true,
-          },
-          yaxis: {
-            title: "Units Sold",
-            tickfont: { color: "#5f84b8" },
-            titlefont: { color: "#4f76ad" },
-            gridcolor: "rgba(96, 165, 250, 0.15)",
-            zerolinecolor: "rgba(96, 165, 250, 0.18)",
-            automargin: true,
-          },
-          shapes: forecastStartDate && currentMode !== "past" ? [{
-            type: "line",
-            x0: forecastStartDate,
-            x1: forecastStartDate,
-            yref: "paper",
-            y0: 0,
-            y1: 1,
-            line: { color: "rgba(96, 165, 250, 0.42)", width: 1, dash: "dot" }
-          }] : [],
-          legend: { font: { color: "#5f84b8" } },
-          margin: { t: 44, l: 50, r: 20, b: 50 }
-        }, {
-          responsive: true,
-          displaylogo: false,
-          modeBarButtonsToRemove: [
-            "zoom2d", "pan2d", "select2d", "lasso2d",
-            "zoomIn2d", "zoomOut2d", "autoScale2d",
-            "hoverClosestCartesian", "hoverCompareCartesian", "toggleSpikelines"
-          ]
-        });
-        requestAnimationFrame(() => {
-          if (chartEl && window.Plotly?.Plots?.resize) {
-            window.Plotly.Plots.resize(chartEl);
+        try {
+          if (!window.Plotly || typeof window.Plotly.newPlot !== "function") {
+            throw new Error("Chart library failed to load");
           }
-        });
+          Plotly.newPlot("chart", series, {
+            title: mode === "past" ? `Past Demand Trend: ${category}` : `Demand Trend vs Predicted: ${category}`,
+            paper_bgcolor: "rgba(0,0,0,0)",
+            plot_bgcolor: "rgba(0,0,0,0)",
+            font: { color: "#2b5378" },
+            titlefont: { color: "#1f4f8a" },
+            hovermode: "x unified",
+            hoverlabel: {
+              bgcolor: "rgba(248, 253, 255, 0.96)",
+              bordercolor: "rgba(106, 163, 222, 0.34)",
+              font: { color: "#1f4f8a" }
+            },
+            xaxis: {
+              title: "Date",
+              tickfont: { color: "#5f84b8" },
+              titlefont: { color: "#4f76ad" },
+              gridcolor: "rgba(96, 165, 250, 0.15)",
+              zerolinecolor: "rgba(96, 165, 250, 0.18)",
+              range: [chartFrom, chartTo],
+              tickformat: "%b %-d",
+              nticks: 10,
+              tickangle: 0,
+              automargin: true,
+            },
+            yaxis: {
+              title: "Units Sold",
+              tickfont: { color: "#5f84b8" },
+              titlefont: { color: "#4f76ad" },
+              gridcolor: "rgba(96, 165, 250, 0.15)",
+              zerolinecolor: "rgba(96, 165, 250, 0.18)",
+              automargin: true,
+            },
+            shapes: forecastStartDate && currentMode !== "past" ? [{
+              type: "line",
+              x0: forecastStartDate,
+              x1: forecastStartDate,
+              yref: "paper",
+              y0: 0,
+              y1: 1,
+              line: { color: "rgba(96, 165, 250, 0.42)", width: 1, dash: "dot" }
+            }] : [],
+            legend: { font: { color: "#5f84b8" } },
+            margin: { t: 44, l: 50, r: 20, b: 50 }
+          }, {
+            responsive: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: [
+              "zoom2d", "pan2d", "select2d", "lasso2d",
+              "zoomIn2d", "zoomOut2d", "autoScale2d",
+              "hoverClosestCartesian", "hoverCompareCartesian", "toggleSpikelines"
+            ]
+          });
+          requestAnimationFrame(() => {
+            if (chartEl && window.Plotly?.Plots?.resize) {
+              window.Plotly.Plots.resize(chartEl);
+            }
+          });
+        } catch (chartErr) {
+          if (chartEl) {
+            chartEl.innerHTML = `<div style="padding:24px;color:#5f84b8;text-align:center;">Forecast data loaded, but the chart could not render: ${escapeHtml(String(chartErr?.message || "Unknown chart error"))}</div>`;
+          }
+        }
 
         exportState.historyCols = ["date", "actual_units_sold"];
         exportState.historyRows = [...(currentMode === "past" ? pastHistoryForDisplay : filteredHistory)].reverse();
         exportState.pastBaseRows = [...pastHistoryForDisplay];
         exportState.forecastBaseRows = [...filteredForecast];
         applyGranularityTable();
+
+        Promise.resolve()
+          .then(() => syncStrategyInputsForProductChange())
+          .catch(() => {
+            // Strategy sync should never block main result rendering.
+          });
 
         loadRecentHistory(category)
           .then((loadedRecent) => {
@@ -5694,8 +5859,28 @@
       } catch (err) {
         if (requestId !== latestLoadRequestId) return;
         contextEl.textContent = `Failed to fetch predicted data: ${err.message}`;
+        const chartEl = document.getElementById("chart");
+        if (chartEl) {
+          chartEl.innerHTML = `<div style="padding:24px;color:#b45309;text-align:center;">Unable to load results: ${escapeHtml(String(err?.message || "Unknown error"))}</div>`;
+        }
         resetXaiPanel(`Simulator unavailable: ${err.message}`);
       }
+    }
+
+    function startResultsAutoRefresh() {
+      if (resultsAutoRefreshTimer) window.clearInterval(resultsAutoRefreshTimer);
+      resultsAutoRefreshTimer = window.setInterval(async () => {
+        if (document.hidden || resultsAutoRefreshBusy) return;
+        try {
+          resultsAutoRefreshBusy = true;
+          const liveStatus = await fetchLiveStatus().catch(() => latestLiveStatus);
+          await loadResults({ forceRefresh: true, liveStatus });
+        } catch (_) {
+          // Keep the existing UI state if a background refresh fails.
+        } finally {
+          resultsAutoRefreshBusy = false;
+        }
+      }, RESULTS_AUTO_REFRESH_MS);
     }
 
     document.getElementById("backBtn").addEventListener("click", () => {
@@ -6517,37 +6702,52 @@
     }
 
     async function initializePage() {
-      const plotlyReady = await ensurePlotlyLoaded();
-      if (!plotlyReady) {
-        const contextEl = document.getElementById("contextText");
-        if (contextEl) {
-          contextEl.textContent = "Chart library could not be loaded. Check internet/firewall and reload.";
-        }
-      }
-      loadDynamicOptions({ preferCache: true }).catch(() => {
-        // Keep results loading even if dynamic options are slow or unavailable.
-      });
-      await applyRoleUi();
-      await loadResults();
-      applyResultsSectionRoute();
-      // Load dynamic editor data in background so forecast results render immediately.
-      loadDynamicOptions({ preferCache: true, forceRefresh: true })
-        .then(async () => {
-          await Promise.all([
-            loadDynamicRecords(),
-            syncStrategyInputsForProductChange(),
-          ]);
-          warmStrategyCacheForProducts(dynamicProductOptions);
-        })
-        .catch((err) => {
-          setDynamicEditorStatus(`Dynamic data unavailable: ${String(err?.message || "Unknown error")}`);
-          setCompareStatus(`Dynamic compare unavailable: ${String(err?.message || "Unknown error")}`);
-          setStrategyStatus(`Strategy simulator unavailable: ${String(err?.message || "Unknown error")}`);
-        });
       const shell = document.querySelector(".page-shell");
-      if (shell) {
-        shell.classList.remove("preload");
-        shell.classList.add("ready");
+      try {
+        if (shell) {
+          shell.classList.remove("preload");
+          shell.classList.add("ready");
+        }
+
+        const plotlyReady = await ensurePlotlyLoaded();
+        if (!plotlyReady) {
+          const contextEl = document.getElementById("contextText");
+          if (contextEl) {
+            contextEl.textContent = "Chart library could not be loaded. Check internet/firewall and reload.";
+          }
+        }
+        loadDynamicOptions({ preferCache: true }).catch(() => {
+          // Keep results loading even if dynamic options are slow or unavailable.
+        });
+        await applyRoleUi();
+        const liveStatus = await fetchLiveStatus().catch(() => latestLiveStatus);
+        await loadResults({ forceRefresh: true, liveStatus });
+        startResultsAutoRefresh();
+        applyResultsSectionRoute();
+
+        // Load dynamic editor data in background so forecast results render immediately.
+        loadDynamicOptions({ preferCache: true, forceRefresh: true })
+          .then(async () => {
+            await Promise.all([
+              loadDynamicRecords(),
+              syncStrategyInputsForProductChange(),
+            ]);
+            warmStrategyCacheForProducts(dynamicProductOptions);
+          })
+          .catch((err) => {
+            setDynamicEditorStatus(`Dynamic data unavailable: ${String(err?.message || "Unknown error")}`);
+            setCompareStatus(`Dynamic compare unavailable: ${String(err?.message || "Unknown error")}`);
+            setStrategyStatus(`Strategy simulator unavailable: ${String(err?.message || "Unknown error")}`);
+          });
+      } catch (err) {
+        const contextEl = document.getElementById("contextText");
+        const roleTextEl = document.getElementById("roleText");
+        const chartEl = document.getElementById("chart");
+        if (contextEl) contextEl.textContent = `Results page failed to initialize: ${String(err?.message || err)}`;
+        if (roleTextEl) roleTextEl.textContent = "Please refresh the page. If the issue continues, the initialization error is shown above.";
+        if (chartEl) {
+          chartEl.innerHTML = `<div style="padding:24px;color:#b45309;text-align:center;">Initialization failed: ${escapeHtml(String(err?.message || err))}</div>`;
+        }
       }
     }
 

@@ -1,0 +1,402 @@
+:root {
+  --portfolio-bg: #f8fbff;
+  --portfolio-bg-soft: #eef5ff;
+  --portfolio-surface: rgba(255, 255, 255, 0.9);
+  --portfolio-surface-soft: rgba(248, 251, 255, 0.96);
+  --portfolio-surface-strong: rgba(241, 247, 255, 0.98);
+  --portfolio-line: rgba(140, 170, 210, 0.24);
+  --portfolio-line-soft: rgba(140, 170, 210, 0.14);
+  --portfolio-text: #17386b;
+  --portfolio-muted: #5f7f9e;
+  --portfolio-faint: #89a0bc;
+  --portfolio-accent: #1687d9;
+  --portfolio-accent-strong: #0f6db8;
+  --portfolio-accent-soft: rgba(22, 135, 217, 0.12);
+  --portfolio-gold: #4f76ad;
+  --portfolio-shadow: 0 18px 42px rgba(111, 142, 173, 0.16);
+}
+
+body.dashboard-layout,
+body.results-layout,
+body.admin-layout,
+body.login-theme,
+body.about-layout,
+body.ai-chat-layout {
+  color: var(--portfolio-text);
+  background:
+    radial-gradient(circle at top right, rgba(181, 229, 255, 0.34), transparent 26%),
+    radial-gradient(circle at 10% 12%, rgba(210, 236, 255, 0.5), transparent 22%),
+    linear-gradient(180deg, #fcfeff 0%, #f4f8ff 54%, #eef5ff 100%);
+  background-attachment: fixed;
+}
+
+body.dashboard-layout::before,
+body.results-layout::before,
+body.admin-layout::before,
+body.login-theme::before,
+body.about-layout::before,
+body.ai-chat-layout::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(235, 244, 255, 0.28)),
+    radial-gradient(circle at center, transparent 40%, rgba(215, 228, 246, 0.16) 100%);
+  z-index: -1;
+}
+
+body.dashboard-layout .mesh-bg,
+body.results-layout .mesh-bg,
+body.admin-layout .mesh-bg,
+body.login-theme .mesh-bg,
+body.about-layout .mesh-bg,
+body.ai-chat-layout .mesh-bg {
+  opacity: 0.82;
+  filter: saturate(1.02) brightness(1.03);
+}
+
+body.dashboard-layout .top-nav,
+body.results-layout .top-nav,
+body.dashboard-layout .dashboard-topbar,
+body.results-layout .glass-card,
+body.admin-layout .glass-card,
+body.admin-layout .topbar,
+body.about-layout .top-nav,
+body.about-layout .glass-card,
+body.ai-chat-layout .top-nav,
+body.ai-chat-layout .hero-card,
+body.ai-chat-layout .chat-card,
+body.ai-chat-layout .composer,
+body.login-theme .login-card,
+body.dashboard-layout .surface-card,
+body.dashboard-layout .dashboard-hero-card,
+body.dashboard-layout .forecast-panel,
+body.dashboard-layout #forecastVisualization,
+body.dashboard-layout .analytics-card,
+body.dashboard-layout .assistant-card,
+body.dashboard-layout .viz-card,
+body.results-layout .results-hero-card,
+body.results-layout .metric,
+body.results-layout .page-footer,
+body.dashboard-layout .page-footer,
+body.results-layout .top-nav,
+body.admin-layout .page-footer,
+body.about-layout .page-footer,
+body.ai-chat-layout .page-footer {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(245, 250, 255, 0.88)) !important;
+  border: 1px solid var(--portfolio-line) !important;
+  box-shadow: var(--portfolio-shadow) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+body.dashboard-layout .top-nav,
+body.results-layout .top-nav,
+body.about-layout .top-nav,
+body.ai-chat-layout .top-nav,
+body.admin-layout .topbar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(242, 248, 255, 0.94)) !important;
+}
+
+body.dashboard-layout .logo-link,
+body.results-layout .logo-link,
+body.about-layout .logo-link,
+body.ai-chat-layout .logo-link,
+body.admin-layout .topbar-logo {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(167, 197, 227, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84);
+}
+
+body.dashboard-layout .logo-wordmark,
+body.results-layout .logo-wordmark,
+body.about-layout .logo-wordmark,
+body.ai-chat-layout .logo-wordmark,
+body.admin-layout .topbar-brand,
+body.dashboard-layout h1,
+body.results-layout h1,
+body.admin-layout h1,
+body.admin-layout h2,
+body.about-layout h1,
+body.about-layout h2,
+body.ai-chat-layout h1,
+body.ai-chat-layout h2,
+body.ai-chat-layout h3,
+body.login-theme .brand-title {
+  color: var(--portfolio-text) !important;
+  text-shadow: none;
+}
+
+body.dashboard-layout .logo-wordmark .iq,
+body.results-layout .logo-wordmark .iq,
+body.about-layout .logo-wordmark .iq,
+body.ai-chat-layout .logo-wordmark .iq {
+  color: var(--portfolio-accent) !important;
+}
+
+body.dashboard-layout p,
+body.results-layout p,
+body.admin-layout p,
+body.about-layout p,
+body.about-layout li,
+body.ai-chat-layout p,
+body.ai-chat-layout .message-meta,
+body.ai-chat-layout .composer-note,
+body.login-theme .subtitle,
+body.login-theme .note,
+body.login-theme .footer,
+body.login-theme .role-help,
+body.dashboard-layout .field-meta,
+body.dashboard-layout .analytics-text,
+body.dashboard-layout .hero-meta,
+body.dashboard-layout .viz-meta-line,
+body.results-layout .results-hero-desc,
+body.results-layout .results-hero-meta,
+body.results-layout .subtle,
+body.admin-layout .admin-hero-desc {
+  color: var(--portfolio-muted) !important;
+}
+
+body.dashboard-layout .menu-item,
+body.results-layout .menu-item,
+body.about-layout .menu-item,
+body.ai-chat-layout .menu-item,
+body.ai-chat-layout .logout-btn,
+body.dashboard-layout .top-action-btn,
+body.admin-layout .nav-btn,
+body.admin-layout .promote-btn,
+body.admin-layout .delete-btn,
+body.admin-layout .account-scroll-btn,
+body.admin-layout .confirm-delete-btn,
+body.admin-layout .confirm-cancel-btn,
+body.results-layout .btn,
+body.results-layout .btn-secondary,
+body.results-layout .mini-btn,
+body.results-layout .chart-download-btn,
+body.login-theme .btn,
+body.about-layout #logoutBtn {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.92)) !important;
+  border: 1px solid rgba(152, 188, 224, 0.34) !important;
+  color: var(--portfolio-text) !important;
+  box-shadow: 0 10px 22px rgba(120, 154, 194, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+body.dashboard-layout .menu-item:hover,
+body.results-layout .menu-item:hover,
+body.about-layout .menu-item:hover,
+body.ai-chat-layout .menu-item:hover,
+body.ai-chat-layout .logout-btn:hover,
+body.dashboard-layout .top-action-btn:hover,
+body.admin-layout .nav-btn:hover,
+body.admin-layout .promote-btn:hover,
+body.admin-layout .delete-btn:hover,
+body.admin-layout .account-scroll-btn:hover,
+body.admin-layout .confirm-delete-btn:hover,
+body.admin-layout .confirm-cancel-btn:hover,
+body.results-layout .btn:hover,
+body.results-layout .btn-secondary:hover,
+body.results-layout .mini-btn:hover,
+body.results-layout .chart-download-btn:hover,
+body.login-theme .btn:hover,
+body.about-layout #logoutBtn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(93, 155, 219, 0.42) !important;
+  box-shadow: 0 14px 28px rgba(120, 154, 194, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.94);
+}
+
+body.dashboard-layout .menu-item.active,
+body.results-layout .menu-item.active,
+body.about-layout .menu-item.active,
+body.ai-chat-layout .menu-item.active,
+body.dashboard-layout .top-action-btn-primary,
+body.admin-layout .nav-btn-logout,
+body.results-layout .btn,
+body.results-layout .compare-btn,
+body.results-layout .dynamic-cta,
+body.results-layout .chart-download-btn,
+body.login-theme .mode-btn.active,
+body.login-theme .btn,
+body.ai-chat-layout .send-btn,
+body.about-layout #logoutBtn {
+  background: linear-gradient(180deg, var(--portfolio-accent), var(--portfolio-accent-strong)) !important;
+  border-color: rgba(18, 117, 189, 0.45) !important;
+  color: #ffffff !important;
+}
+
+body.dashboard-layout .nav-btn-logout,
+body.results-layout #logoutBtn.menu-item,
+body.admin-layout .confirm-delete-btn {
+  background: linear-gradient(180deg, #f46d6d, #d94a4a) !important;
+}
+
+body.dashboard-layout .meta-chip,
+body.results-layout .user-badge,
+body.about-layout .user-badge,
+body.ai-chat-layout .hero-pill,
+body.ai-chat-layout .prompt-chip,
+body.admin-layout .stat-label,
+body.admin-layout .confirm-copy {
+  background: rgba(247, 251, 255, 0.94) !important;
+  border: 1px solid rgba(163, 194, 225, 0.34) !important;
+  color: var(--portfolio-muted) !important;
+}
+
+body.dashboard-layout input,
+body.dashboard-layout select,
+body.dashboard-layout textarea,
+body.dashboard-layout .category-trigger,
+body.dashboard-layout .category-search,
+body.results-layout input,
+body.results-layout select,
+body.results-layout textarea,
+body.results-layout .field,
+body.results-layout .control,
+body.results-layout #datasetFileInput,
+body.admin-layout input,
+body.admin-layout select,
+body.about-layout input,
+body.about-layout select,
+body.ai-chat-layout textarea,
+body.ai-chat-layout .field select,
+body.login-theme input,
+body.login-theme .custom-select-trigger,
+body.login-theme .custom-select-menu,
+body.login-theme .email-suggestions {
+  background: rgba(251, 253, 255, 0.98) !important;
+  border: 1px solid rgba(168, 199, 227, 0.38) !important;
+  color: var(--portfolio-text) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+body.dashboard-layout input::placeholder,
+body.dashboard-layout textarea::placeholder,
+body.results-layout input::placeholder,
+body.results-layout textarea::placeholder,
+body.admin-layout input::placeholder,
+body.login-theme input::placeholder,
+body.ai-chat-layout textarea::placeholder {
+  color: var(--portfolio-faint) !important;
+}
+
+body.dashboard-layout label,
+body.results-layout label,
+body.admin-layout label,
+body.about-layout .meta-k,
+body.ai-chat-layout .field label,
+body.login-theme label,
+body.dashboard-layout .summary-k,
+body.dashboard-layout .dashboard-eyebrow,
+body.results-layout .group-title,
+body.results-layout .section-kicker,
+body.admin-layout .admin-kicker {
+  color: #4f76ad !important;
+  letter-spacing: 0.16em;
+}
+
+body.dashboard-layout .summary-v,
+body.dashboard-layout .metric-row strong,
+body.dashboard-layout .insight-row strong,
+body.results-layout .metric-value,
+body.results-layout .big-number,
+body.admin-layout .stat-value,
+body.about-layout .meta-v {
+  color: var(--portfolio-text) !important;
+}
+
+body.dashboard-layout .surface-card:hover,
+body.dashboard-layout .dashboard-hero-card:hover,
+body.dashboard-layout .forecast-panel:hover,
+body.dashboard-layout .analytics-card:hover,
+body.results-layout .glass-card:hover,
+body.admin-layout .glass-card:hover,
+body.about-layout .glass-card:hover,
+body.ai-chat-layout .hero-card:hover,
+body.ai-chat-layout .chat-card:hover,
+body.login-theme .login-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 48px rgba(123, 157, 191, 0.18) !important;
+}
+
+body.dashboard-layout table,
+body.results-layout table,
+body.admin-layout table {
+  color: var(--portfolio-text);
+}
+
+body.dashboard-layout thead,
+body.results-layout thead,
+body.admin-layout thead {
+  background: linear-gradient(180deg, rgba(94, 160, 231, 0.96), rgba(59, 130, 246, 0.92)) !important;
+}
+
+body.dashboard-layout th,
+body.results-layout th,
+body.admin-layout th {
+  color: #f8fbff !important;
+}
+
+body.dashboard-layout tbody tr:nth-child(odd),
+body.results-layout tbody tr:nth-child(odd),
+body.admin-layout tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+body.dashboard-layout tbody tr:nth-child(even),
+body.results-layout tbody tr:nth-child(even),
+body.admin-layout tbody tr:nth-child(even) {
+  background: rgba(240, 247, 255, 0.86) !important;
+}
+
+body.dashboard-layout tbody td,
+body.results-layout tbody td,
+body.admin-layout tbody td {
+  color: var(--portfolio-muted) !important;
+  border-color: rgba(180, 205, 230, 0.24) !important;
+}
+
+body.dashboard-layout .chart-shell,
+body.results-layout .chart-shell,
+body.dashboard-layout #chart,
+body.results-layout #chart {
+  background: rgba(250, 252, 255, 0.96) !important;
+  border: 1px solid rgba(172, 201, 228, 0.22) !important;
+}
+
+body.dashboard-layout .page-shell,
+body.results-layout .page-shell,
+body.about-layout .page-shell,
+body.ai-chat-layout .page-shell,
+body.admin-layout .admin-shell {
+  position: relative;
+  z-index: 1;
+}
+
+body.login-theme .login-card {
+  max-width: 520px;
+}
+
+body.login-theme .brand-title {
+  font-size: clamp(2.4rem, 4vw, 3.6rem);
+}
+
+body.about-layout .glass-card,
+body.ai-chat-layout .hero-card,
+body.ai-chat-layout .chat-card,
+body.ai-chat-layout .composer,
+body.results-layout .glass-card,
+body.admin-layout .glass-card,
+body.dashboard-layout .surface-card {
+  border-radius: 24px !important;
+}
+
+@media (max-width: 900px) {
+  body.dashboard-layout .top-nav,
+  body.results-layout .top-nav,
+  body.about-layout .top-nav,
+  body.ai-chat-layout .top-nav,
+  body.admin-layout .topbar {
+    background: rgba(255, 255, 255, 0.96) !important;
+  }
+}

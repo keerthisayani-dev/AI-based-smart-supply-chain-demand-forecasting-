@@ -34,6 +34,11 @@ const dashboardTimeEl = document.getElementById("dashboardTime");
 const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
 const refreshBtnEl = document.getElementById("refreshBtn");
 const syncBtnEl = document.getElementById("syncBtn");
+const liveModeStatusEl = document.getElementById("liveModeStatus");
+const liveClearBtnEl = document.getElementById("liveClearBtn");
+const liveStartBtnEl = document.getElementById("liveStartBtn");
+const liveStopBtnEl = document.getElementById("liveStopBtn");
+const liveTickBtnEl = document.getElementById("liveTickBtn");
 const topLogoutBtnEl = document.getElementById("topLogoutBtn");
 const aiInsightTextEl = document.getElementById("aiInsightText");
 const avgDemandValueEl = document.getElementById("avgDemandValue");
@@ -51,6 +56,10 @@ const r2ValueEl = document.getElementById("r2Value");
 const exportCsvBtnEl = document.getElementById("exportCsvBtn");
 const exportPngBtnEl = document.getElementById("exportPngBtn");
 const exportPdfBtnEl = document.getElementById("exportPdfBtn");
+const cityStoreSummaryMetaEl = document.getElementById("cityStoreSummaryMeta");
+const cityStoreSummaryEmptyEl = document.getElementById("cityStoreSummaryEmpty");
+const cityStoreSummaryWrapEl = document.getElementById("cityStoreSummaryWrap");
+const cityStoreSummaryBodyEl = document.getElementById("cityStoreSummaryBody");
 
 const ALLOWED_MIN_DATE = "2025-01-01";
 const ALLOWED_MAX_DATE = "2031-12-31";
@@ -73,12 +82,31 @@ let latestDashboardData = null;
 let renderDebounceTimer = null;
 let renderRunId = 0;
 let latestRenderKey = "";
+let cityStoreSummaryRunId = 0;
+let currentUserRole = "";
+let liveStatusPollTimer = null;
+let liveAutoRefreshTimer = null;
+let liveControlBusy = false;
+let lastAppliedLiveDate = "";
+let dashboardInitialized = false;
+const LIVE_REFRESH_INTERVAL_MS = 2000;
+const LIVE_SIMULATION_INTERVAL_SECONDS = 1;
+let liveSimulationState = {
+  running: false,
+  tick_count: 0,
+  interval_seconds: LIVE_SIMULATION_INTERVAL_SECONDS,
+  latest_data_date: "",
+  live_dataset_rows: 0,
+  last_error: "",
+};
 const scopeOptionsState = {
   cities: [],
   categories: [],
   categoryCityMap: new Map(),
   cityCategoryMap: new Map(),
   categoryCityStoreMap: new Map(),
+  cityStoreMap: new Map(),
+  cityStoreCategoryMap: new Map(),
 };
 const debugLogLines = [];
 
@@ -110,6 +138,21 @@ async function fetchJsonWithDebug(url) {
     return JSON.parse(text);
   } catch (err) {
     throw new Error(`Invalid JSON from ${url}: ${text.slice(0, 180)}`);
+  }
+}
+
+async function fetchJson(url, options = {}) {
+  const resp = await fetch(url, {
+    cache: "no-store",
+    credentials: "same-origin",
+    ...options,
+  });
+  const text = await resp.text();
+  if (!resp.ok) throw new Error(text || `HTTP ${resp.status}`);
+  try {
+    return JSON.parse(text);
+  } catch (_) {
+    throw new Error(`Invalid JSON from ${url}`);
   }
 }
 
@@ -207,6 +250,19 @@ function formatDecimal(value, fractionDigits = 2) {
   return num.toFixed(fractionDigits);
 }
 
+function formatMaybeWhole(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "-";
+  const rounded = Math.round(num);
+  if (Math.abs(num - rounded) < 1e-9) {
+    return rounded.toLocaleString("en-US");
+  }
+  return num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 function normalizeScopeValues(values = []) {
   return [...new Set(
     (Array.isArray(values) ? values : [])
@@ -259,11 +315,25 @@ function getCategoriesForCity(city) {
   return getScopeMapValues(scopeOptionsState.cityCategoryMap, key);
 }
 
+function getStoresForCity(city) {
+  const key = String(city || "").trim();
+  if (!key) return [];
+  if (!scopeOptionsState.cityStoreMap.size) return [];
+  return getScopeMapValues(scopeOptionsState.cityStoreMap, key);
+}
+
 function getStoresForCategoryCity(category, city) {
   const categoryKey = String(category || "").trim();
   const cityKey = String(city || "").trim();
   if (!categoryKey || !cityKey) return [];
   return getScopeMapValues(scopeOptionsState.categoryCityStoreMap, `${categoryKey}|||${cityKey}`);
+}
+
+function getCategoriesForCityStore(city, store) {
+  const cityKey = String(city || "").trim();
+  const storeKey = String(store || "").trim();
+  if (!cityKey || !storeKey) return [];
+  return getScopeMapValues(scopeOptionsState.cityStoreCategoryMap, `${cityKey}|||${storeKey}`);
 }
 
 function populateScopeSelect(selectEl, placeholder, values, selectedValue) {
@@ -280,19 +350,14 @@ function populateScopeSelect(selectEl, placeholder, values, selectedValue) {
 }
 
 function setCategoryFirstMode() {
-  const hasCategory = Boolean(String(categoryEl.value || "").trim());
-  cityEl.disabled = !hasCategory;
+  cityEl.disabled = false;
   if (cityTriggerEl) {
-    cityTriggerEl.disabled = !hasCategory;
-    cityTriggerEl.setAttribute("aria-disabled", hasCategory ? "false" : "true");
-    cityTriggerEl.title = hasCategory ? "" : "Select a category first";
+    cityTriggerEl.disabled = false;
+    cityTriggerEl.setAttribute("aria-disabled", "false");
+    cityTriggerEl.title = "";
   }
-  if (cityShellEl) cityShellEl.classList.toggle("is-disabled", !hasCategory);
-  if (!hasCategory) {
-    cityEl.value = "";
-    updateCityPlaceholderState();
-  }
-  const hasCity = hasCategory && Boolean(String(cityEl.value || "").trim());
+  if (cityShellEl) cityShellEl.classList.remove("is-disabled");
+  const hasCity = Boolean(String(cityEl.value || "").trim());
   storeEl.disabled = !hasCity;
   if (storeTriggerEl) {
     storeTriggerEl.disabled = !hasCity;
@@ -304,35 +369,47 @@ function setCategoryFirstMode() {
     storeEl.value = "";
     updateStorePlaceholderState();
   }
+  const hasStore = hasCity && Boolean(String(storeEl.value || "").trim());
+  categoryEl.disabled = !hasStore;
+  if (categoryTriggerEl) {
+    categoryTriggerEl.disabled = !hasStore;
+    categoryTriggerEl.setAttribute("aria-disabled", hasStore ? "false" : "true");
+    categoryTriggerEl.title = hasStore ? "" : "Select a store first";
+  }
+  if (categoryShellEl) categoryShellEl.classList.toggle("is-disabled", !hasStore);
+  if (!hasStore) {
+    categoryEl.value = "";
+    updateCategoryPlaceholderState();
+  }
   if (cityMetaEl) {
-    const selectedCategory = String(categoryEl.value || "").trim();
-    if (!selectedCategory) {
-      cityMetaEl.textContent = "Select a category to view available cities.";
-    } else {
-      const cities = getCitiesForCategory(selectedCategory);
-      cityMetaEl.textContent = cities.length
-        ? `${cities.length} cities available for ${selectedCategory}`
-        : `No cities available for ${selectedCategory}`;
-    }
+    cityMetaEl.textContent = scopeOptionsState.cities.length
+      ? `${scopeOptionsState.cities.length} cities available in the live scope`
+      : "No cities available right now";
   }
   if (storeMetaEl) {
-    const selectedCategory = String(categoryEl.value || "").trim();
     const selectedCity = String(cityEl.value || "").trim();
-    if (!selectedCategory) {
-      storeMetaEl.textContent = "Select a category and city to view available stores.";
-    } else if (!selectedCity) {
+    if (!selectedCity) {
       storeMetaEl.textContent = "Select a city to view available stores.";
     } else {
-      const stores = getStoresForCategoryCity(selectedCategory, selectedCity);
+      const stores = getStoresForCity(selectedCity);
       storeMetaEl.textContent = stores.length
         ? `${stores.length} stores available in ${selectedCity}`
-        : `No stores available in ${selectedCity} for ${selectedCategory}`;
+        : `No stores available in ${selectedCity}`;
     }
   }
   if (categoryMetaEl) {
-    categoryMetaEl.textContent = scopeOptionsState.categories.length
-      ? `${scopeOptionsState.categories.length} categories available for prediction`
-      : "No categories available right now";
+    const selectedCity = String(cityEl.value || "").trim();
+    const selectedStore = String(storeEl.value || "").trim();
+    if (!selectedCity) {
+      categoryMetaEl.textContent = "Select a city first, then choose a store.";
+    } else if (!selectedStore) {
+      categoryMetaEl.textContent = "Select a store to view available categories.";
+    } else {
+      const categories = getCategoriesForCityStore(selectedCity, selectedStore);
+      categoryMetaEl.textContent = categories.length
+        ? `${categories.length} categories available for ${selectedStore}`
+        : `No categories available for ${selectedStore}`;
+    }
   }
 }
 
@@ -341,50 +418,41 @@ function syncScopeSelections(source = "init", preferredCity = "", preferredCateg
   let selectedCategory = String(preferredCategory || categoryEl.value || "").trim();
   let selectedStore = String(preferredStore || storeEl.value || "").trim();
 
-  if (source === "category" && selectedCity && selectedCategory) {
-    const validCities = getCitiesForCategory(selectedCategory);
-    if (!validCities.includes(selectedCity)) selectedCity = "";
-  }
-  if (source === "city" && selectedCity && selectedCategory) {
-    const validCategories = getCategoriesForCity(selectedCity);
-    if (!validCategories.includes(selectedCategory)) selectedCategory = "";
-  }
-  if (source === "init" && selectedCity && selectedCategory) {
-    const validCities = getCitiesForCategory(selectedCategory);
-    if (!validCities.includes(selectedCity)) selectedCity = "";
-  }
-  if (selectedStore && (!selectedCategory || !selectedCity)) selectedStore = "";
-
   let cityValues = [...scopeOptionsState.cities];
-  if (selectedCategory) {
-    const validCities = getCitiesForCategory(selectedCategory);
-    cityValues = cityValues.length
-      ? intersectScopeValues(cityValues, validCities)
-      : [...validCities];
-  }
-
-  let categoryValues = [...scopeOptionsState.categories];
-  if (selectedCity) {
-    const validCategories = getCategoriesForCity(selectedCity);
-    categoryValues = categoryValues.length
-      ? intersectScopeValues(categoryValues, validCategories)
-      : [...validCategories];
-  }
-
   if (selectedCity && !cityValues.includes(selectedCity)) selectedCity = "";
-  if (selectedCategory && !categoryValues.includes(selectedCategory)) selectedCategory = "";
-  const storeValues = selectedCategory && selectedCity ? getStoresForCategoryCity(selectedCategory, selectedCity) : [];
+
+  let storeValues = selectedCity ? getStoresForCity(selectedCity) : [];
   if (selectedStore && !storeValues.includes(selectedStore)) selectedStore = "";
 
+  let categoryValues = [];
+  if (selectedCity && selectedStore) {
+    categoryValues = getCategoriesForCityStore(selectedCity, selectedStore);
+    if (!categoryValues.length) {
+      categoryValues = getCategoriesForCity(selectedCity);
+    }
+  } else if (selectedCity) {
+    categoryValues = getCategoriesForCity(selectedCity);
+  }
+  if (selectedCategory && !categoryValues.includes(selectedCategory)) selectedCategory = "";
+  if (selectedCategory && selectedCity) {
+    const validStoresForCategory = getStoresForCategoryCity(selectedCategory, selectedCity);
+    if (validStoresForCategory.length && selectedStore && !validStoresForCategory.includes(selectedStore)) {
+      selectedStore = "";
+    }
+    storeValues = selectedCategory
+      ? (validStoresForCategory.length ? intersectScopeValues(storeValues, validStoresForCategory) : storeValues)
+      : storeValues;
+  }
+
   populateScopeSelect(cityEl, "Select city", cityValues, selectedCity);
-  populateScopeSelect(categoryEl, "Select category", categoryValues, selectedCategory);
   populateScopeSelect(storeEl, "Select store", storeValues, selectedStore);
+  populateScopeSelect(categoryEl, "Select category", categoryValues, selectedCategory);
   updateCityPlaceholderState();
-  updateCategoryPlaceholderState();
   updateStorePlaceholderState();
+  updateCategoryPlaceholderState();
   rebuildCityMenu();
-  rebuildCategoryMenu();
   rebuildStoreMenu();
+  rebuildCategoryMenu();
   setCategoryFirstMode();
 }
 
@@ -576,16 +644,98 @@ function buildRenderKey() {
   const category = getSelectedOrFirstCategory();
   const store = getSelectedStore();
   const { from, to } = getResolvedDateRange();
-  return `${city}|${store}|${category}|${from}|${to}`;
+  const liveMode = liveSimulationState.running ? "live" : "manual";
+  return `${city}|${store}|${category}|${from}|${to}|${liveMode}`;
+}
+
+function setCityStoreSummaryState({ message = "", rows = [], selectedStore = "" } = {}) {
+  if (cityStoreSummaryMetaEl && message) cityStoreSummaryMetaEl.textContent = message;
+  if (!cityStoreSummaryBodyEl || !cityStoreSummaryWrapEl || !cityStoreSummaryEmptyEl) return;
+
+  if (!rows.length) {
+    cityStoreSummaryBodyEl.innerHTML = "";
+    cityStoreSummaryWrapEl.classList.add("is-hidden");
+    cityStoreSummaryEmptyEl.classList.remove("is-hidden");
+    return;
+  }
+
+  cityStoreSummaryEmptyEl.classList.add("is-hidden");
+  cityStoreSummaryWrapEl.classList.remove("is-hidden");
+  cityStoreSummaryBodyEl.innerHTML = rows.map((row) => {
+    const isSelected = selectedStore && String(row.store || "").trim() === String(selectedStore || "").trim();
+    return `
+      <tr class="${isSelected ? "is-selected" : ""}">
+        <td>${row.store || "-"}</td>
+        <td>${row.store_id || "-"}</td>
+        <td>${row.latest_date || "-"}</td>
+        <td>${formatMaybeWhole(row.inventory_level)}</td>
+        <td>${formatMaybeWhole(row.units_sold)}</td>
+        <td>${formatMaybeWhole(row.units_ordered)}</td>
+        <td>${formatMaybeWhole(row.avg_demand_forecast)}</td>
+        <td>${formatMaybeWhole(row.price)}</td>
+        <td>${formatMaybeWhole(row.discount)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+async function renderCityStoreSummary() {
+  const runId = ++cityStoreSummaryRunId;
+  const city = getSelectedCity();
+  const category = getSelectedOrFirstCategory();
+  const store = getSelectedStore();
+  const { from, to } = getResolvedDateRange();
+
+  if (!city) {
+    setCityStoreSummaryState({
+      message: "Select a city to view all stores, quantities, units sold, and demand signals.",
+      rows: [],
+      selectedStore: "",
+    });
+    return;
+  }
+
+  const qs = new URLSearchParams();
+  if (category) qs.set("category", category);
+  if (from) qs.set("from_date", from);
+  if (to) qs.set("to_date", to);
+
+  try {
+    const resp = await fetch(`${apiBase()}/cities/${encodeURIComponent(city)}/store-summary?${qs.toString()}`, {
+      cache: "no-store",
+    });
+    if (!resp.ok) throw new Error(`Store summary load failed (${resp.status}).`);
+    const data = await resp.json();
+    if (runId !== cityStoreSummaryRunId) return;
+    const rows = Array.isArray(data.stores) ? data.stores : [];
+    const scopedCategory = String(data.category || "").trim();
+    const rangeText = from && to ? `${from} to ${to}` : "current range";
+    const summaryText = scopedCategory
+      ? `${rows.length} stores in ${city} for ${scopedCategory} during ${rangeText}`
+      : `${rows.length} stores in ${city} during ${rangeText}`;
+    setCityStoreSummaryState({
+      message: rows.length ? summaryText : `No store summary rows available for ${city}.`,
+      rows,
+      selectedStore: store,
+    });
+  } catch (err) {
+    if (runId !== cityStoreSummaryRunId) return;
+    setCityStoreSummaryState({
+      message: `Unable to load city store summary: ${err.message}`,
+      rows: [],
+      selectedStore: "",
+    });
+  }
 }
 
 function queueRenderForecastVisualization(options = {}) {
   const immediate = Boolean(options?.immediate);
+  const force = Boolean(options?.force);
   const run = async () => {
     const renderKey = buildRenderKey();
-    if (renderKey === latestRenderKey) return;
+    if (!force && renderKey === latestRenderKey) return;
     const runId = ++renderRunId;
-    await renderForecastVisualization(runId, renderKey);
+    await renderForecastVisualization(runId, renderKey, options);
   };
 
   if (immediate) {
@@ -604,8 +754,11 @@ function queueRenderForecastVisualization(options = {}) {
   return undefined;
 }
 
-async function fetchForecastSnapshot(city, store, category, fromDate, toDate) {
-  const key = `${city}|${store}|${category}|${fromDate}|${toDate}`;
+async function fetchForecastSnapshot(city, store, category, fromDate, toDate, options = {}) {
+  const liveMode = Boolean(options?.liveMode);
+  const forceRefresh = Boolean(options?.forceRefresh);
+  const key = `${city}|${store}|${category}|${fromDate}|${toDate}|${liveMode ? "live" : "manual"}`;
+  if (forceRefresh) vizDataCache.delete(key);
   if (vizDataCache.has(key)) return vizDataCache.get(key);
   const promise = (async () => {
     const fromDateObj = new Date(fromDate);
@@ -615,12 +768,20 @@ async function fetchForecastSnapshot(city, store, category, fromDate, toDate) {
     const anchor = new Date(fromDateObj);
     anchor.setDate(anchor.getDate() - 1);
     const anchorDate = anchor.toISOString().slice(0, 10);
-    const url = `${apiBase()}/forecast/${encodeURIComponent(category)}?city=${encodeURIComponent(city)}&store=${encodeURIComponent(store)}&horizon=${periodDays}&history_lookback_days=${lookback}&anchor_date=${anchorDate}`;
+    const url = liveMode
+      ? `${apiBase()}/forecast/${encodeURIComponent(category)}?city=${encodeURIComponent(city)}&store=${encodeURIComponent(store)}&horizon=${periodDays}&history_lookback_days=${Math.max(60, periodDays * 2)}`
+      : `${apiBase()}/forecast/${encodeURIComponent(category)}?city=${encodeURIComponent(city)}&store=${encodeURIComponent(store)}&horizon=${periodDays}&history_lookback_days=${lookback}&anchor_date=${anchorDate}`;
     const resp = await fetch(url, { cache: "no-store" });
     if (!resp.ok) throw new Error(`Predicted load failed (${resp.status}).`);
     const data = await resp.json();
     const history = Array.isArray(data.history) ? data.history : [];
     const forecast = Array.isArray(data.forecast) ? data.forecast : [];
+    if (liveMode) {
+      return {
+        filteredHistory: history.slice(-periodDays),
+        filteredForecast: forecast.slice(0, periodDays),
+      };
+    }
     const fromTs = new Date(fromDate).getTime();
     const toTs = new Date(toDate).getTime();
     return {
@@ -646,7 +807,7 @@ function destroyCharts() {
   categoryComparisonChart = null;
   stockRiskGaugeChart = null;
 }
-async function renderForecastVisualization(runId = null, requestedKey = "") {
+async function renderForecastVisualization(runId = null, requestedKey = "", options = {}) {
   if (typeof Chart === "undefined") return;
   const isStale = () => Number.isFinite(runId) && runId !== renderRunId;
   const city = getSelectedCity();
@@ -659,7 +820,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
     document.getElementById("avgForecastKpi").textContent = "-";
     document.getElementById("peakDayKpi").textContent = "-";
     document.getElementById("riskLevelKpi").textContent = "-";
-    document.getElementById("summaryHint").textContent = "Select category, city, and store to preview summary.";
+    document.getElementById("summaryHint").textContent = "Select city, store, category, and date range to preview summary.";
     setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
     setChartEmptyState("categoryComparisonEmpty", true, "No category comparison data.");
     setChartEmptyState("stockRiskEmpty", true, "No risk data available.");
@@ -670,11 +831,17 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
 
   const { from, to } = getResolvedDateRange();
   const subtitleEl = document.getElementById("vizSubtitle");
-  subtitleEl.textContent = `${city} | ${store} | ${category} | ${from} to ${to}`;
+  const liveMode = Boolean(options?.liveMode ?? liveSimulationState.running);
+  subtitleEl.textContent = liveMode
+    ? `${city} | ${store} | ${category} | live rolling window`
+    : `${city} | ${store} | ${category} | ${from} to ${to}`;
 
   let snapshot;
   try {
-    snapshot = await fetchForecastSnapshot(city, store, category, from, to);
+    snapshot = await fetchForecastSnapshot(city, store, category, from, to, {
+      liveMode,
+      forceRefresh: liveMode,
+    });
     if (isStale()) return;
   } catch (err) {
     if (isStale()) return;
@@ -879,7 +1046,10 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
     .slice(0, 6);
   const categoryRows = await Promise.all(categoryOptions.map(async (cat) => {
     try {
-      const snap = await fetchForecastSnapshot(city, cat, from, to);
+      const snap = await fetchForecastSnapshot(city, store, cat, from, to, {
+        liveMode: liveSimulationState.running,
+        forceRefresh: liveSimulationState.running,
+      });
       const totalActual = snap.filteredHistory.reduce((sum, r) => sum + Number(r.actual_units_sold || 0), 0);
       const totalProjected = snap.filteredForecast.reduce((sum, r) => sum + Number(r.forecast_units_sold || 0), 0);
       return { category: cat, units: totalActual > 0 ? totalActual : totalProjected };
@@ -917,6 +1087,176 @@ async function renderForecastVisualization(runId = null, requestedKey = "") {
 
 }
 
+function updateLiveControlsUi() {
+  const liveCapable = currentUserRole === "admin" || currentUserRole === "inventory_manager";
+  if (liveModeStatusEl) {
+    const baseText = liveSimulationState.running
+      ? `Live: running every ${Number(liveSimulationState.interval_seconds || 0).toFixed(0)}s`
+      : "Live: stopped";
+    const latestDateText = liveSimulationState.latest_data_date
+      ? `latest data ${liveSimulationState.latest_data_date}`
+      : "waiting for data";
+    const rowsText = `${Number(liveSimulationState.live_dataset_rows || 0)} rows`;
+    const ticksText = `${Number(liveSimulationState.tick_count || 0)} ticks`;
+    liveModeStatusEl.textContent = `${baseText} | ${latestDateText} | ${rowsText} | ${ticksText}`;
+    liveModeStatusEl.title = liveSimulationState.last_error
+      ? `Simulation warning: ${liveSimulationState.last_error}`
+      : "Continuous live simulation status";
+  }
+  if (liveStartBtnEl) {
+    liveStartBtnEl.style.display = liveCapable ? "" : "none";
+    liveStartBtnEl.disabled = liveControlBusy;
+  }
+  if (liveClearBtnEl) {
+    liveClearBtnEl.style.display = currentUserRole === "admin" ? "" : "none";
+    liveClearBtnEl.disabled = liveControlBusy;
+  }
+  if (liveStopBtnEl) {
+    liveStopBtnEl.style.display = liveCapable ? "" : "none";
+    liveStopBtnEl.disabled = liveControlBusy;
+  }
+  if (liveTickBtnEl) {
+    liveTickBtnEl.style.display = liveCapable ? "" : "none";
+    liveTickBtnEl.disabled = liveControlBusy;
+  }
+}
+
+function applyLiveDateWindow(latestIsoDate) {
+  const latest = String(latestIsoDate || "").trim();
+  if (!latest || !/^\d{4}-\d{2}-\d{2}$/.test(latest)) return false;
+  if (latest === lastAppliedLiveDate) return false;
+
+  const latestDate = clampDateToAllowedRange(new Date(`${latest}T00:00:00`));
+  const from = toIsoDate(latestDate);
+  const toDateRaw = new Date(latestDate);
+  toDateRaw.setDate(toDateRaw.getDate() + 13);
+  const to = toIsoDate(clampDateToAllowedRange(toDateRaw));
+
+  if (fromPicker) fromPicker.setDate(from, true, "Y-m-d");
+  else fromDateEl.value = from;
+
+  if (toPicker) toPicker.setDate(to, true, "Y-m-d");
+  else toDateEl.value = to;
+
+  lastAppliedLiveDate = latest;
+  saveDashboardState();
+  return true;
+}
+
+function applyLiveStatusPayload(payload = {}, options = {}) {
+  const status = payload && typeof payload === "object" && payload.status && typeof payload.status === "object"
+    ? payload.status
+    : payload;
+  if (!status || typeof status !== "object") return;
+  liveSimulationState = {
+    ...liveSimulationState,
+    ...status,
+  };
+  const liveWindowChanged = liveSimulationState.running && applyLiveDateWindow(liveSimulationState.latest_data_date);
+  updateLiveControlsUi();
+  if (options.forceRefresh || liveWindowChanged) {
+    renderCityStoreSummary().catch(() => {});
+    queueRenderForecastVisualization({ immediate: true, force: true, liveMode: liveSimulationState.running });
+  }
+}
+
+async function refreshLiveStatus(options = {}) {
+  try {
+    const data = await fetchJsonWithDebug(`${apiBase()}/live-data/status`);
+    const previousTick = Number(liveSimulationState.tick_count || 0);
+    liveSimulationState = {
+      ...liveSimulationState,
+      ...data,
+    };
+    const liveWindowChanged = liveSimulationState.running && applyLiveDateWindow(liveSimulationState.latest_data_date);
+    updateLiveControlsUi();
+    const forceRefresh = Boolean(options?.forceRefresh);
+    const tickChanged = Number(liveSimulationState.tick_count || 0) !== previousTick;
+    if (forceRefresh || tickChanged || liveWindowChanged) {
+      await renderCityStoreSummary();
+      await queueRenderForecastVisualization({ immediate: true, force: true });
+    }
+  } catch (err) {
+    if (liveModeStatusEl) liveModeStatusEl.textContent = `Live: unavailable (${err.message})`;
+  }
+}
+
+function startLiveStatusPolling() {
+  if (liveStatusPollTimer) window.clearInterval(liveStatusPollTimer);
+  liveStatusPollTimer = window.setInterval(() => {
+    refreshLiveStatus();
+  }, LIVE_REFRESH_INTERVAL_MS);
+}
+
+function startLiveAutoRefreshLoop() {
+  if (liveAutoRefreshTimer) window.clearInterval(liveAutoRefreshTimer);
+  liveAutoRefreshTimer = null;
+}
+
+async function startLiveSimulation() {
+  liveControlBusy = true;
+  updateLiveControlsUi();
+  try {
+    const data = await fetchJson(`${apiBase()}/live-data/simulator/start`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ interval_seconds: LIVE_SIMULATION_INTERVAL_SECONDS, batch_size: 4, horizon: 7 }),
+    });
+    applyLiveStatusPayload(data, { forceRefresh: true });
+    await refreshLiveStatus({ forceRefresh: true });
+  } catch (err) {
+    if (liveModeStatusEl) liveModeStatusEl.textContent = `Live: start failed (${err.message})`;
+  } finally {
+    liveControlBusy = false;
+    updateLiveControlsUi();
+  }
+}
+
+async function stopLiveSimulation() {
+  liveControlBusy = true;
+  updateLiveControlsUi();
+  try {
+    const data = await fetchJson(`${apiBase()}/live-data/simulator/stop`, { method: "POST" });
+    applyLiveStatusPayload(data, { forceRefresh: true });
+    await refreshLiveStatus({ forceRefresh: true });
+  } catch (err) {
+    if (liveModeStatusEl) liveModeStatusEl.textContent = `Live: stop failed (${err.message})`;
+  } finally {
+    liveControlBusy = false;
+    updateLiveControlsUi();
+  }
+}
+
+async function tickLiveSimulation() {
+  liveControlBusy = true;
+  updateLiveControlsUi();
+  try {
+    const data = await fetchJson(`${apiBase()}/live-data/simulator/tick?batch_size=4&horizon=7`, { method: "POST" });
+    applyLiveStatusPayload(data, { forceRefresh: true });
+    await refreshLiveStatus({ forceRefresh: true });
+  } catch (err) {
+    if (liveModeStatusEl) liveModeStatusEl.textContent = `Live: tick failed (${err.message})`;
+  } finally {
+    liveControlBusy = false;
+    updateLiveControlsUi();
+  }
+}
+
+async function clearLiveSimulationData() {
+  liveControlBusy = true;
+  updateLiveControlsUi();
+  try {
+    const data = await fetchJson(`${apiBase()}/live-data/clear`, { method: "POST" });
+    applyLiveStatusPayload(data, { forceRefresh: true });
+    await refreshLiveStatus({ forceRefresh: true });
+  } catch (err) {
+    if (liveModeStatusEl) liveModeStatusEl.textContent = `Live: clear failed (${err.message})`;
+  } finally {
+    liveControlBusy = false;
+    updateLiveControlsUi();
+  }
+}
+
 async function applyRoleUi() {
   try {
     const resp = await fetch(`${apiBase()}/auth/me`, {
@@ -930,6 +1270,7 @@ async function applyRoleUi() {
     }
     const data = await resp.json();
     const role = String(data?.user?.role || "");
+    currentUserRole = role;
     const fullName = String(data?.user?.full_name || "User");
     const roleTitle = formatRole(role);
     if (userMetaChipEl) userMetaChipEl.textContent = `User: ${fullName}`;
@@ -959,6 +1300,7 @@ async function applyRoleUi() {
       if (exportPngBtnEl) exportPngBtnEl.disabled = restrictDownload;
       if (exportPdfBtnEl) exportPdfBtnEl.disabled = restrictDownload;
     }
+    updateLiveControlsUi();
   } catch (_) {
     window.location.href = "/login";
   }
@@ -995,11 +1337,15 @@ async function loadScopeOptions(preferredCity, preferredCategory) {
     scopeOptionsState.categoryCityMap = normalizeScopeMap(data.category_city_map);
     scopeOptionsState.cityCategoryMap = normalizeScopeMap(data.city_category_map);
     scopeOptionsState.categoryCityStoreMap = normalizeScopeMap(data.category_city_store_map);
+    scopeOptionsState.cityStoreMap = normalizeScopeMap(data.city_store_map);
+    scopeOptionsState.cityStoreCategoryMap = normalizeScopeMap(data.city_store_category_map);
     debugLog("scope:loaded", {
       categories: scopeOptionsState.categories.length,
       categoryMapKeys: scopeOptionsState.categoryCityMap.size,
       cityMapKeys: scopeOptionsState.cityCategoryMap.size,
       storeMapKeys: scopeOptionsState.categoryCityStoreMap.size,
+      cityStoreMapKeys: scopeOptionsState.cityStoreMap.size,
+      cityStoreCategoryMapKeys: scopeOptionsState.cityStoreCategoryMap.size,
     });
     scopeOptionsState.cities = initialCities.length
       ? initialCities
@@ -1014,31 +1360,15 @@ async function loadScopeOptions(preferredCity, preferredCategory) {
   }
 }
 
-function ensureCityOptionsForCurrentCategory() {
-  const selectedCategory = String(categoryEl.value || "").trim();
-  if (!selectedCategory) return false;
-  const cities = normalizeScopeValues(getCitiesForCategory(selectedCategory));
-  if (!cities.length) return false;
-  const currentOptions = Array.from(cityEl.options || [])
-    .map((opt) => String(opt.value || "").trim())
-    .filter(Boolean);
-  const sameOptions = currentOptions.length === cities.length
-    && currentOptions.every((value, index) => value === cities[index]);
-  if (!sameOptions) {
-    populateScopeSelect(cityEl, "Select city", cities, cityEl.value || "");
-    if (!cities.includes(String(cityEl.value || "").trim())) cityEl.value = "";
-    updateCityPlaceholderState();
-    rebuildCityMenu();
-  }
-  if (cityMetaEl) cityMetaEl.textContent = `${cities.length} cities available for ${selectedCategory}`;
-  return true;
-}
-
 function ensureStoreOptionsForCurrentSelection() {
-  const selectedCategory = String(categoryEl.value || "").trim();
   const selectedCity = String(cityEl.value || "").trim();
-  if (!selectedCategory || !selectedCity) return false;
-  const stores = normalizeScopeValues(getStoresForCategoryCity(selectedCategory, selectedCity));
+  const selectedCategory = String(categoryEl.value || "").trim();
+  if (!selectedCity) return false;
+  let stores = normalizeScopeValues(getStoresForCity(selectedCity));
+  if (selectedCategory) {
+    const validStores = normalizeScopeValues(getStoresForCategoryCity(selectedCategory, selectedCity));
+    if (validStores.length) stores = intersectScopeValues(stores, validStores);
+  }
   if (!stores.length) return false;
   const currentOptions = Array.from(storeEl.options || [])
     .map((opt) => String(opt.value || "").trim())
@@ -1055,97 +1385,27 @@ function ensureStoreOptionsForCurrentSelection() {
   return true;
 }
 
-async function loadCitiesForCategory(category, preferredCity = "") {
-  const selectedCategory = String(category || "").trim();
-  if (!selectedCategory) {
-    syncScopeSelections("category", "", "");
-    return;
-  }
-  const cachedCities = normalizeScopeValues(scopeOptionsState.categoryCityMap.get(selectedCategory) || []);
-  if (cachedCities.length) {
-    populateScopeSelect(cityEl, "Select city", cachedCities, preferredCity);
-    cityEl.value = cachedCities.includes(preferredCity) ? preferredCity : "";
-    populateScopeSelect(storeEl, "Select store", [], "");
-    updateCityPlaceholderState();
-    updateStorePlaceholderState();
-    rebuildCityMenu();
-    rebuildStoreMenu();
-    setCategoryFirstMode();
-    if (cityMetaEl) {
-      cityMetaEl.textContent = `${cachedCities.length} cities available for ${selectedCategory}`;
-    }
-    return;
-  }
-  try {
-    const data = await fetchJsonWithDebug(`${apiBase()}/categories/${encodeURIComponent(selectedCategory)}/cities`);
-    const resolvedCategory = String(data?.category || selectedCategory).trim();
-    const cities = normalizeScopeValues(data?.cities);
-    debugLog("cities:loaded", { category: resolvedCategory, count: cities.length, cities });
-    scopeOptionsState.categoryCityMap.set(resolvedCategory, cities);
-    scopeOptionsState.categoryCityStoreMap.forEach((_, key, map) => {
-      if (key.startsWith(`${resolvedCategory}|||`)) map.delete(key);
-    });
-    cities.forEach((city) => {
-      const categoryList = normalizeScopeValues([
-        ...(scopeOptionsState.cityCategoryMap.get(city) || []),
-        resolvedCategory,
-      ]);
-      scopeOptionsState.cityCategoryMap.set(city, categoryList);
-    });
-    populateScopeSelect(cityEl, "Select city", cities, preferredCity);
-    cityEl.value = cities.includes(preferredCity) ? preferredCity : "";
-    populateScopeSelect(storeEl, "Select store", [], "");
-    updateCityPlaceholderState();
-    updateStorePlaceholderState();
-    rebuildCityMenu();
-    rebuildStoreMenu();
-    setCategoryFirstMode();
-    if (cityMetaEl) {
-      cityMetaEl.textContent = `${cities.length} cities available for ${resolvedCategory}`;
-    }
-  } catch (err) {
-    debugLog("cities:error", { category: selectedCategory, error: err?.message || String(err) });
-    const fallbackCities = normalizeScopeValues(
-      scopeOptionsState.categoryCityMap.get(selectedCategory)
-      || scopeOptionsState.categoryCityMap.get(String(categoryEl.value || "").trim())
-      || [],
-    );
-    if (fallbackCities.length) {
-      scopeOptionsState.categoryCityMap.set(selectedCategory, fallbackCities);
-      populateScopeSelect(cityEl, "Select city", fallbackCities, preferredCity);
-      cityEl.value = fallbackCities.includes(preferredCity) ? preferredCity : "";
-      populateScopeSelect(storeEl, "Select store", [], "");
-      updateCityPlaceholderState();
-      updateStorePlaceholderState();
-      rebuildCityMenu();
-      rebuildStoreMenu();
-      setCategoryFirstMode();
-      if (cityMetaEl) {
-        cityMetaEl.textContent = `${fallbackCities.length} cities available for ${selectedCategory}`;
-      }
-      return;
-    }
-    syncScopeSelections("category", "", selectedCategory);
-    setFieldError(cityEl, cityErrorEl, "Unable to load cities for this category. Please refresh and try again.");
-  }
-}
-
-async function loadStoresForCategoryCity(category, city, preferredStore = "") {
-  const selectedCategory = String(category || "").trim();
+async function loadStoresForCity(city, preferredStore = "") {
   const selectedCity = String(city || "").trim();
-  if (!selectedCategory || !selectedCity) {
-    syncScopeSelections("store", selectedCity, selectedCategory, "");
+  if (!selectedCity) {
+    syncScopeSelections("city", "", "", "");
+    return;
+  }
+  const cachedStores = normalizeScopeValues(getStoresForCity(selectedCity));
+  if (cachedStores.length) {
+    populateScopeSelect(storeEl, "Select store", cachedStores, preferredStore);
+    storeEl.value = cachedStores.includes(preferredStore) ? preferredStore : "";
+    updateStorePlaceholderState();
+    rebuildStoreMenu();
+    setCategoryFirstMode();
     return;
   }
   try {
-    const data = await fetchJsonWithDebug(
-      `${apiBase()}/categories/${encodeURIComponent(selectedCategory)}/cities/${encodeURIComponent(selectedCity)}/stores`,
-    );
-    const resolvedCategory = String(data?.category || selectedCategory).trim();
+    const data = await fetchJsonWithDebug(`${apiBase()}/cities/${encodeURIComponent(selectedCity)}/stores`);
     const resolvedCity = String(data?.city || selectedCity).trim();
     const stores = normalizeScopeValues(data?.stores);
-    debugLog("stores:loaded", { category: resolvedCategory, city: resolvedCity, count: stores.length, stores });
-    scopeOptionsState.categoryCityStoreMap.set(`${resolvedCategory}|||${resolvedCity}`, stores);
+    debugLog("stores:loaded", { city: resolvedCity, count: stores.length, stores });
+    scopeOptionsState.cityStoreMap.set(resolvedCity, stores);
     const nextStore = stores.length === 1 && !preferredStore ? stores[0] : preferredStore;
     populateScopeSelect(storeEl, "Select store", stores, nextStore);
     storeEl.value = stores.includes(nextStore) ? nextStore : "";
@@ -1153,13 +1413,61 @@ async function loadStoresForCategoryCity(category, city, preferredStore = "") {
     rebuildStoreMenu();
     setCategoryFirstMode();
   } catch (err) {
-    debugLog("stores:error", { category: selectedCategory, city: selectedCity, error: err?.message || String(err) });
-    scopeOptionsState.categoryCityStoreMap.set(`${selectedCategory}|||${selectedCity}`, []);
+    debugLog("stores:error", { city: selectedCity, error: err?.message || String(err) });
+    scopeOptionsState.cityStoreMap.set(selectedCity, []);
     populateScopeSelect(storeEl, "Select store", [], "");
     updateStorePlaceholderState();
     rebuildStoreMenu();
     setCategoryFirstMode();
     setFieldError(storeEl, storeErrorEl, "Unable to load stores for this city. Please refresh and try again.");
+  }
+}
+
+async function loadCategoriesForCityStore(city, store, preferredCategory = "") {
+  const selectedCity = String(city || "").trim();
+  const selectedStore = String(store || "").trim();
+  if (!selectedCity || !selectedStore) {
+    syncScopeSelections("store", selectedCity, "", selectedStore);
+    return;
+  }
+  const cachedCategories = normalizeScopeValues(getCategoriesForCityStore(selectedCity, selectedStore));
+  if (cachedCategories.length) {
+    const nextCategory = cachedCategories.includes(preferredCategory) ? preferredCategory : "";
+    populateScopeSelect(categoryEl, "Select category", cachedCategories, nextCategory);
+    categoryEl.value = nextCategory;
+    updateCategoryPlaceholderState();
+    rebuildCategoryMenu();
+    setCategoryFirstMode();
+    return;
+  }
+  try {
+    const data = await fetchJsonWithDebug(
+      `${apiBase()}/cities/${encodeURIComponent(selectedCity)}/stores/${encodeURIComponent(selectedStore)}/categories`,
+    );
+    const resolvedCity = String(data?.city || selectedCity).trim();
+    const resolvedStore = String(data?.store || selectedStore).trim();
+    const categories = normalizeScopeValues(data?.categories);
+    debugLog("categories:loaded", { city: resolvedCity, store: resolvedStore, count: categories.length, categories });
+    scopeOptionsState.cityStoreCategoryMap.set(`${resolvedCity}|||${resolvedStore}`, categories);
+    const cityCategories = normalizeScopeValues([
+      ...(scopeOptionsState.cityCategoryMap.get(resolvedCity) || []),
+      ...categories,
+    ]);
+    scopeOptionsState.cityCategoryMap.set(resolvedCity, cityCategories);
+    const nextCategory = categories.includes(preferredCategory) ? preferredCategory : "";
+    populateScopeSelect(categoryEl, "Select category", categories, nextCategory);
+    categoryEl.value = nextCategory;
+    updateCategoryPlaceholderState();
+    rebuildCategoryMenu();
+    setCategoryFirstMode();
+  } catch (err) {
+    debugLog("categories:error", { city: selectedCity, store: selectedStore, error: err?.message || String(err) });
+    scopeOptionsState.cityStoreCategoryMap.set(`${selectedCity}|||${selectedStore}`, []);
+    populateScopeSelect(categoryEl, "Select category", [], "");
+    updateCategoryPlaceholderState();
+    rebuildCategoryMenu();
+    setCategoryFirstMode();
+    setFieldError(categoryEl, categoryErrorEl, "Unable to load categories for this store. Please refresh and try again.");
   }
 }
 
@@ -1343,11 +1651,10 @@ function rebuildCityMenu() {
     .filter((opt) => opt.value && !opt.disabled);
 
   cityMenuEl.innerHTML = "";
-  const hasCategory = Boolean(String(categoryEl.value || "").trim());
   if (!options.length) {
     const empty = document.createElement("div");
     empty.className = "category-empty";
-    empty.textContent = hasCategory ? "No cities available for this category" : "Select a category first";
+    empty.textContent = "No cities available";
     cityMenuEl.appendChild(empty);
     return;
   }
@@ -1453,6 +1760,8 @@ function consumeForceClearFlag() {
 }
 
 async function initializeDefaults() {
+  if (dashboardInitialized) return;
+  dashboardInitialized = true;
   clearAllErrors();
   await applyRoleUi();
   // Static behavior: always clear form state on browser refresh.
@@ -1462,8 +1771,11 @@ async function initializeDefaults() {
   clearInputState();
   initDatePickers();
   await loadScopeOptions(savedState?.city || "", savedState?.category || "");
-  if (savedState?.category && savedState?.city) {
-    await loadStoresForCategoryCity(savedState.category, savedState.city, savedState?.store || "");
+  if (savedState?.city) {
+    await loadStoresForCity(savedState.city, savedState?.store || "");
+  }
+  if (savedState?.city && savedState?.store) {
+    await loadCategoriesForCityStore(savedState.city, savedState.store, savedState?.category || "");
   }
   const hasSavedCity = Boolean(savedState?.city);
   const hasSavedCategory = Boolean(savedState?.category);
@@ -1494,6 +1806,7 @@ async function initializeDefaults() {
     shell.classList.remove("preload");
     shell.classList.add("ready");
   }
+  await renderCityStoreSummary();
   await queueRenderForecastVisualization({ immediate: true });
 }
 
@@ -1505,16 +1818,16 @@ function validateInputs() {
   const fromDate = fromDateEl.value;
   const toDate = toDateEl.value;
   let hasError = false;
-  if (!category) {
-    setFieldError(categoryEl, categoryErrorEl, "Please select a category first.");
-    hasError = true;
-  }
   if (!city) {
-    setFieldError(cityEl, cityErrorEl, category ? "Please select a city for this category." : "Select a category first to view cities.");
+    setFieldError(cityEl, cityErrorEl, "Please select a city first.");
     hasError = true;
   }
   if (!store) {
-    setFieldError(storeEl, storeErrorEl, city ? "Please select a store for this city." : "Select a city first to view stores.");
+    setFieldError(storeEl, storeErrorEl, city ? "Please select a store from this city." : "Select a city first to view stores.");
+    hasError = true;
+  }
+  if (!category) {
+    setFieldError(categoryEl, categoryErrorEl, store ? "Please select a category for this store." : "Select a store first to view categories.");
     hasError = true;
   }
   if (!fromDate) {
@@ -1635,45 +1948,52 @@ function exportForecastPdf() {
 cityEl.addEventListener("change", async () => {
   clearFieldError(cityEl, cityErrorEl);
   clearFieldError(storeEl, storeErrorEl);
-  syncScopeSelections("city");
-  await loadStoresForCategoryCity(categoryEl.value || "", cityEl.value || "", storeEl.value || "");
+  clearFieldError(categoryEl, categoryErrorEl);
+  syncScopeSelections("city", cityEl.value || "", "", "");
+  await loadStoresForCity(cityEl.value || "", storeEl.value || "");
+  await renderCityStoreSummary();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
-categoryEl.addEventListener("change", async () => {
+storeEl.addEventListener("change", async () => {
+  clearFieldError(storeEl, storeErrorEl);
   clearFieldError(categoryEl, categoryErrorEl);
-  clearFieldError(cityEl, cityErrorEl);
+  syncScopeSelections("store", cityEl.value || "", "", storeEl.value || "");
+  await loadCategoriesForCityStore(cityEl.value || "", storeEl.value || "", categoryEl.value || "");
+  await renderCityStoreSummary();
+  saveDashboardState();
+  queueRenderForecastVisualization();
+});
+categoryEl.addEventListener("change", () => {
+  clearFieldError(categoryEl, categoryErrorEl);
   updateCategoryPlaceholderState();
   rebuildCategoryMenu();
-  await loadCitiesForCategory(categoryEl.value || "", cityEl.value || "");
-  ensureCityOptionsForCurrentCategory();
-  saveDashboardState();
-  queueRenderForecastVisualization();
-});
-storeEl.addEventListener("change", () => {
-  clearFieldError(storeEl, storeErrorEl);
-  updateStorePlaceholderState();
-  rebuildStoreMenu();
+  syncScopeSelections("category", cityEl.value || "", categoryEl.value || "", storeEl.value || "");
+  renderCityStoreSummary();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
 fromDateEl.addEventListener("input", () => {
   clearFieldError(fromDateEl, fromDateErrorEl);
+  renderCityStoreSummary();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
 fromDateEl.addEventListener("change", () => {
   clearFieldError(fromDateEl, fromDateErrorEl);
+  renderCityStoreSummary();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
 toDateEl.addEventListener("input", () => {
   clearFieldError(toDateEl, toDateErrorEl);
+  renderCityStoreSummary();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
 toDateEl.addEventListener("change", () => {
   clearFieldError(toDateEl, toDateErrorEl);
+  renderCityStoreSummary();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
@@ -1712,9 +2032,9 @@ if (topLogoutBtnEl) {
     logoutAndGoLogin();
   });
 }
-if (refreshBtnEl) {
+  if (refreshBtnEl) {
   refreshBtnEl.addEventListener("click", () => {
-    queueRenderForecastVisualization({ immediate: true });
+    queueRenderForecastVisualization({ immediate: true, force: true });
   });
 }
 if (syncBtnEl) {
@@ -1736,6 +2056,10 @@ if (sidebarToggleBtn) {
 }
 if (categoryTriggerEl) {
   categoryTriggerEl.addEventListener("click", () => {
+    if (categoryTriggerEl.disabled) {
+      setFieldError(categoryEl, categoryErrorEl, "Select a store first to view categories.");
+      return;
+    }
     if (!categoryShellEl) return;
     const isOpen = categoryShellEl.classList.contains("is-open");
     if (isOpen) closeCategoryMenu();
@@ -1745,10 +2069,9 @@ if (categoryTriggerEl) {
 if (cityTriggerEl) {
   cityTriggerEl.addEventListener("click", () => {
     if (cityTriggerEl.disabled) {
-      setFieldError(cityEl, cityErrorEl, "Select a category first to view available cities.");
+      setFieldError(cityEl, cityErrorEl, "Please select a city.");
       return;
     }
-    ensureCityOptionsForCurrentCategory();
     if (!cityShellEl) return;
     const isOpen = cityShellEl.classList.contains("is-open");
     if (isOpen) closeCityMenu();
@@ -1784,9 +2107,36 @@ document.addEventListener("keydown", (event) => {
 if (exportCsvBtnEl) exportCsvBtnEl.addEventListener("click", exportForecastCsv);
 if (exportPngBtnEl) exportPngBtnEl.addEventListener("click", exportChartPng);
 if (exportPdfBtnEl) exportPdfBtnEl.addEventListener("click", exportForecastPdf);
+if (liveStartBtnEl) {
+  liveStartBtnEl.addEventListener("click", async () => {
+    await startLiveSimulation();
+  });
+}
+if (liveClearBtnEl) {
+  liveClearBtnEl.addEventListener("click", async () => {
+    await clearLiveSimulationData();
+  });
+}
+if (liveStopBtnEl) {
+  liveStopBtnEl.addEventListener("click", async () => {
+    await stopLiveSimulation();
+  });
+}
+if (liveTickBtnEl) {
+  liveTickBtnEl.addEventListener("click", async () => {
+    await tickLiveSimulation();
+  });
+}
 
 initializeDefaults();
 initializeSidebarState();
 updateDashboardClock();
+refreshLiveStatus();
+startLiveStatusPolling();
+startLiveAutoRefreshLoop();
 window.setInterval(updateDashboardClock, 1000);
-window.addEventListener("pageshow", initializeDefaults);
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted) {
+    window.location.reload();
+  }
+});

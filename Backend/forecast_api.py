@@ -11,8 +11,8 @@ import re
 import subprocess
 import sys
 import tempfile
-import urllib.error
-import urllib.request
+import time
+import random
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -43,6 +43,8 @@ try:
         build_daily_series,
         forecast_next_days,
         load_sales_data,
+        normalize_columns,
+        prepare_sales_data,
         parse_date_series,
         train_forecast_model,
     )
@@ -55,6 +57,8 @@ except ImportError:  # Allows running as a script from Backend/
         build_daily_series,
         forecast_next_days,
         load_sales_data,
+        normalize_columns,
+        prepare_sales_data,
         parse_date_series,
         train_forecast_model,
     )
@@ -70,6 +74,9 @@ elif CITY_LEVEL_CSV_PATH.exists():
     CSV_PATH = CITY_LEVEL_CSV_PATH
 else:
     CSV_PATH = LEGACY_CSV_PATH
+LIVE_DATA_DIR = PROJECT_DIR / "Dataset" / "live"
+LEGACY_LIVE_CSV_PATH = PROJECT_DIR / "Dataset" / "live_sales_dataset.csv"
+LIVE_CSV_PATH = LIVE_DATA_DIR / "simulated_live_data.csv"
 FRONTEND_LOGIN_HTML_PATH = PROJECT_DIR / "Frontend" / "login.html"
 FRONTEND_HTML_PATH = PROJECT_DIR / "Frontend" / "dashboard.html"
 FRONTEND_RESULTS_HTML_PATH = PROJECT_DIR / "Frontend" / "dashboard_results.html"
@@ -154,11 +161,39 @@ _engine_lock = threading.Lock()
 @dataclass
 class _EngineCache:
     csv_mtime_ns: int = -1
+    base_csv_mtime_ns: int = -1
+    base_df: Optional[pd.DataFrame] = None
     df: Optional[pd.DataFrame] = None
+    scope_payload: Optional[Dict[str, Any]] = None
+    scope_maps: Optional[
+        Tuple[
+            Dict[str, List[str]],
+            Dict[str, List[str]],
+            Dict[str, List[str]],
+            Dict[str, List[str]],
+            Dict[str, List[str]],
+        ]
+    ] = None
+    forecast_payloads: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     trained_by_category: Dict[str, Any] = field(default_factory=dict)
 
 
 _engine_cache = _EngineCache()
+_live_simulator_lock = threading.Lock()
+_live_simulator_stop_event = threading.Event()
+_live_simulator_thread: Optional[threading.Thread] = None
+_live_simulator_state: Dict[str, Any] = {
+    "running": False,
+    "interval_seconds": 1,
+    "batch_size": 4,
+    "horizon": DEFAULT_HORIZON,
+    "started_at": "",
+    "last_tick_at": "",
+    "tick_count": 0,
+    "last_generated_count": 0,
+    "last_generated_categories": [],
+    "last_error": "",
+}
 
 
 def _probe_sqlite_path(path: Path, probe_table: str) -> tuple[bool, str]:
@@ -444,6 +479,10 @@ def _init_auth_db() -> None:
             )
             """
         )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires ON auth_sessions(expires_at_epoch)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_auth_tokens_expires ON auth_tokens(expires_at_epoch)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_users_active_email ON users(is_active, email)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_users_full_name ON users(full_name)")
 
         cols = {row["name"] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
         if "email_verified" not in cols:
@@ -484,7 +523,7 @@ def _init_auth_db() -> None:
         # Keep bootstrap admin accounts in sync with .env so login works without DB reset.
         for admin in bootstrap_admins:
             existing_admin = conn.execute(
-                "SELECT id FROM users WHERE lower(email) = ?",
+                "SELECT id FROM users WHERE email = ?",
                 (admin["email"],),
             ).fetchone()
             if existing_admin is None:
@@ -1175,6 +1214,26 @@ _init_history_db()
 _init_auth_db()
 
 
+def _prewarm_engine_cache() -> None:
+    try:
+        with _engine_lock:
+            df = _get_cached_df()
+            _ = _get_cached_valid_scope_maps(df)
+            _ = _get_cached_scope_payload(df)
+    except Exception:
+        # Background prewarm should never block app startup.
+        pass
+
+
+@app.on_event("startup")
+def _startup_prewarm_engine_cache() -> None:
+    threading.Thread(
+        target=_prewarm_engine_cache,
+        name="demandiq-cache-prewarm",
+        daemon=True,
+    ).start()
+
+
 class SalesRecord(BaseModel):
     date: str
     units_sold: float
@@ -1192,6 +1251,12 @@ class SalesIngestRequest(BaseModel):
     records: List[SalesRecord]
     horizon: int = DEFAULT_HORIZON
     persist: bool = True
+
+
+class LiveSimulationStartRequest(BaseModel):
+    interval_seconds: float = 1.0
+    batch_size: int = 4
+    horizon: int = DEFAULT_HORIZON
 
 
 class LoginRequest(BaseModel):
@@ -1693,176 +1758,6 @@ def _safe_mean_text(df: pd.DataFrame, canonical: str, label: str) -> Optional[st
     return f"{label}: {vals.mean():.2f}"
 
 
-def _dataset_context_for_chat(product: str) -> Dict[str, Any]:
-    with _engine_lock:
-        df = _load_dynamic_dataset()
-        scoped_df = _filter_dynamic_product(df, product) if product else df.copy()
-        if scoped_df.empty:
-            raise HTTPException(status_code=404, detail=f"No dataset rows found for '{product}'")
-
-        date_col = _dynamic_find_col(scoped_df, "date")
-        parsed_dates = parse_date_series(_dynamic_get_series(scoped_df, date_col)).dropna() if date_col else pd.Series(dtype="datetime64[ns]")
-        if date_col and parsed_dates.notna().any():
-            scoped_df = scoped_df.assign(__sort_date__=parse_date_series(_dynamic_get_series(scoped_df, date_col)))
-            scoped_df = scoped_df.sort_values("__sort_date__", ascending=False).drop(columns=["__sort_date__"], errors="ignore")
-
-        stats = _compare_metrics(scoped_df)
-        recent_rows = []
-        col_map = {k: _dynamic_find_col(scoped_df, k) for k in _dynamic_alias_map().keys()}
-        for _, row in scoped_df.head(8).iterrows():
-            recent_rows.append(_dynamic_item_from_row(row, col_map))
-
-    scope_name = product.strip() if product.strip() else "the full dataset"
-    details: List[str] = [
-        f"Scope: {scope_name}",
-        f"Rows: {int(stats['rows'])}",
-        f"Total units sold: {stats['total_units_sold']:.2f}",
-        f"Average units sold: {stats['avg_units_sold']:.2f}",
-    ]
-    if not parsed_dates.empty:
-        details.append(f"Date range: {parsed_dates.min().strftime('%Y-%m-%d')} to {parsed_dates.max().strftime('%Y-%m-%d')}")
-    for line in (
-        _safe_mean_text(scoped_df, "price", "Average price"),
-        _safe_mean_text(scoped_df, "discount", "Average discount"),
-        _safe_mean_text(scoped_df, "inventory_level", "Average inventory level"),
-        _safe_mean_text(scoped_df, "units_ordered", "Average units ordered"),
-        _safe_mean_text(scoped_df, "demand_forecast", "Average demand forecast"),
-    ):
-        if line:
-            details.append(line)
-
-    return {
-        "scope_name": scope_name,
-        "summary_text": "\n".join(details),
-        "recent_rows": recent_rows,
-        "row_count": int(stats["rows"]),
-    }
-
-
-def _basic_chat_answer(message: str) -> str:
-    text = str(message or "").strip()
-    lowered = text.lower()
-    normalized = re.sub(r"[^a-z0-9\s]", " ", lowered)
-    normalized = re.sub(r"\s+", " ", normalized).strip()
-
-    if normalized in {"hi", "hello", "hey", "hii", "good morning", "good afternoon", "good evening"}:
-        return "Hello! I can help with product demand, price, discount, inventory, forecast questions, and general supply-chain basics."
-    if "how are you" in normalized:
-        return "I am ready to help. You can ask about your dataset, product performance, forecasts, or basic supply-chain questions."
-    if any(phrase in normalized for phrase in {"what can you do", "help", "how can you help", "what all can you do"}):
-        return (
-            "I can answer product and category questions from your dataset, summarize demand and pricing patterns, "
-            "explain forecast-related concepts, and handle simple general questions."
-        )
-    if any(phrase in normalized for phrase in {"who are you", "what are you"}):
-        return "I am the DemandIQ assistant powered for retail demand and inventory questions, with support for basic general chat too."
-    if (
-        any(token in normalized for token in {"model", "algorithm", "working"})
-        and any(token in normalized for token in {"project", "system", "this", "app"})
-    ) or "on what model" in normalized or "which model" in normalized:
-        return (
-            f"This project is mainly working on {MODEL_INFO}. "
-            "In simple terms, it uses a Linear Regression forecasting pipeline with lag features, rolling averages, calendar seasonality, and holiday-aware demand behavior."
-        )
-    if any(phrase in normalized for phrase in {"how this project works", "how does this project work", "how this system works", "how does this system work"}):
-        return (
-            "This project loads historical retail data, builds time-series demand signals, trains a forecasting model for product or category demand, "
-            "and then uses those patterns to generate future demand predictions and insights."
-        )
-    if any(phrase in normalized for phrase in {"thank you", "thanks", "ok thanks", "thankyou"}):
-        return "You are welcome. Ask another question anytime."
-    if "forecast" in normalized and any(phrase in normalized for phrase in {"what is", "meaning", "define", "explain"}):
-        return "A forecast is an estimate of future demand or sales based on historical patterns and related signals such as price, seasonality, and promotions."
-    if "inventory" in normalized and any(phrase in normalized for phrase in {"what is", "meaning", "define", "explain"}):
-        return "Inventory is the stock of products available for sale or use. Good inventory management balances product availability with avoiding overstock."
-    if "discount" in normalized and any(phrase in normalized for phrase in {"what is", "meaning", "define", "explain"}):
-        return "A discount is a reduction from the regular selling price, often used to increase demand, clear stock, or support promotions."
-    if "demand" in normalized and any(phrase in normalized for phrase in {"what is", "meaning", "define", "explain"}):
-        return "Demand is the quantity customers want to buy during a given period. In this project, it is reflected mainly through units sold over time."
-    return ""
-
-
-def _local_dataset_chat_answer(product: str, message: str, context: Dict[str, Any]) -> str:
-    basic_answer = _basic_chat_answer(message)
-    if basic_answer:
-        return basic_answer
-
-    rows = context.get("recent_rows", [])
-    summary_lines = [
-        f"Dataset summary for {context.get('scope_name', product or 'the selected data')}:",
-        context.get("summary_text", ""),
-    ]
-    if rows:
-        latest = rows[0]
-        latest_bits = [
-            f"Latest row date: {latest.get('date') or 'n/a'}",
-            f"Units sold: {latest.get('units_sold')}",
-        ]
-        if latest.get("price") is not None:
-            latest_bits.append(f"Price: {latest.get('price')}")
-        if latest.get("discount") is not None:
-            latest_bits.append(f"Discount: {latest.get('discount')}")
-        summary_lines.append("Latest record snapshot: " + ", ".join(latest_bits))
-
-    api_key_present = bool(_env_str("OPENAI_API_KEY", ""))
-    if api_key_present:
-        summary_lines.append("Live OpenAI response was unavailable for this request, so this answer was generated from the local dataset summary.")
-    else:
-        summary_lines.append("OpenAI chat is not configured yet, so this answer was generated from the local dataset summary.")
-    summary_lines.append(f"Your question was: {message.strip()}")
-    return "\n\n".join([line for line in summary_lines if line])
-
-
-def _call_openai_ai_chat(message: str, context: Dict[str, Any]) -> str:
-    api_key = _env_str("OPENAI_API_KEY", "")
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not configured")
-
-    prompt = (
-        "You are DemandIQ Assistant, a concise supply-chain analytics assistant. "
-        "Answer basic general questions naturally. "
-        "When the user asks about products, categories, demand, price, discount, inventory, forecasts, or trends in this project, use the provided dataset context first. "
-        "If the dataset does not contain the requested project-specific detail, say that clearly. "
-        "For general knowledge questions, you may answer normally without pretending the dataset contains that information.\n\n"
-        f"Dataset summary:\n{context['summary_text']}\n\n"
-        f"Recent rows JSON:\n{json.dumps(context['recent_rows'], ensure_ascii=True)}\n\n"
-        f"User question:\n{message.strip()}"
-    )
-    payload = json.dumps(
-        {
-            "model": AI_CHAT_MODEL,
-            "input": prompt,
-        }
-    ).encode("utf-8")
-    req = urllib.request.Request(
-        "https://api.openai.com/v1/responses",
-        data=payload,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=45) as resp:
-            body = resp.read().decode("utf-8")
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"OpenAI request failed: {exc.code} {body}") from exc
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"OpenAI request failed: {exc.reason}") from exc
-
-    try:
-        data = json.loads(body)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError("OpenAI returned a non-JSON response") from exc
-
-    output_text = str(data.get("output_text") or "").strip()
-    if output_text:
-        return output_text
-    raise RuntimeError("OpenAI returned no output_text")
-
-
 def _looks_like_product_id(value: str) -> bool:
     return bool(re.fullmatch(r"[A-Za-z]\d{2,}", str(value).strip()))
 
@@ -1980,9 +1875,17 @@ def _resolve_store_value(df: pd.DataFrame, store: Optional[str]) -> Optional[str
     raise ValueError(f"No rows found for store {store}")
 
 
-def _build_valid_scope_maps(df: pd.DataFrame) -> tuple[Dict[str, List[str]], Dict[str, List[str]], Dict[str, List[str]]]:
+def _build_valid_scope_maps(
+    df: pd.DataFrame,
+) -> tuple[
+    Dict[str, List[str]],
+    Dict[str, List[str]],
+    Dict[str, List[str]],
+    Dict[str, List[str]],
+    Dict[str, List[str]],
+]:
     if "city" not in df.columns or PRODUCT_COL not in df.columns or TARGET_COL not in df.columns:
-        return {}, {}, {}
+        return {}, {}, {}, {}, {}
     store_col = _store_scope_column(df)
 
     cols = [PRODUCT_COL, "city", TARGET_COL]
@@ -1990,7 +1893,7 @@ def _build_valid_scope_maps(df: pd.DataFrame) -> tuple[Dict[str, List[str]], Dic
         cols.append(store_col)
     pair_df = df[cols].dropna(subset=[PRODUCT_COL, "city", TARGET_COL]).copy()
     if pair_df.empty:
-        return {}, {}, {}
+        return {}, {}, {}, {}, {}
 
     pair_df[PRODUCT_COL] = pair_df[PRODUCT_COL].astype(str).map(str.strip)
     pair_df["city"] = pair_df["city"].astype(str).map(str.strip)
@@ -2002,7 +1905,7 @@ def _build_valid_scope_maps(df: pd.DataFrame) -> tuple[Dict[str, List[str]], Dic
         & pair_df["city"].ne("")
     ]
     if pair_df.empty:
-        return {}, {}, {}
+        return {}, {}, {}, {}, {}
 
     positive_pairs = (
         pair_df.groupby([PRODUCT_COL, "city"], as_index=False)[TARGET_COL]
@@ -2010,7 +1913,7 @@ def _build_valid_scope_maps(df: pd.DataFrame) -> tuple[Dict[str, List[str]], Dic
     )
     positive_pairs = positive_pairs[positive_pairs[TARGET_COL] > 0].copy()
     if positive_pairs.empty:
-        return {}, {}, {}
+        return {}, {}, {}, {}, {}
 
     category_city_map = {
         str(category): sorted({str(city) for city in values["city"].tolist()})
@@ -2021,6 +1924,8 @@ def _build_valid_scope_maps(df: pd.DataFrame) -> tuple[Dict[str, List[str]], Dic
         for city, values in positive_pairs.groupby("city")
     }
     category_city_store_map: Dict[str, List[str]] = {}
+    city_store_map: Dict[str, List[str]] = {}
+    city_store_category_map: Dict[str, List[str]] = {}
     if store_col:
         store_pairs = pair_df[
             pair_df[store_col].ne("")
@@ -2031,7 +1936,29 @@ def _build_valid_scope_maps(df: pd.DataFrame) -> tuple[Dict[str, List[str]], Dic
                 f"{str(category)}|||{str(city)}": sorted({str(store) for store in values[store_col].tolist()})
                 for (category, city), values in store_pairs.groupby([PRODUCT_COL, "city"])
             }
-    return category_city_map, city_category_map, category_city_store_map
+            city_store_map = {
+                str(city): sorted({str(store) for store in values[store_col].tolist()})
+                for city, values in store_pairs.groupby("city")
+            }
+            city_store_category_map = {
+                f"{str(city)}|||{str(store)}": sorted({str(category) for category in values[PRODUCT_COL].tolist()})
+                for (city, store), values in store_pairs.groupby(["city", store_col])
+            }
+    return category_city_map, city_category_map, category_city_store_map, city_store_map, city_store_category_map
+
+
+def _get_cached_valid_scope_maps(
+    df: pd.DataFrame,
+) -> tuple[
+    Dict[str, List[str]],
+    Dict[str, List[str]],
+    Dict[str, List[str]],
+    Dict[str, List[str]],
+    Dict[str, List[str]],
+]:
+    if _engine_cache.scope_maps is None:
+        _engine_cache.scope_maps = _build_valid_scope_maps(df)
+    return _engine_cache.scope_maps
 
 
 def _build_scope_payload(df: pd.DataFrame) -> Dict[str, Any]:
@@ -2062,7 +1989,7 @@ def _build_scope_payload(df: pd.DataFrame) -> Dict[str, Any]:
     if "state" in df.columns:
         svalues = df["state"].dropna().astype(str).map(str.strip)
         states = sorted({v for v in svalues if v})
-    category_city_map, city_category_map, category_city_store_map = _build_valid_scope_maps(df)
+    category_city_map, city_category_map, category_city_store_map, city_store_map, city_store_category_map = _get_cached_valid_scope_maps(df)
     return {
         "categories": categories,
         "product_ids": product_ids,
@@ -2072,8 +1999,35 @@ def _build_scope_payload(df: pd.DataFrame) -> Dict[str, Any]:
         "category_city_map": category_city_map,
         "city_category_map": city_category_map,
         "category_city_store_map": category_city_store_map,
+        "city_store_map": city_store_map,
+        "city_store_category_map": city_store_category_map,
         "dataset_path": str(CSV_PATH.name),
     }
+
+
+def _get_cached_scope_payload(df: pd.DataFrame) -> Dict[str, Any]:
+    if _engine_cache.scope_payload is None:
+        _engine_cache.scope_payload = _build_scope_payload(df)
+    return _engine_cache.scope_payload
+
+
+def _apply_optional_date_filter(
+    df: pd.DataFrame,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+) -> pd.DataFrame:
+    scoped = df.copy()
+    if from_date:
+        parsed_from = pd.to_datetime(from_date, errors="coerce")
+        if pd.isna(parsed_from):
+            raise ValueError("from_date must be a valid date")
+        scoped = scoped[scoped[DATE_COL] >= parsed_from.normalize()].copy()
+    if to_date:
+        parsed_to = pd.to_datetime(to_date, errors="coerce")
+        if pd.isna(parsed_to):
+            raise ValueError("to_date must be a valid date")
+        scoped = scoped[scoped[DATE_COL] <= parsed_to.normalize()].copy()
+    return scoped
 
 
 def _scope_df_for_forecast(
@@ -2086,7 +2040,7 @@ def _scope_df_for_forecast(
     resolved_city = _resolve_city_value(df, city)
     resolved_store = _resolve_store_value(df, store)
     if resolved_city:
-        category_city_map, _, category_city_store_map = _build_valid_scope_maps(df)
+        category_city_map, _, category_city_store_map, _, _ = _get_cached_valid_scope_maps(df)
         valid_cities = category_city_map.get(resolved_category, [])
         if valid_cities and resolved_city not in valid_cities:
             raise ValueError(
@@ -2115,23 +2069,177 @@ def _scope_df_for_forecast(
     return scoped_df, resolved_category, resolved_city, resolved_store
 
 
+def _city_store_summary(
+    df: pd.DataFrame,
+    city: str,
+    category: Optional[str] = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+) -> Dict[str, Any]:
+    resolved_city = _resolve_city_value(df, city)
+    scoped = df[df["city"].astype(str).str.strip() == resolved_city].copy()
+    resolved_category: Optional[str] = None
+    if category and str(category).strip():
+        resolved_category = _resolve_category_value(scoped, category)
+        scoped = scoped[scoped[PRODUCT_COL].astype(str).str.strip() == resolved_category].copy()
+    scoped = _apply_optional_date_filter(scoped, from_date=from_date, to_date=to_date)
+    store_col = _store_scope_column(scoped)
+    if store_col is None:
+        raise ValueError("Store data is not available in the dataset")
+    if scoped.empty:
+        return {
+            "city": resolved_city,
+            "category": resolved_category,
+            "from_date": from_date or "",
+            "to_date": to_date or "",
+            "stores": [],
+            "store_count": 0,
+        }
+
+    scoped["_store_name"] = scoped[store_col].astype(str).str.strip()
+    scoped = scoped[scoped["_store_name"].ne("")].copy()
+    if scoped.empty:
+        return {
+            "city": resolved_city,
+            "category": resolved_category,
+            "from_date": from_date or "",
+            "to_date": to_date or "",
+            "stores": [],
+            "store_count": 0,
+        }
+
+    scoped["_date_sort"] = pd.to_datetime(scoped[DATE_COL], errors="coerce")
+    scoped = scoped.sort_values(["_store_name", "_date_sort"])
+    grouped = scoped.groupby("_store_name", as_index=False)
+
+    def _latest_numeric(group_df: pd.DataFrame, col: str) -> float:
+        if col not in group_df.columns:
+            return 0.0
+        numeric = pd.to_numeric(group_df[col], errors="coerce")
+        valid = numeric.dropna()
+        return float(valid.iloc[-1]) if not valid.empty else 0.0
+
+    stores: List[Dict[str, Any]] = []
+    for store_name, group_df in grouped:
+        latest_row = group_df.iloc[-1]
+        stores.append({
+            "store": str(store_name),
+            "store_id": str(latest_row.get("store id", "") or "").strip(),
+            "latest_date": str(latest_row.get(DATE_COL, "") or "").strip(),
+            "inventory_level": round(_latest_numeric(group_df, "inventory level"), 2),
+            "units_sold": round(float(pd.to_numeric(group_df.get(TARGET_COL), errors="coerce").fillna(0).sum()), 2),
+            "units_ordered": round(float(pd.to_numeric(group_df.get("units ordered"), errors="coerce").fillna(0).sum()) if "units ordered" in group_df.columns else 0.0, 2),
+            "avg_demand_forecast": round(float(pd.to_numeric(group_df.get("demand forecast"), errors="coerce").dropna().mean()) if "demand forecast" in group_df.columns and pd.to_numeric(group_df.get("demand forecast"), errors="coerce").dropna().size else 0.0, 2),
+            "price": round(_latest_numeric(group_df, "price"), 2),
+            "discount": round(_latest_numeric(group_df, "discount"), 2),
+        })
+
+    stores.sort(key=lambda row: row["store"].lower())
+    return {
+        "city": resolved_city,
+        "category": resolved_category,
+        "from_date": from_date or "",
+        "to_date": to_date or "",
+        "stores": stores,
+        "store_count": len(stores),
+    }
+
+
 def _read_csv_mtime_ns() -> int:
-    try:
-        return CSV_PATH.stat().st_mtime_ns
-    except FileNotFoundError:
-        return -1
+    mtimes: List[int] = []
+    for path in (CSV_PATH, LIVE_CSV_PATH, LEGACY_LIVE_CSV_PATH):
+        try:
+            mtimes.append(path.stat().st_mtime_ns)
+        except FileNotFoundError:
+            continue
+    return max(mtimes) if mtimes else -1
 
 
 def _invalidate_engine_cache() -> None:
     _engine_cache.csv_mtime_ns = -1
+    _engine_cache.base_csv_mtime_ns = -1
+    _engine_cache.base_df = None
     _engine_cache.df = None
+    _engine_cache.scope_payload = None
+    _engine_cache.scope_maps = None
+    _engine_cache.forecast_payloads.clear()
     _engine_cache.trained_by_category.clear()
+
+
+def _preferred_live_csv_path() -> Path:
+    existing_paths = [path for path in (LIVE_CSV_PATH, LEGACY_LIVE_CSV_PATH) if path.exists()]
+    if not existing_paths:
+        return LIVE_CSV_PATH
+    return max(existing_paths, key=lambda path: path.stat().st_mtime_ns)
+
+
+def _existing_live_csv_paths() -> List[Path]:
+    return sorted(
+        [path for path in (LIVE_CSV_PATH, LEGACY_LIVE_CSV_PATH) if path.exists()],
+        key=lambda path: path.stat().st_mtime_ns,
+    )
+
+
+def _write_live_sales_dataframe(df: pd.DataFrame) -> None:
+    LIVE_CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(LIVE_CSV_PATH, index=False)
+    df.to_csv(LEGACY_LIVE_CSV_PATH, index=False)
+
+
+def _load_base_sales_df() -> pd.DataFrame:
+    if not CSV_PATH.exists():
+        raise FileNotFoundError(f"Dataset file not found: {CSV_PATH}")
+    base_raw = pd.read_csv(CSV_PATH)
+    return prepare_sales_data(base_raw)
+
+
+def _get_cached_base_df() -> pd.DataFrame:
+    try:
+        base_mtime_ns = CSV_PATH.stat().st_mtime_ns
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(f"Dataset file not found: {CSV_PATH}") from exc
+
+    if _engine_cache.base_df is None or _engine_cache.base_csv_mtime_ns != base_mtime_ns:
+        _engine_cache.base_df = _load_base_sales_df()
+        _engine_cache.base_csv_mtime_ns = base_mtime_ns
+    return _engine_cache.base_df.copy()
+
+
+def _load_combined_sales_df() -> pd.DataFrame:
+    base_df = _get_cached_base_df()
+
+    live_frames: List[pd.DataFrame] = []
+    for live_path in _existing_live_csv_paths():
+        live_raw = pd.read_csv(live_path)
+        live_frames.append(prepare_sales_data(live_raw))
+
+    if live_frames:
+        all_cols = list(dict.fromkeys([*base_df.columns.tolist(), *[col for frame in live_frames for col in frame.columns.tolist()]]))
+        if not all_cols:
+            all_cols = base_df.columns.tolist()
+        for col in all_cols:
+            if col not in base_df.columns:
+                base_df[col] = pd.NA
+        aligned_frames = [base_df[all_cols]]
+        for live_raw in live_frames:
+            working_live = live_raw.copy()
+            for col in all_cols:
+                if col not in working_live.columns:
+                    working_live[col] = pd.NA
+            aligned_frames.append(working_live[all_cols])
+        combined = pd.concat(aligned_frames, ignore_index=True)
+        combined = _dedupe_live_sales_dataframe(combined)
+        combined = combined.sort_values(DATE_COL)
+    else:
+        combined = base_df
+
+    return combined
 
 
 def _get_cached_df() -> pd.DataFrame:
     mtime_ns = _read_csv_mtime_ns()
     if _engine_cache.df is None or _engine_cache.csv_mtime_ns != mtime_ns:
-        _engine_cache.df = load_sales_data(CSV_PATH)
+        _engine_cache.df = _load_combined_sales_df()
         _engine_cache.csv_mtime_ns = mtime_ns
         _engine_cache.trained_by_category.clear()
     return _engine_cache.df
@@ -2193,13 +2301,53 @@ def _record_identifier(record: SalesRecord) -> str:
     return ""
 
 
+def _dedupe_live_sales_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    working = df.copy()
+    dedupe_cols: List[str] = []
+
+    if DATE_COL in working.columns:
+        parsed_dates = parse_date_series(working[DATE_COL])
+        working["__dedupe_date"] = parsed_dates.dt.strftime("%Y-%m-%d").fillna(
+            working[DATE_COL].astype("string").str.strip().str.lower()
+        )
+        dedupe_cols.append("__dedupe_date")
+
+    for col in ("city", _store_scope_column(working), PRODUCT_COL, "product id"):
+        if not col or col not in working.columns:
+            continue
+        helper_col = f"__dedupe_{col.replace(' ', '_')}"
+        working[helper_col] = working[col].astype("string").str.strip().str.lower()
+        dedupe_cols.append(helper_col)
+
+    dedupe_cols = [c for c in dedupe_cols if c in working.columns]
+    if len(dedupe_cols) < 2:
+        return df
+
+    deduped = working.drop_duplicates(subset=dedupe_cols, keep="last").copy()
+    helper_cols = [c for c in deduped.columns if c.startswith("__dedupe_")]
+    if helper_cols:
+        deduped = deduped.drop(columns=helper_cols)
+    return deduped
+
+
 def _append_sales_rows(records: List[SalesRecord], persist: bool = True) -> pd.DataFrame:
-    existing = pd.read_csv(CSV_PATH)
-    existing.columns = existing.columns.str.strip().str.lower()
+    base_existing = pd.read_csv(CSV_PATH)
+    base_existing.columns = base_existing.columns.str.strip().str.lower()
+    live_paths = _existing_live_csv_paths()
+    if live_paths:
+        existing_frames: List[pd.DataFrame] = []
+        for live_path in live_paths:
+            current = pd.read_csv(live_path)
+            current.columns = current.columns.str.strip().str.lower()
+            existing_frames.append(current)
+        existing = pd.concat(existing_frames, ignore_index=True)
+        existing = _dedupe_live_sales_dataframe(existing)
+    else:
+        existing = pd.DataFrame(columns=base_existing.columns)
 
     new_rows = pd.DataFrame([_normalize_payload_record(r) for r in records])
     if new_rows.empty:
-        return existing
+        return _load_combined_sales_df()
 
     if DATE_COL not in new_rows.columns or PRODUCT_COL not in new_rows.columns or TARGET_COL not in new_rows.columns:
         raise HTTPException(
@@ -2207,8 +2355,14 @@ def _append_sales_rows(records: List[SalesRecord], persist: bool = True) -> pd.D
             detail="Each record requires date, units_sold, and category (or product_id/product id).",
         )
 
-    if PRODUCT_COL in existing.columns and PRODUCT_COL in new_rows.columns:
-        existing_values = existing[PRODUCT_COL].dropna().astype(str).map(str.strip)
+    if PRODUCT_COL in new_rows.columns:
+        existing_values = pd.concat(
+            [
+                base_existing[PRODUCT_COL].dropna().astype(str).map(str.strip) if PRODUCT_COL in base_existing.columns else pd.Series(dtype="string"),
+                existing[PRODUCT_COL].dropna().astype(str).map(str.strip) if PRODUCT_COL in existing.columns else pd.Series(dtype="string"),
+            ],
+            ignore_index=True,
+        )
         canonical_map: Dict[str, str] = {}
         for v in existing_values:
             lk = v.lower()
@@ -2219,7 +2373,9 @@ def _append_sales_rows(records: List[SalesRecord], persist: bool = True) -> pd.D
             lambda c: canonical_map.get(c.lower(), c) if isinstance(c, str) and c else c
         )
 
-    for col in existing.columns:
+    reference_cols = list(dict.fromkeys([*base_existing.columns.tolist(), *existing.columns.tolist()]))
+
+    for col in reference_cols:
         if col not in new_rows.columns:
             new_rows[col] = pd.NA
 
@@ -2227,10 +2383,302 @@ def _append_sales_rows(records: List[SalesRecord], persist: bool = True) -> pd.D
         if col not in existing.columns:
             existing[col] = pd.NA
 
-    combined = pd.concat([existing, new_rows[existing.columns]], ignore_index=True)
+    live_combined = pd.concat([existing[reference_cols], new_rows[reference_cols]], ignore_index=True)
+    live_combined = _dedupe_live_sales_dataframe(live_combined)
     if persist:
-        combined.to_csv(CSV_PATH, index=False)
-    return combined
+        _write_live_sales_dataframe(live_combined)
+    return _load_combined_sales_df()
+
+
+def _live_dataset_row_count() -> int:
+    live_paths = _existing_live_csv_paths()
+    if not live_paths:
+        return 0
+    try:
+        frames = [pd.read_csv(path) for path in live_paths]
+        combined = pd.concat(frames, ignore_index=True)
+        combined = _dedupe_live_sales_dataframe(combined)
+        return int(len(combined.index))
+    except Exception:
+        return 0
+
+
+def _ensure_live_data_path() -> None:
+    LIVE_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    if LEGACY_LIVE_CSV_PATH.exists() and not LIVE_CSV_PATH.exists():
+        shutil.copy2(LEGACY_LIVE_CSV_PATH, LIVE_CSV_PATH)
+
+
+_ensure_live_data_path()
+
+
+def _clear_live_sales_data() -> Dict[str, Any]:
+    _stop_live_simulator()
+    _ensure_live_data_path()
+    if LIVE_CSV_PATH.exists():
+        LIVE_CSV_PATH.unlink(missing_ok=True)
+    if LEGACY_LIVE_CSV_PATH.exists():
+        LEGACY_LIVE_CSV_PATH.unlink(missing_ok=True)
+    _invalidate_engine_cache()
+    df = _get_cached_df()
+    return _live_simulation_status_payload(df)
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _safe_float_value(value: Any, default: float = 0.0) -> float:
+    try:
+        numeric = pd.to_numeric(value, errors="coerce")
+        if pd.isna(numeric):
+            return float(default)
+        return float(numeric)
+    except Exception:
+        return float(default)
+
+
+def _season_for_month(month: int) -> str:
+    if month in {12, 1, 2}:
+        return "Winter"
+    if month in {3, 4, 5}:
+        return "Spring"
+    if month in {6, 7, 8}:
+        return "Monsoon"
+    return "Autumn"
+
+
+def _latest_available_data_date(df: Optional[pd.DataFrame] = None) -> str:
+    working = df
+    if working is None:
+        working = _get_cached_df()
+    if DATE_COL not in working.columns or working.empty:
+        return ""
+    parsed = pd.to_datetime(working[DATE_COL], errors="coerce")
+    parsed = parsed.dropna()
+    if parsed.empty:
+        return ""
+    return parsed.max().date().isoformat()
+
+
+def _live_simulation_status_payload(df: Optional[pd.DataFrame] = None) -> Dict[str, Any]:
+    with _live_simulator_lock:
+        state = dict(_live_simulator_state)
+    working = df
+    live_path = _preferred_live_csv_path()
+    if working is None:
+        try:
+            working = _get_cached_df()
+        except Exception:
+            working = None
+    state.update(
+        {
+            "base_dataset_path": str(CSV_PATH.name),
+            "live_dataset_path": str(live_path.relative_to(PROJECT_DIR)),
+            "live_dataset_exists": live_path.exists(),
+            "live_dataset_rows": _live_dataset_row_count(),
+            "latest_data_date": _latest_available_data_date(working),
+        }
+    )
+    return state
+
+
+def _build_simulated_sales_records(df: pd.DataFrame, batch_size: int) -> List[SalesRecord]:
+    working = df.copy()
+    working[DATE_COL] = parse_date_series(working[DATE_COL])
+    working = working.dropna(subset=[DATE_COL, PRODUCT_COL, TARGET_COL]).sort_values(DATE_COL)
+    if working.empty:
+        raise ValueError("No valid rows available for live simulation")
+
+    store_col = _store_scope_column(working)
+    group_cols = [PRODUCT_COL]
+    if "city" in working.columns:
+        group_cols.append("city")
+    if store_col and store_col in working.columns:
+        group_cols.append(store_col)
+
+    latest_rows = working.groupby(group_cols, as_index=False, dropna=False).tail(1).copy()
+    if latest_rows.empty:
+        raise ValueError("Unable to create simulation seeds from the dataset")
+
+    requested_n = max(1, int(batch_size))
+    random_seed = random.randint(1, 10_000_000)
+    sampled_parts: List[pd.DataFrame] = []
+
+    if "category" in latest_rows.columns:
+        per_category = latest_rows.groupby("category", dropna=False, group_keys=False).sample(
+            n=1,
+            replace=False,
+            random_state=random_seed,
+        )
+        sampled_parts.append(per_category)
+        requested_n = max(requested_n, len(per_category.index))
+        remaining = latest_rows.drop(index=per_category.index, errors="ignore")
+    else:
+        remaining = latest_rows
+
+    already_selected = sum(len(part.index) for part in sampled_parts)
+    extra_needed = max(0, requested_n - already_selected)
+    if extra_needed > 0:
+        source = remaining if not remaining.empty else latest_rows
+        sampled_parts.append(
+            source.sample(
+                n=extra_needed,
+                replace=len(source.index) < extra_needed,
+                random_state=random_seed + 1,
+            )
+        )
+
+    sampled = pd.concat(sampled_parts, ignore_index=False)
+
+    records: List[SalesRecord] = []
+    seed_prefix = int(time.time())
+    for idx, (_, row) in enumerate(sampled.iterrows(), start=1):
+        next_date = pd.to_datetime(row[DATE_COL], errors="coerce")
+        if pd.isna(next_date):
+            next_date = pd.Timestamp.utcnow().normalize()
+        else:
+            next_date = next_date.normalize() + pd.Timedelta(days=1)
+
+        units_sold_prev = max(1.0, _safe_float_value(row.get(TARGET_COL), 1.0))
+        units_ordered_prev = max(units_sold_prev, _safe_float_value(row.get("units ordered"), units_sold_prev * 1.25))
+        inventory_prev = max(units_sold_prev * 2.0, _safe_float_value(row.get("inventory level"), units_sold_prev * 2.0))
+        price_prev = max(1.0, _safe_float_value(row.get("price"), 50.0))
+        discount_prev = max(0.0, _safe_float_value(row.get("discount"), 5.0))
+
+        weekday_factor = 1.08 if int(next_date.dayofweek) in {4, 5, 6} else 0.97
+        promo_flag = 1.0 if random.random() < 0.22 else 0.0
+        promo_lift = 1.14 if promo_flag else 1.0
+        noise_factor = random.uniform(0.92, 1.14)
+
+        units_sold = max(0.0, round(units_sold_prev * weekday_factor * promo_lift * noise_factor, 3))
+        units_ordered = max(units_sold, round(units_ordered_prev * random.uniform(0.95, 1.12), 3))
+        inventory_level = max(0.0, round(inventory_prev - units_sold + (units_ordered * random.uniform(0.30, 0.55)), 3))
+        price = round(price_prev * random.uniform(0.985, 1.025), 2)
+        discount = round(min(45.0, max(0.0, discount_prev + random.uniform(-2.0, 2.5))), 2)
+        competitor_pricing = round(max(1.0, price * random.uniform(0.94, 1.05)), 2)
+        demand_forecast = round(max(0.0, units_sold * random.uniform(1.01, 1.08)), 2)
+
+        payload = {
+            "date": next_date.strftime("%Y-%m-%d"),
+            "units_sold": units_sold,
+            "category": str(row.get("category") or row.get(PRODUCT_COL) or "").strip(),
+            "product_id": str(row.get("product id") or "").strip() or None,
+            "store id": row.get("store id"),
+            "location": row.get("location"),
+            "inventory level": inventory_level,
+            "units ordered": units_ordered,
+            "demand forecast": demand_forecast,
+            "price": price,
+            "discount": discount,
+            "weather condition": row.get("weather condition") or random.choice(["Sunny", "Cloudy", "Rainy"]),
+            "holiday/promotion": promo_flag,
+            "competitor pricing": competitor_pricing,
+            "seasonality": _season_for_month(int(next_date.month)),
+            "record_id": f"live-{seed_prefix}-{idx:03d}",
+            "region": row.get("region"),
+            "city": row.get("city"),
+            "state": row.get("state"),
+            "country": row.get("country"),
+            "store_name": row.get("store_name"),
+        }
+        payload = {k: v for k, v in payload.items() if v is not None and str(v).strip() != ""}
+        records.append(SalesRecord(**payload))
+
+    return records
+
+
+def _run_live_simulation_tick(batch_size: int, horizon: int) -> Dict[str, Any]:
+    with _engine_lock:
+        combined = _get_cached_df()
+        records = _build_simulated_sales_records(combined, batch_size=batch_size)
+        _append_sales_rows(records, persist=True)
+        _invalidate_engine_cache()
+        refreshed = _get_cached_df()
+
+    generated_categories = sorted(
+        {
+            str(record.category or record.product_id or "").strip()
+            for record in records
+            if str(record.category or record.product_id or "").strip()
+        }
+    )
+
+    with _live_simulator_lock:
+        _live_simulator_state["last_tick_at"] = _utc_now_iso()
+        _live_simulator_state["tick_count"] = int(_live_simulator_state.get("tick_count", 0)) + 1
+        _live_simulator_state["last_generated_count"] = len(records)
+        _live_simulator_state["last_generated_categories"] = generated_categories
+        _live_simulator_state["last_error"] = ""
+        state = dict(_live_simulator_state)
+
+    return {
+        "ok": True,
+        "message": "Live simulation tick completed",
+        "generated_records": len(records),
+        "generated_categories": generated_categories,
+        "horizon": horizon,
+        "status": _live_simulation_status_payload(refreshed),
+        "state": state,
+    }
+
+
+def _live_simulation_loop() -> None:
+    while not _live_simulator_stop_event.is_set():
+        with _live_simulator_lock:
+            interval_seconds = float(_live_simulator_state.get("interval_seconds", 8))
+            batch_size = int(_live_simulator_state.get("batch_size", 4))
+            horizon = int(_live_simulator_state.get("horizon", DEFAULT_HORIZON))
+        try:
+            _run_live_simulation_tick(batch_size=batch_size, horizon=horizon)
+        except Exception as exc:
+            with _live_simulator_lock:
+                _live_simulator_state["last_error"] = str(exc)
+                _live_simulator_state["last_tick_at"] = _utc_now_iso()
+        if _live_simulator_stop_event.wait(max(0.5, interval_seconds)):
+            break
+
+    with _live_simulator_lock:
+        _live_simulator_state["running"] = False
+
+
+def _start_live_simulator(interval_seconds: float, batch_size: int, horizon: int) -> Dict[str, Any]:
+    global _live_simulator_thread
+    safe_interval = max(1.0, float(interval_seconds))
+    safe_batch_size = max(1, min(int(batch_size), 25))
+    safe_horizon = max(1, min(int(horizon), 30))
+
+    with _live_simulator_lock:
+        already_running = bool(_live_simulator_state.get("running"))
+        _live_simulator_state["interval_seconds"] = safe_interval
+        _live_simulator_state["batch_size"] = safe_batch_size
+        _live_simulator_state["horizon"] = safe_horizon
+        if already_running:
+            return _live_simulation_status_payload()
+        _live_simulator_state["running"] = True
+        _live_simulator_state["started_at"] = _utc_now_iso()
+        _live_simulator_state["last_error"] = ""
+
+    _live_simulator_stop_event.clear()
+    _live_simulator_thread = threading.Thread(
+        target=_live_simulation_loop,
+        name="demandiq-live-simulator",
+        daemon=True,
+    )
+    _live_simulator_thread.start()
+    return _live_simulation_status_payload()
+
+
+def _stop_live_simulator() -> Dict[str, Any]:
+    global _live_simulator_thread
+    _live_simulator_stop_event.set()
+    thread = _live_simulator_thread
+    if thread is not None and thread.is_alive():
+        thread.join(timeout=2.0)
+    _live_simulator_thread = None
+    with _live_simulator_lock:
+        _live_simulator_state["running"] = False
+    return _live_simulation_status_payload()
 
 
 def _forecast_for_category(
@@ -2313,6 +2761,29 @@ def _history_for_category(
     ]
 
 
+def _forecast_cache_key(
+    *,
+    category: str,
+    city: Optional[str],
+    store: Optional[str],
+    horizon: int,
+    anchor_date: Optional[str],
+    history_lookback_days: int,
+) -> str:
+    return json.dumps(
+        {
+            "category": str(category or "").strip(),
+            "city": str(city or "").strip(),
+            "store": str(store or "").strip(),
+            "horizon": int(horizon),
+            "anchor_date": str(anchor_date or "").strip(),
+            "history_lookback_days": int(history_lookback_days),
+            "csv_mtime_ns": int(_engine_cache.csv_mtime_ns),
+        },
+        sort_keys=True,
+    )
+
+
 @app.get("/", include_in_schema=False)
 def index() -> RedirectResponse:
     return RedirectResponse(url="/login", status_code=307)
@@ -2337,20 +2808,7 @@ def dashboard(request: Request) -> Response:
             status_code=404,
             detail=f"Dashboard file not found at {FRONTEND_HTML_PATH}",
         )
-    with _engine_lock:
-        df = _get_cached_df()
-        scope_payload = _build_scope_payload(df)
     html = FRONTEND_HTML_PATH.read_text(encoding="utf-8")
-    bootstrap_script = (
-        "<script>"
-        f"window.__DEMANDIQ_BOOTSTRAP__ = {json.dumps(scope_payload)};"
-        "</script>"
-    )
-    dashboard_script_marker = '<script src="/assets/js/dashboard_redesign.js'
-    if dashboard_script_marker in html:
-        html = html.replace(dashboard_script_marker, f"{bootstrap_script}\n  {dashboard_script_marker}", 1)
-    else:
-        html = html.replace("</body>", f"{bootstrap_script}\n</body>")
     return HTMLResponse(content=html, headers=NO_CACHE_HEADERS)
 
 
@@ -2363,7 +2821,72 @@ def dashboard_results(request: Request) -> Response:
             status_code=404,
             detail=f"Dashboard results file not found at {FRONTEND_RESULTS_HTML_PATH}",
         )
-    return FileResponse(FRONTEND_RESULTS_HTML_PATH, headers=NO_CACHE_HEADERS)
+    html = FRONTEND_RESULTS_HTML_PATH.read_text(encoding="utf-8")
+
+    params = request.query_params
+    city = str(params.get("city") or "").strip()
+    store = str(params.get("store") or "").strip()
+    category = str(params.get("category") or "").strip()
+    from_date = str(params.get("from") or "").strip()
+    to_date = str(params.get("to") or "").strip()
+    mode = str(params.get("mode") or "forecast").strip().lower()
+
+    bootstrap_payload: Dict[str, Any] = {
+        "query": {
+            "city": city,
+            "store": store,
+            "category": category,
+            "from": from_date,
+            "to": to_date,
+            "mode": mode,
+        }
+    }
+
+    if city and store and category and from_date and to_date:
+        try:
+            from_iso = pd.to_datetime(from_date, errors="coerce")
+            to_iso = pd.to_datetime(to_date, errors="coerce")
+            if pd.notna(from_iso) and pd.notna(to_iso):
+                from_iso = from_iso.normalize()
+                to_iso = to_iso.normalize()
+                period_days = max(1, int((to_iso - from_iso).days) + 1)
+                lookback = max(60, period_days)
+                forecast_anchor = (from_iso - pd.Timedelta(days=1)).date().isoformat()
+                request_anchor = forecast_anchor if mode != "past" else to_iso.date().isoformat()
+                with _engine_lock:
+                    df = _get_cached_df()
+                    bootstrap_payload["forecast_payload"] = {
+                        "category": category,
+                        "city": city,
+                        "store": store,
+                        "anchor_date": request_anchor,
+                        "history": _history_for_category(
+                            df,
+                            category=category,
+                            city=city,
+                            store=store,
+                            lookback_days=lookback,
+                            anchor_date=request_anchor,
+                        ),
+                        "forecast": _forecast_for_category(
+                            df,
+                            category=category,
+                            city=city,
+                            store=store,
+                            horizon=period_days,
+                            anchor_date=request_anchor,
+                        ),
+                    }
+        except Exception as exc:
+            bootstrap_payload["bootstrap_error"] = str(exc)
+
+    bootstrap_script = (
+        "<script>"
+        f"window.__DEMANDIQ_RESULTS_BOOTSTRAP__ = {json.dumps(bootstrap_payload)};"
+        "</script>"
+    )
+    html = html.replace("</body>", f"{bootstrap_script}\n</body>")
+    return HTMLResponse(content=html, headers=NO_CACHE_HEADERS)
 
 
 @app.get("/admin/dashboard", include_in_schema=False)
@@ -2405,7 +2928,7 @@ def auth_login(payload: LoginRequest, request: Request) -> JSONResponse:
             """
             SELECT id, email, full_name, role, password_hash, is_active, email_verified
             FROM users
-            WHERE lower(email) = ?
+            WHERE email = ?
             """,
             (email,),
         ).fetchone()
@@ -2489,13 +3012,13 @@ def auth_register(payload: RegisterRequest, request: Request) -> JSONResponse:
 
     with _get_auth_db_conn() as conn:
         existing = conn.execute(
-            "SELECT id FROM users WHERE lower(email) = ?",
+            "SELECT id FROM users WHERE email = ?",
             (email,),
         ).fetchone()
         if existing is not None:
             raise HTTPException(status_code=409, detail="An account already exists for this email")
         existing_name = conn.execute(
-            "SELECT id FROM users WHERE lower(trim(full_name)) = lower(trim(?))",
+            "SELECT id FROM users WHERE full_name = ?",
             (full_name,),
         ).fetchone()
         if existing_name is not None:
@@ -2555,7 +3078,7 @@ def auth_request_email_verification(payload: EmailOnlyRequest, request: Request)
         raise HTTPException(status_code=400, detail="Email is required")
     with _get_auth_db_conn() as conn:
         row = conn.execute(
-            "SELECT id, email_verified FROM users WHERE lower(email) = ?",
+            "SELECT id, email_verified FROM users WHERE email = ?",
             (email,),
         ).fetchone()
     if row is None:
@@ -2622,7 +3145,7 @@ def auth_request_password_reset(payload: EmailOnlyRequest, request: Request) -> 
         raise HTTPException(status_code=400, detail="Email is required")
     with _get_auth_db_conn() as conn:
         row = conn.execute(
-            "SELECT id FROM users WHERE lower(email) = ?",
+            "SELECT id FROM users WHERE email = ?",
             (email,),
         ).fetchone()
     if row is None:
@@ -2738,7 +3261,7 @@ def auth_account_suggestions(q: str = "", limit: int = 12) -> Dict[str, Any]:
                 SELECT email, role
                 FROM users
                 WHERE is_active = 1
-                  AND lower(email) LIKE ?
+                  AND email LIKE ?
                 ORDER BY email ASC
                 LIMIT ?
                 """,
@@ -2768,12 +3291,63 @@ def health() -> Dict[str, str]:
     return {"status": "ok", "model_info": MODEL_INFO}
 
 
+@app.get("/live-data/status")
+def live_data_status(request: Request) -> Dict[str, Any]:
+    _require_roles(request, ALLOWED_LOGIN_ROLES)
+    with _engine_lock:
+        df = _get_cached_df()
+        return _live_simulation_status_payload(df)
+
+
+@app.post("/live-data/simulator/start")
+def start_live_data_simulator(payload: LiveSimulationStartRequest, request: Request) -> Dict[str, Any]:
+    _require_roles(request, {ROLE_ADMIN, ROLE_INVENTORY_MANAGER})
+    status = _start_live_simulator(
+        interval_seconds=payload.interval_seconds,
+        batch_size=payload.batch_size,
+        horizon=payload.horizon,
+    )
+    return {
+        "ok": True,
+        "message": "Live simulator started",
+        "status": status,
+    }
+
+
+@app.post("/live-data/simulator/stop")
+def stop_live_data_simulator(request: Request) -> Dict[str, Any]:
+    _require_roles(request, {ROLE_ADMIN, ROLE_INVENTORY_MANAGER})
+    status = _stop_live_simulator()
+    return {
+        "ok": True,
+        "message": "Live simulator stopped",
+        "status": status,
+    }
+
+
+@app.post("/live-data/simulator/tick")
+def tick_live_data_simulator(request: Request, batch_size: int = 4, horizon: int = DEFAULT_HORIZON) -> Dict[str, Any]:
+    _require_roles(request, {ROLE_ADMIN, ROLE_INVENTORY_MANAGER})
+    return _run_live_simulation_tick(batch_size=max(1, min(int(batch_size), 25)), horizon=max(1, min(int(horizon), 30)))
+
+
+@app.post("/live-data/clear")
+def clear_live_data(request: Request) -> Dict[str, Any]:
+    _require_roles(request, {ROLE_ADMIN})
+    status = _clear_live_sales_data()
+    return {
+        "ok": True,
+        "message": "Simulated live data cleared",
+        "status": status,
+    }
+
+
 @app.get("/categories")
 def get_categories(request: Request) -> Dict[str, Any]:
     _require_roles(request, ALLOWED_LOGIN_ROLES)
     with _engine_lock:
         df = _get_cached_df()
-        return _build_scope_payload(df)
+        return _get_cached_scope_payload(df)
 
 
 @app.get("/categories/{category}/cities")
@@ -2782,7 +3356,7 @@ def get_cities_for_category(request: Request, category: str) -> Dict[str, Any]:
     with _engine_lock:
         df = _get_cached_df()
         resolved_category = _resolve_category_value(df, category)
-        category_city_map, _, _ = _build_valid_scope_maps(df)
+        category_city_map, _, _, _, _ = _get_cached_valid_scope_maps(df)
         cities = category_city_map.get(resolved_category, [])
     return {
         "category": resolved_category,
@@ -2798,13 +3372,64 @@ def get_stores_for_category_city(request: Request, category: str, city: str) -> 
         df = _get_cached_df()
         resolved_category = _resolve_category_value(df, category)
         resolved_city = _resolve_city_value(df, city)
-        _, _, category_city_store_map = _build_valid_scope_maps(df)
+        _, _, category_city_store_map, _, _ = _get_cached_valid_scope_maps(df)
         stores = category_city_store_map.get(f"{resolved_category}|||{resolved_city}", [])
     return {
         "category": resolved_category,
         "city": resolved_city,
         "stores": stores,
         "count": len(stores),
+    }
+
+
+@app.get("/cities/{city}/stores")
+def get_stores_for_city(request: Request, city: str) -> Dict[str, Any]:
+    _require_roles(request, ALLOWED_LOGIN_ROLES)
+    with _engine_lock:
+        df = _get_cached_df()
+        resolved_city = _resolve_city_value(df, city)
+        _, _, _, city_store_map, _ = _get_cached_valid_scope_maps(df)
+        stores = city_store_map.get(resolved_city, [])
+    return {
+        "city": resolved_city,
+        "stores": stores,
+        "count": len(stores),
+    }
+
+
+@app.get("/cities/{city}/store-summary")
+def get_store_summary_for_city(
+    request: Request,
+    city: str,
+    category: Optional[str] = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+) -> Dict[str, Any]:
+    _require_roles(request, ALLOWED_LOGIN_ROLES)
+    with _engine_lock:
+        df = _get_cached_df()
+        try:
+            return _city_store_summary(df, city=city, category=category, from_date=from_date, to_date=to_date)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/cities/{city}/stores/{store}/categories")
+def get_categories_for_city_store(request: Request, city: str, store: str) -> Dict[str, Any]:
+    _require_roles(request, ALLOWED_LOGIN_ROLES)
+    with _engine_lock:
+        df = _get_cached_df()
+        resolved_city = _resolve_city_value(df, city)
+        resolved_store = _resolve_store_value(df, store)
+        _, city_category_map, _, _, city_store_category_map = _get_cached_valid_scope_maps(df)
+        categories = city_store_category_map.get(f"{resolved_city}|||{resolved_store}", [])
+        if not categories:
+            categories = city_category_map.get(resolved_city, [])
+    return {
+        "city": resolved_city,
+        "store": resolved_store,
+        "categories": categories,
+        "count": len(categories),
     }
 
 
@@ -2848,6 +3473,17 @@ def get_forecast(
 
     with _engine_lock:
         df = _get_cached_df()
+        cache_key = _forecast_cache_key(
+            category=category,
+            city=city,
+            store=store,
+            horizon=horizon,
+            anchor_date=anchor_date,
+            history_lookback_days=history_lookback_days,
+        )
+        cached_payload = _engine_cache.forecast_payloads.get(cache_key)
+        if cached_payload is not None:
+            return cached_payload
         try:
             rows = _forecast_for_category(
                 df,
@@ -2891,17 +3527,19 @@ def get_forecast(
             forecast=rows,
         )
 
-    return {
-        "category": category,
-        "city": city,
-        "store": store,
-        "horizon": horizon,
-        "history_lookback_days": history_lookback_days,
-        "anchor_date": anchor_date,
-        "model_info": MODEL_INFO,
-        "history": history,
-        "forecast": rows,
-    }
+        payload = {
+            "category": category,
+            "city": city,
+            "store": store,
+            "horizon": horizon,
+            "history_lookback_days": history_lookback_days,
+            "anchor_date": anchor_date,
+            "model_info": MODEL_INFO,
+            "history": history,
+            "forecast": rows,
+        }
+        _engine_cache.forecast_payloads[cache_key] = payload
+        return payload
 
 
 @app.get("/forecast-history")
@@ -3251,8 +3889,11 @@ def ingest_sales(payload: SalesIngestRequest, request: Request) -> Dict[str, Any
             )
 
     return {
-        "message": "Sales data appended and forecasts refreshed",
+        "message": "Live sales data ingested and forecasts refreshed",
         "model_info": MODEL_INFO,
+        "base_dataset_path": str(CSV_PATH.name),
+        "live_dataset_path": str(_preferred_live_csv_path().relative_to(PROJECT_DIR)),
+        "live_dataset_rows": _live_dataset_row_count(),
         "updated_categories": updated_categories,
         "horizon": payload.horizon,
         "forecasts": forecasts,

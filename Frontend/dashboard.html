@@ -11,7 +11,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-  <link rel="stylesheet" href="/assets/css/dashboard_glass.css?v=20260401-01" />
+  <link rel="stylesheet" href="/assets/css/dashboard_glass.css?v=20260402-02" />
+  <link rel="stylesheet" href="/assets/css/portfolio_dark_theme.css?v=20260402-02" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
@@ -58,9 +59,6 @@
         <a href="/about-project" class="menu-item">
           <span class="menu-text">Project Overview</span>
         </a>
-        <a href="/ai-chat" class="menu-item">
-          <span class="menu-text">AI Assistant</span>
-        </a>
         <button id="adminDashBtn" class="menu-item" type="button" style="display:none;">Admin Control</button>
       </div>
       <div class="sidebar-divider"></div>
@@ -102,6 +100,11 @@
         <p id="roleHint" class="dashboard-hero-meta">Loading access level...</p>
       </div>
       <div class="dashboard-hero-actions">
+        <span id="liveModeStatus" class="meta-chip role-pill" title="Live simulation status">Live: checking...</span>
+        <button id="liveClearBtn" class="top-action-btn" type="button" style="display:none;">Clear Live</button>
+        <button id="liveTickBtn" class="top-action-btn" type="button" style="display:none;">Tick Once</button>
+        <button id="liveStartBtn" class="top-action-btn" type="button" style="display:none;">Start Live</button>
+        <button id="liveStopBtn" class="top-action-btn" type="button" style="display:none;">Stop Live</button>
         <button id="syncBtn" class="top-action-btn" type="button">Sync</button>
         <button id="refreshBtn" class="top-action-btn top-action-btn-primary" type="button">Refresh</button>
       </div>
@@ -110,20 +113,6 @@
     <section id="forecastPanel" class="forecast-panel">
       <article class="surface-card forecast-inputs">
         <div class="date-grid">
-          <div class="field">
-            <label for="category">Category</label>
-            <div class="select-shell" id="categoryShell">
-              <select id="category" autocomplete="off" aria-hidden="true" tabindex="-1">
-                <option value="" selected disabled>Select category</option>
-              </select>
-              <button id="categoryTrigger" class="category-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
-                <span id="categoryTriggerText">Select category</span>
-              </button>
-              <div id="categoryMenu" class="category-menu" role="listbox" aria-label="Category options"></div>
-            </div>
-            <p id="categoryMeta" class="field-meta">Loading categories...</p>
-            <div id="categoryError" class="field-error" role="alert" aria-live="polite"></div>
-          </div>
           <div class="field">
             <label for="city">City</label>
             <div class="select-shell" id="cityShell">
@@ -135,15 +124,8 @@
               </button>
               <div id="cityMenu" class="category-menu" role="listbox" aria-label="City options"></div>
             </div>
-            <p id="cityMeta" class="field-meta">Select a category to view available cities.</p>
+            <p id="cityMeta" class="field-meta">Loading available cities...</p>
             <div id="cityError" class="field-error" role="alert" aria-live="polite"></div>
-          </div>
-        </div>
-        <div class="date-grid">
-          <div class="field">
-            <label for="fromDate">From Date</label>
-            <input id="fromDate" type="text" autocomplete="off" placeholder="Select start date" />
-            <div id="fromDateError" class="field-error" role="alert" aria-live="polite"></div>
           </div>
           <div class="field">
             <label for="store">Store</label>
@@ -156,8 +138,29 @@
               </button>
               <div id="storeMenu" class="category-menu" role="listbox" aria-label="Store options"></div>
             </div>
-            <p id="storeMeta" class="field-meta">Select a city to view available stores.</p>
+            <p id="storeMeta" class="field-meta">Select a city to view all stores in that city.</p>
             <div id="storeError" class="field-error" role="alert" aria-live="polite"></div>
+          </div>
+          <div class="field">
+            <label for="category">Category</label>
+            <div class="select-shell" id="categoryShell">
+              <select id="category" autocomplete="off" aria-hidden="true" tabindex="-1">
+                <option value="" selected disabled>Select category</option>
+              </select>
+              <button id="categoryTrigger" class="category-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                <span id="categoryTriggerText">Select category</span>
+              </button>
+              <div id="categoryMenu" class="category-menu" role="listbox" aria-label="Category options"></div>
+            </div>
+            <p id="categoryMeta" class="field-meta">Select a store to view available categories.</p>
+            <div id="categoryError" class="field-error" role="alert" aria-live="polite"></div>
+          </div>
+        </div>
+        <div class="date-grid">
+          <div class="field">
+            <label for="fromDate">From Date</label>
+            <input id="fromDate" type="text" autocomplete="off" placeholder="Select start date" />
+            <div id="fromDateError" class="field-error" role="alert" aria-live="polite"></div>
           </div>
           <div class="field">
             <label for="toDate">To Date</label>
@@ -174,7 +177,7 @@
 
       <article class="surface-card assistant-card" aria-label="Predicted assistant">
         <h2>Predicted Assistant</h2>
-        <p class="assistant-copy">Pick a category first, choose one of its available cities, then use the date range to generate projected demand.</p>
+        <p class="assistant-copy">Pick a city, choose one of its stores, then select a category and from/to dates to generate projected demand.</p>
         <div class="assistant-bars" aria-hidden="true">
           <span style="height:22px;"></span>
           <span style="height:34px;"></span>
@@ -191,8 +194,36 @@
           <div class="assistant-stat"><span>Risk level</span><strong id="riskLevelKpi">-</strong></div>
         </div>
         <canvas id="summarySparkline" class="assistant-sparkline" aria-label="Predicted summary sparkline"></canvas>
-        <p id="summaryHint" class="summary-hint">Summary updates when city, category, or date changes.</p>
+        <p id="summaryHint" class="summary-hint">Summary updates when city, store, category, or date changes.</p>
       </article>
+    </section>
+
+    <section id="cityStoreSummarySection" class="surface-card city-store-summary-card">
+      <div class="viz-head city-store-summary-head">
+        <div>
+          <h2>City Store Inventory Snapshot</h2>
+          <span id="cityStoreSummaryMeta" class="viz-meta-line">Select a city to view all stores, quantities, units sold, and demand signals.</span>
+        </div>
+      </div>
+      <div id="cityStoreSummaryEmpty" class="city-store-summary-empty">Select a city to load store-wise quantities and sales details.</div>
+      <div id="cityStoreSummaryWrap" class="city-store-summary-wrap is-hidden">
+        <table class="city-store-table" aria-label="City store inventory summary">
+          <thead>
+            <tr>
+              <th>Store</th>
+              <th>Store ID</th>
+              <th>Latest Date</th>
+              <th>Inventory</th>
+              <th>Units Sold</th>
+              <th>Units Ordered</th>
+              <th>Avg Forecast</th>
+              <th>Price</th>
+              <th>Discount</th>
+            </tr>
+          </thead>
+          <tbody id="cityStoreSummaryBody"></tbody>
+        </table>
+      </div>
     </section>
 
     <section id="forecastVisualization" class="surface-card viz-panel">
