@@ -1113,7 +1113,132 @@ def _init_history_db() -> None:
             conn.execute("ALTER TABLE forecast_history ADD COLUMN start_date TEXT")
         if "end_date" not in existing_cols:
             conn.execute("ALTER TABLE forecast_history ADD COLUMN end_date TEXT")
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS manual_trend_points (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                user_id INTEGER NOT NULL,
+                category TEXT NOT NULL,
+                point_date TEXT NOT NULL,
+                units_sold REAL NOT NULL,
+                demand_forecast REAL NOT NULL,
+                units_ordered REAL NOT NULL DEFAULT 0,
+                inventory_level REAL NOT NULL DEFAULT 0,
+                price REAL NOT NULL DEFAULT 0,
+                discount REAL NOT NULL DEFAULT 0
+            )
+            """
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_manual_trend_points_user_date ON manual_trend_points(user_id, point_date, id)"
+        )
         conn.commit()
+
+
+def _list_manual_trend_points(user_id: int) -> List[Dict[str, Any]]:
+    with _get_history_db_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT
+                id,
+                created_at,
+                category,
+                point_date,
+                units_sold,
+                demand_forecast,
+                units_ordered,
+                inventory_level,
+                price,
+                discount
+            FROM manual_trend_points
+            WHERE user_id = ?
+            ORDER BY point_date ASC, id ASC
+            """,
+            (int(user_id),),
+        ).fetchall()
+    return [
+        {
+            "id": int(row["id"]),
+            "created_at": str(row["created_at"]),
+            "category": str(row["category"]),
+            "date": str(row["point_date"]),
+            "units_sold": float(row["units_sold"]),
+            "demand_forecast": float(row["demand_forecast"]),
+            "units_ordered": float(row["units_ordered"]),
+            "inventory_level": float(row["inventory_level"]),
+            "price": float(row["price"]),
+            "discount": float(row["discount"]),
+        }
+        for row in rows
+    ]
+
+
+def _insert_manual_trend_point(user_id: int, payload: "ManualTrendPointRequest") -> Dict[str, Any]:
+    category = str(payload.category or "").strip()
+    point_date = str(payload.date or "").strip()
+    parsed_date = pd.to_datetime(point_date, errors="coerce")
+    if not category:
+        raise HTTPException(status_code=400, detail="category is required")
+    if pd.isna(parsed_date):
+        raise HTTPException(status_code=400, detail="date must be a valid date")
+    point_date = parsed_date.date().isoformat()
+
+    with _get_history_db_conn() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO manual_trend_points (
+                user_id,
+                category,
+                point_date,
+                units_sold,
+                demand_forecast,
+                units_ordered,
+                inventory_level,
+                price,
+                discount
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                int(user_id),
+                category,
+                point_date,
+                float(payload.units_sold),
+                float(payload.demand_forecast),
+                float(payload.units_ordered),
+                float(payload.inventory_level),
+                float(payload.price),
+                float(payload.discount),
+            ),
+        )
+        conn.commit()
+        point_id = int(cur.lastrowid)
+
+    items = _list_manual_trend_points(int(user_id))
+    row = next((item for item in items if int(item["id"]) == point_id), None)
+    if row is None:
+        raise HTTPException(status_code=500, detail="Unable to load saved manual trend point")
+    return row
+
+
+def _delete_manual_trend_point(user_id: int, point_id: int) -> int:
+    with _get_history_db_conn() as conn:
+        cur = conn.execute(
+            "DELETE FROM manual_trend_points WHERE id = ? AND user_id = ?",
+            (int(point_id), int(user_id)),
+        )
+        conn.commit()
+        return int(cur.rowcount or 0)
+
+
+def _clear_manual_trend_points(user_id: int) -> int:
+    with _get_history_db_conn() as conn:
+        cur = conn.execute(
+            "DELETE FROM manual_trend_points WHERE user_id = ?",
+            (int(user_id),),
+        )
+        conn.commit()
+        return int(cur.rowcount or 0)
 
 
 def _save_forecast_history(
@@ -1349,6 +1474,17 @@ class DynamicCompareRequest(BaseModel):
     left_to: str = ""
     right_from: str = ""
     right_to: str = ""
+
+
+class ManualTrendPointRequest(BaseModel):
+    category: str
+    date: str
+    units_sold: float
+    demand_forecast: float
+    units_ordered: float = 0.0
+    inventory_level: float = 0.0
+    price: float = 0.0
+    discount: float = 0.0
 
 
 def _norm_text(value: Any) -> str:
@@ -3553,6 +3689,48 @@ def get_forecast_history(
     return {
         "count": len(items),
         "items": items,
+    }
+
+
+@app.get("/manual-trends")
+def get_manual_trends(request: Request) -> Dict[str, Any]:
+    user = _require_roles(request, ALLOWED_LOGIN_ROLES)
+    items = _list_manual_trend_points(int(user["id"]))
+    return {
+        "count": len(items),
+        "items": items,
+    }
+
+
+@app.post("/manual-trends")
+def create_manual_trend(payload: ManualTrendPointRequest, request: Request) -> Dict[str, Any]:
+    user = _require_roles(request, ALLOWED_LOGIN_ROLES)
+    item = _insert_manual_trend_point(int(user["id"]), payload)
+    return {
+        "ok": True,
+        "item": item,
+    }
+
+
+@app.delete("/manual-trends/{point_id}")
+def delete_manual_trend(point_id: int, request: Request) -> Dict[str, Any]:
+    user = _require_roles(request, ALLOWED_LOGIN_ROLES)
+    deleted = _delete_manual_trend_point(int(user["id"]), int(point_id))
+    if deleted <= 0:
+        raise HTTPException(status_code=404, detail="Manual trend point not found")
+    return {
+        "ok": True,
+        "deleted": deleted,
+    }
+
+
+@app.delete("/manual-trends")
+def clear_manual_trends(request: Request) -> Dict[str, Any]:
+    user = _require_roles(request, ALLOWED_LOGIN_ROLES)
+    deleted = _clear_manual_trend_points(int(user["id"]))
+    return {
+        "ok": True,
+        "deleted": deleted,
     }
 
 

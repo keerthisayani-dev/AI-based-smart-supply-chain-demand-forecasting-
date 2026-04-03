@@ -227,45 +227,75 @@
     </section>
 
     <section id="forecastVisualization" class="surface-card viz-panel">
-      <div class="viz-head">
-        <h2>Predicted Visualization</h2>
-        <span id="vizSubtitle" class="viz-meta-line">Live city and category projection view</span>
-      </div>
-      <div class="viz-grid">
-        <article class="surface-card viz-card viz-card-wide">
-          <h3>Actual vs Predicted Demand</h3>
-          <div class="chart-wrap">
-            <canvas id="actualForecastChart" aria-label="Actual vs Predicted Demand chart"></canvas>
-            <p id="actualForecastEmpty" class="chart-empty is-hidden">No chart data available.</p>
+      <article class="surface-card viz-card viz-card-wide">
+        <h3>All 15 Product Daily Trends</h3>
+        <div class="chart-wrap">
+          <canvas id="categoryComparisonChart" aria-label="Category demand comparison chart"></canvas>
+          <p id="categoryComparisonEmpty" class="chart-empty is-hidden">No product daily trend data available.</p>
+        </div>
+      </article>
+      <article class="surface-card viz-card viz-card-wide manual-trend-card">
+        <div class="manual-trend-head">
+          <div>
+            <h3>Manual Trend Compare</h3>
+            <p class="manual-trend-copy">Enter your own daily values to compare units sold and demand forecast in a clean manual trend view.</p>
           </div>
-        </article>
-        <article class="surface-card viz-card viz-card-wide">
-          <h3>Daily Trends</h3>
-          <div class="metric-grid compact" aria-label="Daily trend summary">
-            <div class="metric-row"><span>Visible Days</span><strong id="trendWindowValue">-</strong></div>
-            <div class="metric-row"><span>Peak Trend Day</span><strong id="trendPeakValue">-</strong></div>
-            <div class="metric-row emphasize"><span>Trend Direction</span><strong id="trendDirectionValue">-</strong></div>
+          <div class="manual-trend-actions">
+            <button id="manualTrendAddBtn" class="top-action-btn top-action-btn-primary" type="button">Add Point</button>
+            <button id="manualTrendClearBtn" class="top-action-btn" type="button">Clear</button>
           </div>
-          <div class="chart-wrap">
-            <canvas id="dailyTrendChart" aria-label="Daily demand trend chart"></canvas>
-            <p id="dailyTrendEmpty" class="chart-empty is-hidden">No daily trend data available.</p>
+        </div>
+        <div class="manual-trend-grid">
+          <div class="manual-trend-form">
+            <div class="field">
+              <label for="manualTrendCategory">Category</label>
+              <select id="manualTrendCategory">
+                <option value="" selected>Select category</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="manualTrendDate">Date</label>
+              <input id="manualTrendDate" type="date" />
+            </div>
+            <div class="field">
+              <label for="manualTrendUnitsSold">Units Sold</label>
+              <input id="manualTrendUnitsSold" type="number" min="0" step="0.01" placeholder="Enter units sold" />
+            </div>
+            <div class="field">
+              <label for="manualTrendDemandForecast">Demand Forecast</label>
+              <input id="manualTrendDemandForecast" type="number" min="0" step="0.01" placeholder="Enter demand forecast" />
+            </div>
+            <div class="field">
+              <label for="manualTrendUnitsOrdered">Units Ordered</label>
+              <input id="manualTrendUnitsOrdered" type="number" min="0" step="0.01" placeholder="Enter units ordered" />
+            </div>
+            <div class="field">
+              <label for="manualTrendInventoryLevel">Inventory Level</label>
+              <input id="manualTrendInventoryLevel" type="number" min="0" step="0.01" placeholder="Enter inventory level" />
+            </div>
+            <div class="field">
+              <label for="manualTrendPrice">Price</label>
+              <input id="manualTrendPrice" type="number" min="0" step="0.01" placeholder="Enter price" />
+            </div>
+            <div class="field">
+              <label for="manualTrendDiscount">Discount</label>
+              <input id="manualTrendDiscount" type="number" min="0" step="0.01" placeholder="Enter discount" />
+            </div>
           </div>
-        </article>
-        <article class="surface-card viz-card">
-          <h3>Scope Demand Comparison</h3>
-          <div class="chart-wrap">
-            <canvas id="categoryComparisonChart" aria-label="Category demand comparison chart"></canvas>
-            <p id="categoryComparisonEmpty" class="chart-empty is-hidden">No predicted scope comparison data.</p>
+          <div class="manual-trend-visuals">
+            <div class="metric-grid compact">
+              <div class="metric-row"><span>Manual Points</span><strong id="manualTrendCount">0</strong></div>
+              <div class="metric-row"><span>Manual Category</span><strong id="manualTrendCategoryValue">-</strong></div>
+              <div class="metric-row emphasize"><span>Compare Mode</span><strong>Units Sold vs Forecast</strong></div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="manualTrendChart" aria-label="Manual trend comparison chart"></canvas>
+              <p id="manualTrendEmpty" class="chart-empty">Add manual points to compare your trend.</p>
+            </div>
+            <div id="manualTrendList" class="manual-trend-list"></div>
           </div>
-        </article>
-        <article class="surface-card viz-card">
-          <h3>Stock Risk Gauge</h3>
-          <div class="chart-wrap gauge-wrap">
-            <canvas id="stockRiskGauge" aria-label="Stock risk gauge chart"></canvas>
-            <p id="stockRiskEmpty" class="chart-empty is-hidden">No risk data available.</p>
-          </div>
-        </article>
-      </div>
+        </div>
+      </article>
     </section>
 
     <section id="advancedAnalytics" class="analytics-stack">
@@ -303,7 +333,7 @@
   <footer class="page-footer">&copy; DemandIQ - AI Demand Prediction System</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="/assets/js/dashboard_redesign.js?v=20260401-01"></script>
+  <script src="/assets/js/dashboard_redesign.js?v=20260403-05"></script>
 </body>
 </html>
 

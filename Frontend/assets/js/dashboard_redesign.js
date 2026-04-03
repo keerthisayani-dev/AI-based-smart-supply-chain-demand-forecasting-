@@ -60,6 +60,19 @@ const cityStoreSummaryMetaEl = document.getElementById("cityStoreSummaryMeta");
 const cityStoreSummaryEmptyEl = document.getElementById("cityStoreSummaryEmpty");
 const cityStoreSummaryWrapEl = document.getElementById("cityStoreSummaryWrap");
 const cityStoreSummaryBodyEl = document.getElementById("cityStoreSummaryBody");
+const manualTrendCategoryEl = document.getElementById("manualTrendCategory");
+const manualTrendDateEl = document.getElementById("manualTrendDate");
+const manualTrendUnitsSoldEl = document.getElementById("manualTrendUnitsSold");
+const manualTrendDemandForecastEl = document.getElementById("manualTrendDemandForecast");
+const manualTrendUnitsOrderedEl = document.getElementById("manualTrendUnitsOrdered");
+const manualTrendInventoryLevelEl = document.getElementById("manualTrendInventoryLevel");
+const manualTrendPriceEl = document.getElementById("manualTrendPrice");
+const manualTrendDiscountEl = document.getElementById("manualTrendDiscount");
+const manualTrendAddBtnEl = document.getElementById("manualTrendAddBtn");
+const manualTrendClearBtnEl = document.getElementById("manualTrendClearBtn");
+const manualTrendCountEl = document.getElementById("manualTrendCount");
+const manualTrendCategoryValueEl = document.getElementById("manualTrendCategoryValue");
+const manualTrendListEl = document.getElementById("manualTrendList");
 
 const ALLOWED_MIN_DATE = "2025-01-01";
 const ALLOWED_MAX_DATE = "2031-12-31";
@@ -78,6 +91,8 @@ let actualForecastChart = null;
 let dailyTrendChart = null;
 let categoryComparisonChart = null;
 let stockRiskGaugeChart = null;
+let manualTrendChart = null;
+let manualTrendRows = [];
 const vizDataCache = new Map();
 let latestDashboardData = null;
 let renderDebounceTimer = null;
@@ -262,6 +277,321 @@ function formatMaybeWhole(value) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+function setElementText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function populateManualTrendCategories() {
+  if (!manualTrendCategoryEl) return;
+  const previousValue = String(manualTrendCategoryEl.value || "").trim();
+  manualTrendCategoryEl.innerHTML = '<option value="" selected>Select category</option>';
+  scopeOptionsState.categories.slice(0, 15).forEach((categoryName) => {
+    const opt = document.createElement("option");
+    opt.value = categoryName;
+    opt.textContent = categoryName;
+    manualTrendCategoryEl.appendChild(opt);
+  });
+  if (previousValue && scopeOptionsState.categories.includes(previousValue)) {
+    manualTrendCategoryEl.value = previousValue;
+  }
+}
+
+function clearManualTrendInputs() {
+  if (manualTrendDateEl) manualTrendDateEl.value = "";
+  if (manualTrendUnitsSoldEl) manualTrendUnitsSoldEl.value = "";
+  if (manualTrendDemandForecastEl) manualTrendDemandForecastEl.value = "";
+  if (manualTrendUnitsOrderedEl) manualTrendUnitsOrderedEl.value = "";
+  if (manualTrendInventoryLevelEl) manualTrendInventoryLevelEl.value = "";
+  if (manualTrendPriceEl) manualTrendPriceEl.value = "";
+  if (manualTrendDiscountEl) manualTrendDiscountEl.value = "";
+}
+
+async function loadManualTrendData() {
+  try {
+    const payload = await fetchJson(`${apiBase()}/manual-trends`);
+    manualTrendRows = Array.isArray(payload?.items)
+      ? payload.items.map((row) => ({
+        id: Number(row?.id || 0),
+        category: String(row?.category || "").trim(),
+        date: String(row?.date || "").trim(),
+        unitsSold: Number(row?.units_sold ?? row?.unitsSold ?? 0),
+        demandForecast: Number(row?.demand_forecast ?? row?.demandForecast ?? 0),
+        unitsOrdered: Number(row?.units_ordered ?? row?.unitsOrdered ?? 0),
+        inventoryLevel: Number(row?.inventory_level ?? row?.inventoryLevel ?? 0),
+        price: Number(row?.price ?? 0),
+        discount: Number(row?.discount ?? 0),
+      }))
+      : [];
+  } catch (err) {
+    debugLog("manual-trend:load-error", err?.message || String(err));
+    manualTrendRows = [];
+  }
+  renderManualTrendChart();
+}
+
+function renderManualTrendList(rows) {
+  if (!manualTrendListEl) return;
+  if (!rows.length) {
+    manualTrendListEl.innerHTML = "";
+    return;
+  }
+  manualTrendListEl.innerHTML = rows.map((row) => `
+    <div class="manual-trend-item">
+      <div class="manual-trend-item-top">
+        <span>${row.category || "-"}</span>
+        <div class="manual-trend-item-actions">
+          <span>${formatShortDate(row.date)}</span>
+          <button
+            class="manual-trend-delete-btn"
+            type="button"
+            data-id="${Number(row.id || 0)}"
+            aria-label="Delete manual point for ${row.category || "product"} on ${formatShortDate(row.date)}"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+      <div class="manual-trend-item-meta">
+        <span>Sold: ${formatMaybeWhole(row.unitsSold)}</span>
+        <span>Forecast: ${formatMaybeWhole(row.demandForecast)}</span>
+        <span>Ordered: ${formatMaybeWhole(row.unitsOrdered)}</span>
+        <span>Inventory: ${formatMaybeWhole(row.inventoryLevel)}</span>
+      </div>
+    </div>
+  `).join("");
+
+  manualTrendListEl.querySelectorAll(".manual-trend-delete-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const pointId = Number(btn.getAttribute("data-id"));
+      if (!Number.isInteger(pointId) || pointId <= 0) return;
+      try {
+        await fetchJson(`${apiBase()}/manual-trends/${pointId}`, { method: "DELETE" });
+        manualTrendRows = manualTrendRows.filter((row) => Number(row.id || 0) !== pointId);
+        renderManualTrendChart();
+      } catch (err) {
+        debugLog("manual-trend:delete-error", err?.message || String(err));
+      }
+    });
+  });
+}
+
+function renderManualTrendChart() {
+  if (typeof Chart === "undefined") return;
+  const canvas = document.getElementById("manualTrendChart");
+  if (!canvas) return;
+  const chartRows = [...manualTrendRows].sort((left, right) => String(left.date || "").localeCompare(String(right.date || "")));
+  const labels = chartRows.map((row) => formatShortDate(row.date));
+  const soldSeries = chartRows.map((row) => Number(row.unitsSold || 0));
+  const forecastSeries = chartRows.map((row) => Number(row.demandForecast || 0));
+  const activeCategory = chartRows.length ? chartRows[chartRows.length - 1].category : "";
+
+  setElementText("manualTrendCount", String(chartRows.length));
+  setElementText("manualTrendCategoryValue", activeCategory || "-");
+  renderManualTrendList(chartRows.slice().reverse());
+
+  if (manualTrendChart) manualTrendChart.destroy();
+  if (!chartRows.length) {
+    setChartEmptyState("manualTrendEmpty", true, "Add manual points to compare your trend.");
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
+  setChartEmptyState("manualTrendEmpty", false);
+  manualTrendChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Units Sold",
+          data: soldSeries,
+          borderColor: "rgba(104, 151, 145, 1)",
+          backgroundColor: "rgba(104, 151, 145, 0.08)",
+          borderWidth: 2.4,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          pointBackgroundColor: "rgba(104, 151, 145, 1)",
+          pointBorderColor: "rgba(255, 255, 255, 0.95)",
+          pointBorderWidth: 1,
+          tension: 0.34,
+          fill: false,
+        },
+        {
+          label: "Demand Forecast",
+          data: forecastSeries,
+          borderColor: "rgba(201, 130, 42, 1)",
+          backgroundColor: "rgba(201, 130, 42, 0.08)",
+          borderWidth: 2.4,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          pointBackgroundColor: "rgba(201, 130, 42, 1)",
+          pointBorderColor: "rgba(255, 255, 255, 0.95)",
+          pointBorderWidth: 1,
+          tension: 0.34,
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 900, easing: "easeOutQuart" },
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: {
+          position: "top",
+          labels: {
+            color: "#6b7d86",
+            boxWidth: 10,
+            boxHeight: 10,
+            usePointStyle: true,
+            pointStyle: "circle",
+            padding: 10,
+            font: { size: 11, weight: "600" },
+          },
+        },
+        tooltip: {
+          backgroundColor: "rgba(255, 255, 255, 0.96)",
+          titleColor: "#52636b",
+          bodyColor: "#52636b",
+          borderColor: "rgba(198, 205, 210, 0.85)",
+          borderWidth: 1,
+          padding: 10,
+        },
+      },
+      scales: {
+        x: {
+          border: { display: false },
+          ticks: { color: "#7a888f", maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+          grid: { display: false },
+        },
+        y: {
+          border: { display: false },
+          title: {
+            display: true,
+            text: "Units",
+            color: "#7a888f",
+            font: { weight: "700", size: 11 },
+          },
+          ticks: { color: "#7a888f", maxTicksLimit: 6 },
+          grid: { color: "rgba(210, 214, 217, 0.55)" },
+        },
+      },
+    },
+  });
+}
+
+async function addManualTrendPoint() {
+  const category = String(manualTrendCategoryEl?.value || "").trim();
+  const date = String(manualTrendDateEl?.value || "").trim();
+  const unitsSold = Number(manualTrendUnitsSoldEl?.value);
+  const demandForecast = Number(manualTrendDemandForecastEl?.value);
+  const unitsOrdered = Number(manualTrendUnitsOrderedEl?.value);
+  const inventoryLevel = Number(manualTrendInventoryLevelEl?.value);
+  const price = Number(manualTrendPriceEl?.value);
+  const discount = Number(manualTrendDiscountEl?.value);
+
+  if (!category || !date || !Number.isFinite(unitsSold) || !Number.isFinite(demandForecast)) {
+    debugLog("manual-trend:invalid", { category, date, unitsSold, demandForecast });
+    return;
+  }
+
+  try {
+    const payload = await fetchJson(`${apiBase()}/manual-trends`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        category,
+        date,
+        units_sold: unitsSold,
+        demand_forecast: demandForecast,
+        units_ordered: Number.isFinite(unitsOrdered) ? unitsOrdered : 0,
+        inventory_level: Number.isFinite(inventoryLevel) ? inventoryLevel : 0,
+        price: Number.isFinite(price) ? price : 0,
+        discount: Number.isFinite(discount) ? discount : 0,
+      }),
+    });
+    const saved = payload?.item;
+    if (saved) {
+      manualTrendRows.push({
+        id: Number(saved.id || 0),
+        category: String(saved.category || "").trim(),
+        date: String(saved.date || "").trim(),
+        unitsSold: Number(saved.units_sold ?? 0),
+        demandForecast: Number(saved.demand_forecast ?? 0),
+        unitsOrdered: Number(saved.units_ordered ?? 0),
+        inventoryLevel: Number(saved.inventory_level ?? 0),
+        price: Number(saved.price ?? 0),
+        discount: Number(saved.discount ?? 0),
+      });
+      renderManualTrendChart();
+      clearManualTrendInputs();
+    }
+  } catch (err) {
+    debugLog("manual-trend:save-error", err?.message || String(err));
+  }
+}
+
+async function clearManualTrendData() {
+  try {
+    await fetchJson(`${apiBase()}/manual-trends`, { method: "DELETE" });
+    manualTrendRows = [];
+    clearManualTrendInputs();
+    if (manualTrendChart) {
+      manualTrendChart.destroy();
+      manualTrendChart = null;
+    }
+    renderManualTrendChart();
+  } catch (err) {
+    debugLog("manual-trend:clear-error", err?.message || String(err));
+  }
+}
+
+function buildSeriesColor(index = 0, alpha = 1) {
+  const palette = [
+    [59, 130, 246],
+    [34, 197, 94],
+    [239, 68, 68],
+    [245, 158, 11],
+    [168, 85, 247],
+    [20, 184, 166],
+    [236, 72, 153],
+    [99, 102, 241],
+    [132, 204, 22],
+    [249, 115, 22],
+    [6, 182, 212],
+    [244, 114, 182],
+    [250, 204, 21],
+    [14, 165, 233],
+    [163, 230, 53],
+  ];
+  const [r, g, b] = palette[index % palette.length];
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function buildTrendReferenceColor(index = 0, alpha = 1) {
+  const palette = [
+    [104, 151, 145],
+    [201, 130, 42],
+    [126, 162, 186],
+    [172, 118, 99],
+    [136, 168, 105],
+    [125, 127, 168],
+    [174, 148, 89],
+    [118, 161, 160],
+    [180, 119, 123],
+    [108, 145, 180],
+    [164, 145, 114],
+    [143, 160, 136],
+    [150, 136, 176],
+    [186, 140, 84],
+    [114, 154, 142],
+  ];
+  const [r, g, b] = palette[index % palette.length];
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function normalizeScopeValues(values = []) {
@@ -816,51 +1146,65 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
   const city = getSelectedCity();
   const store = getSelectedStore();
   const category = getSelectedOrFirstCategory();
-  if (!city || !category || !store) {
-    if (isStale()) return;
-    destroyCharts();
-    latestDashboardData = null;
-    document.getElementById("avgForecastKpi").textContent = "-";
-    document.getElementById("peakDayKpi").textContent = "-";
-    document.getElementById("riskLevelKpi").textContent = "-";
-    document.getElementById("trendWindowValue").textContent = "-";
-    document.getElementById("trendPeakValue").textContent = "-";
-    document.getElementById("trendDirectionValue").textContent = "-";
-    document.getElementById("summaryHint").textContent = "Select city, store, category, and date range to preview summary.";
-    setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
-    setChartEmptyState("dailyTrendEmpty", true, "No daily trend data available.");
-    setChartEmptyState("categoryComparisonEmpty", true, "No category comparison data.");
-    setChartEmptyState("stockRiskEmpty", true, "No risk data available.");
-    resetAdvancedSections("Generate a prediction to view AI insight.");
-    latestRenderKey = requestedKey || buildRenderKey();
-    return;
-  }
-
+  const hasDetailedScope = Boolean(city && category && store);
   const { from, to } = getResolvedDateRange();
   const subtitleEl = document.getElementById("vizSubtitle");
   const liveMode = Boolean(options?.liveMode ?? liveSimulationState.running);
-  subtitleEl.textContent = liveMode
-    ? `${city} | ${store} | ${category} | live rolling window`
-    : `${city} | ${store} | ${category} | ${from} to ${to}`;
+  if (subtitleEl) {
+    subtitleEl.textContent = hasDetailedScope
+      ? (liveMode
+        ? `${city} | ${store} | ${category} | live rolling window`
+        : `${city} | ${store} | ${category} | ${from} to ${to}`)
+      : (city
+        ? `${city} | all 15 products | ${from} to ${to}`
+        : `All cities | all 15 products | ${from} to ${to}`);
+  }
 
   let snapshot;
-  try {
-    snapshot = await fetchForecastSnapshot(city, store, category, from, to, {
-      liveMode,
-      forceRefresh: liveMode,
-    });
-    if (isStale()) return;
-  } catch (err) {
-    if (isStale()) return;
-    destroyCharts();
+  if (!hasDetailedScope) {
+    if (actualForecastChart) actualForecastChart.destroy();
+    if (dailyTrendChart) dailyTrendChart.destroy();
+    if (stockRiskGaugeChart) stockRiskGaugeChart.destroy();
+    actualForecastChart = null;
+    dailyTrendChart = null;
+    stockRiskGaugeChart = null;
     latestDashboardData = null;
-    subtitleEl.textContent = `Visualization unavailable: ${err.message}`;
-    setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
-    setChartEmptyState("dailyTrendEmpty", true, "No daily trend data available.");
-    setChartEmptyState("categoryComparisonEmpty", true, "No category comparison data.");
-    setChartEmptyState("stockRiskEmpty", true, "No risk data available.");
-    resetAdvancedSections(`Unable to generate AI insight: ${err.message}`);
-    return;
+    setElementText("avgForecastKpi", "-");
+    setElementText("peakDayKpi", "-");
+    setElementText("riskLevelKpi", "-");
+    setElementText("trendWindowValue", "-");
+    setElementText("trendPeakValue", "-");
+    setElementText("trendDirectionValue", "-");
+    setElementText("summaryHint", city
+      ? "Showing all 15 product trends for the selected city. Choose store and category to unlock the detailed charts."
+      : "Showing all 15 product trends across all cities. Choose city, store, and category to unlock the detailed charts.");
+    setChartEmptyState("actualForecastEmpty", true, "Select city, store, and category to view this chart.");
+    setChartEmptyState("dailyTrendEmpty", true, "Select city, store, and category to view this chart.");
+    setChartEmptyState("stockRiskEmpty", true, "Select city, store, and category to view this chart.");
+    resetAdvancedSections("Choose city, store, and category to view AI insight.");
+  } else {
+    try {
+      snapshot = await fetchForecastSnapshot(city, store, category, from, to, {
+        liveMode,
+        forceRefresh: liveMode,
+      });
+      if (isStale()) return;
+    } catch (err) {
+      if (isStale()) return;
+      destroyCharts();
+      latestDashboardData = null;
+      if (subtitleEl) subtitleEl.textContent = `Visualization unavailable: ${err.message}`;
+      setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
+      setChartEmptyState("dailyTrendEmpty", true, "No daily trend data available.");
+      setChartEmptyState("categoryComparisonEmpty", true, "No product daily trend data available.");
+      setChartEmptyState("stockRiskEmpty", true, "No risk data available.");
+      resetAdvancedSections(`Unable to generate AI insight: ${err.message}`);
+      return;
+    }
+  }
+
+  if (!hasDetailedScope) {
+    snapshot = { filteredHistory: [], filteredForecast: [] };
   }
 
   const history = snapshot.filteredHistory;
@@ -911,58 +1255,61 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
     riskColor = "#f59e0b";
   }
 
-  document.getElementById("avgForecastKpi").textContent = avgForecast > 0 ? avgForecast.toFixed(1) : "-";
-  document.getElementById("peakDayKpi").textContent = peakDayRow?.date ? formatShortDate(peakDayRow.date) : "-";
-  document.getElementById("riskLevelKpi").textContent = riskLabel;
-  document.getElementById("summaryHint").textContent = peakDayRow?.date
+  setElementText("avgForecastKpi", avgForecast > 0 ? avgForecast.toFixed(1) : "-");
+  setElementText("peakDayKpi", peakDayRow?.date ? formatShortDate(peakDayRow.date) : "-");
+  setElementText("riskLevelKpi", riskLabel);
+  setElementText("summaryHint", peakDayRow?.date
     ? `Peak predicted value on ${formatShortDate(peakDayRow.date)} with ${Number(peakDayRow.forecast_units_sold || 0).toFixed(1)} units.`
-    : "Summary updates when city, category, or date changes.";
+    : "Summary updates when city, category, or date changes.");
 
-  const lineCtx = document.getElementById("actualForecastChart").getContext("2d");
-  const lineBlue = lineCtx.createLinearGradient(0, 0, 0, 320);
-  lineBlue.addColorStop(0, "rgba(59, 130, 246, 0.95)");
-  lineBlue.addColorStop(1, "rgba(59, 130, 246, 0.45)");
-  const linePurple = lineCtx.createLinearGradient(0, 0, 0, 320);
-  linePurple.addColorStop(0, "rgba(139, 92, 246, 0.95)");
-  linePurple.addColorStop(1, "rgba(139, 92, 246, 0.45)");
+  const actualForecastCanvas = document.getElementById("actualForecastChart");
+  if (actualForecastCanvas) {
+    const lineCtx = actualForecastCanvas.getContext("2d");
+    const lineBlue = lineCtx.createLinearGradient(0, 0, 0, 320);
+    lineBlue.addColorStop(0, "rgba(59, 130, 246, 0.95)");
+    lineBlue.addColorStop(1, "rgba(59, 130, 246, 0.45)");
+    const linePurple = lineCtx.createLinearGradient(0, 0, 0, 320);
+    linePurple.addColorStop(0, "rgba(139, 92, 246, 0.95)");
+    linePurple.addColorStop(1, "rgba(139, 92, 246, 0.45)");
 
-  if (actualForecastChart) actualForecastChart.destroy();
-  if (labels.length) {
-    setChartEmptyState("actualForecastEmpty", false);
-    actualForecastChart = new Chart(lineCtx, {
-      type: "line",
-      data: {
-        labels: labels.map(formatShortDate),
-        datasets: [
-          { label: "Actual Demand", data: actualSeries, borderColor: lineBlue, backgroundColor: "rgba(59, 130, 246, 0.18)", tension: 0.35, borderWidth: 2, pointRadius: 1.6, spanGaps: true },
-          { label: "Predicted Demand", data: forecastSeries, borderColor: linePurple, backgroundColor: "rgba(139, 92, 246, 0.18)", tension: 0.35, borderWidth: 2, pointRadius: 1.6, spanGaps: true },
-          {
-            label: "Weekend",
-            data: weekendSeries,
-            type: "scatter",
-            showLine: false,
-            pointRadius: 4,
-            pointHoverRadius: 5,
-            pointBackgroundColor: "#f8fafc",
-            pointBorderColor: "rgba(148, 163, 184, 0.9)",
-            pointBorderWidth: 1.2,
-            spanGaps: true,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 1200, easing: "easeOutQuart" },
-        plugins: { legend: { labels: { color: "#dbe7ff", boxWidth: 12, boxHeight: 2, usePointStyle: true } } },
-        scales: {
-          x: { ticks: { color: "#9cb0d8" }, grid: { color: "rgba(148, 163, 184, 0.12)" } },
-          y: { ticks: { color: "#9cb0d8" }, grid: { color: "rgba(148, 163, 184, 0.12)" } },
+    if (actualForecastChart) actualForecastChart.destroy();
+    if (labels.length) {
+      setChartEmptyState("actualForecastEmpty", false);
+      actualForecastChart = new Chart(lineCtx, {
+        type: "line",
+        data: {
+          labels: labels.map(formatShortDate),
+          datasets: [
+            { label: "Actual Demand", data: actualSeries, borderColor: lineBlue, backgroundColor: "rgba(59, 130, 246, 0.18)", tension: 0.35, borderWidth: 2, pointRadius: 1.6, spanGaps: true },
+            { label: "Predicted Demand", data: forecastSeries, borderColor: linePurple, backgroundColor: "rgba(139, 92, 246, 0.18)", tension: 0.35, borderWidth: 2, pointRadius: 1.6, spanGaps: true },
+            {
+              label: "Weekend",
+              data: weekendSeries,
+              type: "scatter",
+              showLine: false,
+              pointRadius: 4,
+              pointHoverRadius: 5,
+              pointBackgroundColor: "#f8fafc",
+              pointBorderColor: "rgba(148, 163, 184, 0.9)",
+              pointBorderWidth: 1.2,
+              spanGaps: true,
+            },
+          ],
         },
-      },
-    });
-  } else {
-    setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 1200, easing: "easeOutQuart" },
+          plugins: { legend: { labels: { color: "#dbe7ff", boxWidth: 12, boxHeight: 2, usePointStyle: true } } },
+          scales: {
+            x: { ticks: { color: "#9cb0d8" }, grid: { color: "rgba(148, 163, 184, 0.12)" } },
+            y: { ticks: { color: "#9cb0d8" }, grid: { color: "rgba(148, 163, 184, 0.12)" } },
+          },
+        },
+      });
+    } else {
+      setChartEmptyState("actualForecastEmpty", true, "No chart data available.");
+    }
   }
 
   const rollingTrendSeries = trendBaseSeries.map((_, idx) => {
@@ -985,15 +1332,17 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
     if (trendEnd > trendStart) trendDirection = "Rising";
     else if (trendEnd < trendStart) trendDirection = "Falling";
   }
-  document.getElementById("trendWindowValue").textContent = labels.length ? `${labels.length} days` : "-";
-  document.getElementById("trendPeakValue").textContent = peakTrendPoint?.date ? formatShortDate(peakTrendPoint.date) : "-";
-  document.getElementById("trendDirectionValue").textContent = trendDirection;
+  setElementText("trendWindowValue", labels.length ? `${labels.length} days` : "-");
+  setElementText("trendPeakValue", peakTrendPoint?.date ? formatShortDate(peakTrendPoint.date) : "-");
+  setElementText("trendDirectionValue", trendDirection);
 
-  const dailyTrendCtx = document.getElementById("dailyTrendChart").getContext("2d");
-  if (dailyTrendChart) dailyTrendChart.destroy();
-  if (labels.length) {
-    setChartEmptyState("dailyTrendEmpty", false);
-    dailyTrendChart = new Chart(dailyTrendCtx, {
+  const dailyTrendCanvas = document.getElementById("dailyTrendChart");
+  if (dailyTrendCanvas) {
+    const dailyTrendCtx = dailyTrendCanvas.getContext("2d");
+    if (dailyTrendChart) dailyTrendChart.destroy();
+    if (labels.length) {
+      setChartEmptyState("dailyTrendEmpty", false);
+      dailyTrendChart = new Chart(dailyTrendCtx, {
       type: "bar",
       data: {
         labels: labels.map(formatShortDate),
@@ -1033,8 +1382,9 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
         },
       },
     });
-  } else {
-    setChartEmptyState("dailyTrendEmpty", true, "No daily trend data available.");
+    } else {
+      setChartEmptyState("dailyTrendEmpty", true, "No daily trend data available.");
+    }
   }
 
   const centerTextPlugin = {
@@ -1056,15 +1406,18 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
     },
   };
 
-  const gaugeCtx = document.getElementById("stockRiskGauge").getContext("2d");
-  if (stockRiskGaugeChart) stockRiskGaugeChart.destroy();
-  setChartEmptyState("stockRiskEmpty", false);
-  stockRiskGaugeChart = new Chart(gaugeCtx, {
-    type: "doughnut",
-    data: { labels: ["Risk", "Remaining"], datasets: [{ data: [riskValue, Math.max(0, 100 - riskValue)], backgroundColor: [riskColor, "rgba(148, 163, 184, 0.18)"], borderWidth: 0, cutout: "72%", circumference: 360, rotation: -90 }] },
-    options: { responsive: true, maintainAspectRatio: false, animation: { duration: 1200, easing: "easeOutQuart" }, plugins: { legend: { display: false } } },
-    plugins: [centerTextPlugin],
-  });
+  const stockRiskCanvas = document.getElementById("stockRiskGauge");
+  if (stockRiskCanvas) {
+    const gaugeCtx = stockRiskCanvas.getContext("2d");
+    if (stockRiskGaugeChart) stockRiskGaugeChart.destroy();
+    setChartEmptyState("stockRiskEmpty", false);
+    stockRiskGaugeChart = new Chart(gaugeCtx, {
+      type: "doughnut",
+      data: { labels: ["Risk", "Remaining"], datasets: [{ data: [riskValue, Math.max(0, 100 - riskValue)], backgroundColor: [riskColor, "rgba(148, 163, 184, 0.18)"], borderWidth: 0, cutout: "72%", circumference: 360, rotation: -90 }] },
+      options: { responsive: true, maintainAspectRatio: false, animation: { duration: 1200, easing: "easeOutQuart" }, plugins: { legend: { display: false } } },
+      plugins: [centerTextPlugin],
+    });
+  }
 
   const firstForecast = forecast.length ? Number(forecast[0].forecast_units_sold || 0) : 0;
   const lastForecast = forecast.length ? Number(forecast[forecast.length - 1].forecast_units_sold || 0) : 0;
@@ -1125,49 +1478,144 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
   });
   latestRenderKey = requestedKey || `${category}|${from}|${to}`;
 
-  const categoryOptions = Array.from(categoryEl.options || [])
-    .map((opt) => String(opt.value || "").trim())
+  const productSeries = scopeOptionsState.categories
     .filter(Boolean)
-    .slice(0, 6);
-  const categoryRows = await Promise.all(categoryOptions.map(async (cat) => {
+    .slice(0, 15);
+  const categoryRows = await Promise.all(productSeries.map(async (cat) => {
     try {
-      const snap = await fetchForecastSnapshot(city, store, cat, from, to, {
+      const snap = await fetchForecastSnapshot(city, "", cat, from, to, {
         liveMode: liveSimulationState.running,
         forceRefresh: liveSimulationState.running,
       });
-      const totalActual = snap.filteredHistory.reduce((sum, r) => sum + Number(r.actual_units_sold || 0), 0);
-      const totalProjected = snap.filteredForecast.reduce((sum, r) => sum + Number(r.forecast_units_sold || 0), 0);
-      return { category: cat, units: totalActual > 0 ? totalActual : totalProjected };
+      const preferredRows = Array.isArray(snap.filteredForecast) && snap.filteredForecast.length
+        ? snap.filteredForecast
+        : snap.filteredHistory;
+      return {
+        category: cat,
+        points: (Array.isArray(preferredRows) ? preferredRows : []).map((row) => ({
+          date: String(row?.date || ""),
+          value: Number(
+            row?.forecast_units_sold != null
+              ? row.forecast_units_sold
+              : row?.actual_units_sold != null
+                ? row.actual_units_sold
+                : NaN,
+          ),
+        })).filter((point) => point.date && Number.isFinite(point.value)),
+      };
     } catch (_) {
-      return { category: cat, units: 0 };
+      return { category: cat, points: [] };
     }
   }));
   if (isStale()) return;
 
-  const barCtx = document.getElementById("categoryComparisonChart").getContext("2d");
-  const barGrad = barCtx.createLinearGradient(0, 0, 0, 320);
-  barGrad.addColorStop(0, "rgba(79, 172, 254, 0.95)");
-  barGrad.addColorStop(1, "rgba(123, 97, 255, 0.75)");
+  const comparisonCtx = document.getElementById("categoryComparisonChart").getContext("2d");
+  const comparisonLabels = Array.from(new Set(
+    categoryRows.flatMap((row) => row.points.map((point) => point.date)),
+  )).filter(Boolean).sort();
+  const comparisonDatasets = categoryRows
+    .filter((row) => Array.isArray(row.points) && row.points.length)
+    .map((row, index) => {
+      const pointMap = new Map(row.points.map((point) => [point.date, point.value]));
+      const isSelectedCategory = row.category === category;
+      return {
+        label: row.category,
+        data: comparisonLabels.map((date) => (pointMap.has(date) ? Number(pointMap.get(date)) : null)),
+        borderColor: buildTrendReferenceColor(index, isSelectedCategory ? 1 : 0.82),
+        backgroundColor: buildTrendReferenceColor(index, 0.08),
+        borderWidth: isSelectedCategory ? 2.6 : 1.7,
+        pointRadius: comparisonLabels.length > 18 ? (isSelectedCategory ? 2.8 : 1.8) : (isSelectedCategory ? 3.6 : 2.4),
+        pointHoverRadius: isSelectedCategory ? 5 : 4,
+        pointBackgroundColor: buildTrendReferenceColor(index, 1),
+        pointBorderColor: "rgba(255, 255, 255, 0.96)",
+        pointBorderWidth: 1,
+        pointStyle: "circle",
+        tension: 0.34,
+        spanGaps: true,
+        fill: false,
+      };
+    });
 
   if (categoryComparisonChart) categoryComparisonChart.destroy();
-  if (categoryRows.length) {
+  if (comparisonLabels.length && comparisonDatasets.length) {
     setChartEmptyState("categoryComparisonEmpty", false);
-    categoryComparisonChart = new Chart(barCtx, {
-      type: "bar",
-      data: { labels: categoryRows.map((r) => r.category), datasets: [{ label: "Units Sold", data: categoryRows.map((r) => Number(r.units.toFixed(1))), backgroundColor: barGrad, borderRadius: 8, borderSkipped: false }] },
+    categoryComparisonChart = new Chart(comparisonCtx, {
+      type: "line",
+      data: {
+        labels: comparisonLabels.map(formatShortDate),
+        datasets: comparisonDatasets,
+      },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         animation: { duration: 1200, easing: "easeOutQuart" },
-        plugins: { legend: { labels: { color: "#dbe7ff", boxWidth: 12, boxHeight: 2, usePointStyle: true } } },
+        interaction: { mode: "nearest", intersect: false },
+        plugins: {
+          legend: {
+            position: "top",
+            labels: {
+              color: "#6b7d86",
+              boxWidth: 10,
+              boxHeight: 10,
+              usePointStyle: true,
+              pointStyle: "circle",
+              padding: 10,
+              font: {
+                size: 11,
+                weight: "600",
+              },
+            },
+          },
+          tooltip: {
+            backgroundColor: "rgba(255, 255, 255, 0.96)",
+            titleColor: "#52636b",
+            bodyColor: "#52636b",
+            borderColor: "rgba(198, 205, 210, 0.85)",
+            borderWidth: 1,
+            padding: 10,
+            displayColors: true,
+            callbacks: {
+              title(items) {
+                const item = Array.isArray(items) && items.length ? items[0] : null;
+                return item?.label ? `Date: ${item.label}` : "";
+              },
+              label(context) {
+                const value = Number(context.parsed?.y);
+                return `${context.dataset.label}: ${Number.isFinite(value) ? `${formatMaybeWhole(value)} units` : "-"}`;
+              },
+            },
+          },
+        },
         scales: {
-          x: { ticks: { color: "#9cb0d8" }, grid: { display: false } },
-          y: { ticks: { color: "#9cb0d8" }, grid: { color: "rgba(148, 163, 184, 0.12)" } },
+          x: {
+            border: { display: false },
+            ticks: {
+              color: "#7a888f",
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 8,
+            },
+            grid: { display: false },
+          },
+          y: {
+            border: { display: false },
+            title: {
+              display: true,
+              text: "Units Sold",
+              color: "#7a888f",
+              font: { weight: "700", size: 11 },
+            },
+            ticks: {
+              color: "#7a888f",
+              maxTicksLimit: 6,
+            },
+            grid: { color: "rgba(210, 214, 217, 0.55)" },
+          },
         },
       },
     });
   } else {
-    setChartEmptyState("categoryComparisonEmpty", true, "No category comparison data.");
+    setChartEmptyState("categoryComparisonEmpty", true, "No product daily trend data available.");
   }
 
 }
@@ -1437,6 +1885,7 @@ async function loadScopeOptions(preferredCity, preferredCategory) {
       : normalizeScopeValues(
           Array.from(scopeOptionsState.categoryCityMap.values()).flat(),
         );
+    populateManualTrendCategories();
     syncScopeSelections("init", preferredCity, preferredCategory);
   } catch (err) {
     debugLog("scope:error", err?.message || String(err));
@@ -1891,6 +2340,7 @@ async function initializeDefaults() {
     shell.classList.remove("preload");
     shell.classList.add("ready");
   }
+  await loadManualTrendData();
   await renderCityStoreSummary();
   await queueRenderForecastVisualization({ immediate: true });
 }
@@ -2126,6 +2576,21 @@ if (syncBtnEl) {
   syncBtnEl.addEventListener("click", async () => {
     clearDashboardState();
     await initializeDefaults();
+  });
+}
+if (manualTrendAddBtnEl) {
+  manualTrendAddBtnEl.addEventListener("click", async () => {
+    await addManualTrendPoint();
+  });
+}
+if (manualTrendClearBtnEl) {
+  manualTrendClearBtnEl.addEventListener("click", async () => {
+    await clearManualTrendData();
+  });
+}
+if (manualTrendDemandForecastEl) {
+  manualTrendDemandForecastEl.addEventListener("keydown", async (event) => {
+    if (event.key === "Enter") await addManualTrendPoint();
   });
 }
 if (sidebarToggleBtn) {

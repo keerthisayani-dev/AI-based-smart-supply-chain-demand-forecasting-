@@ -871,7 +871,7 @@
     .xai-grid {
       margin-top: 18px;
       display: grid;
-      grid-template-columns: minmax(360px, 1.08fr) minmax(360px, 1fr);
+      grid-template-columns: minmax(0, 1fr);
       gap: 16px;
       align-items: start;
     }
@@ -1053,6 +1053,7 @@
       display: grid;
       gap: 14px;
       align-content: start;
+      order: 2;
     }
     .strategy-output-card .xai-subcard-head {
       margin-bottom: 0;
@@ -1063,6 +1064,9 @@
     }
     .strategy-output-card .xai-subcard-badge {
       justify-self: end;
+    }
+    .hybrid-output-card {
+      margin-bottom: 18px;
     }
     .xai-table-wrap {
       width: 100%;
@@ -2832,17 +2836,13 @@
           <i data-lucide="line-chart" class="menu-icon"></i>
           <span class="menu-text">Past Demand Report</span>
         </button>
-        <button class="menu-item optional-toggle" id="strategyNavBtn" type="button" style="display:none;">
-          <i data-lucide="sliders-horizontal" class="menu-icon"></i>
-          <span class="menu-text">Strategy Simulator</span>
-        </button>
         <button class="menu-item optional-toggle" id="dynamicToolsNavBtn" type="button">
           <i data-lucide="table-properties" class="menu-icon"></i>
           <span class="menu-text">Dataset Editor</span>
         </button>
         <button class="menu-item optional-toggle" id="compareNavBtn" type="button">
           <i data-lucide="git-compare-arrows" class="menu-icon"></i>
-          <span class="menu-text">Platform Compare</span>
+          <span class="menu-text">Hybrid Compare</span>
         </button>
         <button class="menu-item optional-toggle" id="historyNavBtn" type="button">
           <i data-lucide="history" class="menu-icon"></i>
@@ -2983,92 +2983,9 @@
         </article>
       </div>
     </section>
-    <section class="glass-card optional-panel-hidden" id="xaiSection">
-      <div class="chart-head xai-header">
-        <div class="xai-header-copy">
-          <h3>Demand Strategy Simulator</h3>
-          <p class="xai-summary" id="strategySummaryText">Simulate pricing and discount decisions to estimate demand and revenue impact.</p>
-        </div>
-      </div>
-      <div class="xai-meta-row">
-        <span class="xai-pill" id="strategyBaseDemand">Baseline Demand: -</span>
-        <span class="xai-pill" id="strategySimDemand">Predicted Demand: -</span>
-        <span class="xai-pill" id="strategyRevenueImpact">Revenue Impact: -</span>
-      </div>
-      <div class="xai-grid">
-        <article class="xai-subcard strategy-input-card">
-          <div class="xai-subcard-head">
-            <div>
-              <h4 class="xai-subtitle">Strategy Inputs</h4>
-              <p class="xai-subcard-note">Choose a product, platform, and planning window. Price and discount tweaks are optional.</p>
-            </div>
-          </div>
-          <div class="xai-input-grid">
-            <div class="xai-field-row">
-              <label class="xai-field" for="strategyProduct">
-                <span class="xai-label">Product</span>
-                <select id="strategyProduct"></select>
-              </label>
-              <label class="xai-field" for="strategyPlatform">
-                <span class="xai-label">Platform</span>
-                <select id="strategyPlatform"></select>
-              </label>
-            </div>
-            <div class="xai-field-row">
-              <label class="xai-field" for="strategyFromDate">
-                <span class="xai-label">From Date</span>
-                <input id="strategyFromDate" type="text" placeholder="YYYY-MM-DD" />
-              </label>
-              <label class="xai-field" for="strategyToDate">
-                <span class="xai-label">To Date</span>
-                <input id="strategyToDate" type="text" placeholder="YYYY-MM-DD" />
-              </label>
-            </div>
-            <div class="xai-field-row">
-              <label class="xai-field" for="strategyPriceChange">
-                <span class="xai-label">Price Change <span>(Optional)</span></span>
-                <input id="strategyPriceChange" type="number" step="0.1" placeholder="Price change (%)" />
-              </label>
-              <label class="xai-field" for="strategyDiscount">
-                <span class="xai-label">Discount <span>(Optional)</span></span>
-                <input id="strategyDiscount" type="number" step="0.1" placeholder="Discount (%)" />
-              </label>
-            </div>
-          </div>
-          <div class="xai-action-row">
-            <button class="btn" id="strategyRunBtn" type="button">Run Simulation</button>
-          </div>
-          <p class="xai-summary" id="strategyStatus">Set inputs and click Run Simulation.</p>
-        </article>
-        <article class="xai-subcard strategy-output-card">
-          <div class="xai-subcard-head">
-            <div>
-              <h4 class="xai-subtitle">Simulation Output</h4>
-              <p class="xai-subcard-note">Review the baseline, simulated values, and the expected business impact at a glance.</p>
-            </div>
-          </div>
-          <div class="xai-table-wrap">
-            <table class="xai-table">
-              <thead>
-                <tr>
-                  <th>Metric</th>
-                  <th>Baseline</th>
-                  <th>Simulated</th>
-                  <th>Change</th>
-                </tr>
-              </thead>
-              <tbody id="strategyTableBody">
-                <tr><td colspan="4">No simulation run yet.</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="xai-summary" id="strategyRecommendation">Recommendation will appear here.</p>
-        </article>
-      </div>
-    </section>
     <section class="glass-card optional-panel-hidden" id="dynamicCompareSection">
       <div class="chart-head">
-        <h3 id="dynamicCompareTitle">Dynamic Dataset Editor and Product Comparison</h3>
+        <h3 id="dynamicCompareTitle">Dynamic Dataset Editor and Hybrid Platform Comparison</h3>
       </div>
       <div class="dynamic-grid">
         <article class="dynamic-card" id="dynamicEditorCard">
@@ -3159,8 +3076,8 @@
         <article class="dynamic-card compare-card" id="dynamicCompareCard">
           <div class="compare-head">
             <div class="compare-copy">
-              <h4 class="dynamic-title">Compare Product Across Platforms</h4>
-              <p class="compare-subtitle">Review demand, peak sales, pricing, and predicted strength side by side in one cleaner view.</p>
+              <h4 class="dynamic-title">Hybrid Product Compare</h4>
+              <p class="compare-subtitle">Use the strategy simulator with platform comparison together to review demand, pricing, and final platform recommendation in one view.</p>
             </div>
           </div>
           <div class="compare-form-grid">
@@ -3184,15 +3101,56 @@
               <span class="compare-label">To</span>
               <input id="cmpToDate" type="text" placeholder="YYYY-MM-DD" />
             </label>
+            <label class="compare-field" for="cmpPriceChange">
+              <span class="compare-label">Price Change</span>
+              <input id="cmpPriceChange" type="number" step="0.1" placeholder="Price change (%)" />
+            </label>
+            <label class="compare-field" for="cmpDiscount">
+              <span class="compare-label">Discount</span>
+              <input id="cmpDiscount" type="number" step="0.1" placeholder="Discount (%)" />
+            </label>
+            <label class="compare-field compare-field-wide" for="cmpDemoMode">
+              <span class="compare-label">Demonstrate</span>
+              <select id="cmpDemoMode">
+                <option value="both" selected>Show Both</option>
+                <option value="strategy">Strategy Simulator</option>
+                <option value="compare">Platform Compare</option>
+              </select>
+            </label>
           </div>
           <div class="compare-action-row">
-            <p class="dynamic-note compare-inline-note" id="cmpStatus"></p>
-            <button class="btn compare-btn" id="cmpRunBtn" type="button">Compare</button>
+            <p class="dynamic-note compare-inline-note" id="cmpStatus">Enter shared inputs once, then choose what to demonstrate.</p>
+            <button class="btn compare-btn" id="cmpRunBtn" type="button">Run Hybrid</button>
           </div>
           <div class="compare-results-card">
             <div class="compare-results-head">
-              <p class="compare-results-title">Comparison Output</p>
+              <p class="compare-results-title">Hybrid Output</p>
             </div>
+            <article class="xai-subcard strategy-output-card hybrid-output-card">
+              <div class="xai-subcard-head">
+                <div>
+                  <h4 class="xai-subtitle">Strategy Output</h4>
+                  <p class="xai-subcard-note" id="strategySummaryText">Simulate pricing and discount decisions from the shared hybrid inputs.</p>
+                </div>
+              </div>
+              <div class="xai-table-wrap">
+                <table class="xai-table">
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Baseline</th>
+                      <th>Simulated</th>
+                      <th>Change</th>
+                    </tr>
+                  </thead>
+                  <tbody id="strategyTableBody">
+                    <tr><td colspan="4">No simulation run yet.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="xai-summary" id="strategyRecommendation">Recommendation will appear here.</p>
+              <p class="xai-summary" id="strategyStatus">Set shared inputs and click Run Hybrid.</p>
+            </article>
             <div class="compare-recommendation-card">
               <div class="compare-reco-head">
                 <p class="compare-reco-title">Final Recommendation</p>
@@ -3471,15 +3429,6 @@
 
     function setStrategyPanelOpen(isOpen) {
       strategyPanelOpen = Boolean(isOpen);
-      const xaiSection = document.getElementById("xaiSection");
-      const strategyNavBtn = document.getElementById("strategyNavBtn");
-      if (xaiSection) {
-        xaiSection.classList.toggle("optional-panel-hidden", !strategyPanelOpen);
-      }
-      if (strategyNavBtn) {
-        strategyNavBtn.classList.toggle("active", strategyPanelOpen);
-        strategyNavBtn.setAttribute("aria-pressed", strategyPanelOpen ? "true" : "false");
-      }
     }
 
     function setDynamicToolsPanelOpen(isOpen) {
@@ -3542,7 +3491,7 @@
       const requestedSection = normalizeResultsSection(new URLSearchParams(window.location.search).get("section"));
       const canUseStrategy = currentUserRole === "admin" || currentUserRole === "inventory_manager";
       const canUseAdminUpload = currentUserRole === "admin";
-      let section = requestedSection;
+      let section = requestedSection === "strategy" ? "compare" : requestedSection;
 
       if (section === "strategy" && !canUseStrategy) {
         section = "reports";
@@ -3567,9 +3516,9 @@
       const forecastSection = document.getElementById("forecastSection");
       const sectionLabels = {
         reports: currentMode === "past" ? "Past Demand Report Branch" : "Results Report Branch",
-        strategy: "Strategy Simulator Branch",
+        strategy: "Hybrid Strategy Branch",
         "dynamic-tools": "Dataset Editor Branch",
-        compare: "Platform Compare Branch",
+        compare: "Hybrid Strategy and Platform Compare Branch",
         history: "History Log Branch",
         "admin-upload": "Admin Upload Hub Branch",
       };
@@ -3585,9 +3534,9 @@
       if (resultsHeroCard) {
         resultsHeroCard.classList.toggle("section-hero-hidden", !isReports);
       }
-      setStrategyPanelOpen(isStrategy);
+      setStrategyPanelOpen(isCompare || isStrategy);
       setDynamicToolsPanelOpen(isDynamic);
-      setComparePanelOpen(isCompare);
+      setComparePanelOpen(isCompare || isStrategy);
       setHistoryPanelOpen(isHistory);
       setAdminUploadPanelOpen(isAdminUpload);
 
@@ -3596,11 +3545,11 @@
         el.classList.toggle("optional-panel-hidden", !isReports);
       });
       if (dynamicCompareSection) {
-        dynamicCompareSection.classList.toggle("optional-panel-hidden", !(isDynamic || isCompare));
+        dynamicCompareSection.classList.toggle("optional-panel-hidden", !(isDynamic || isCompare || isStrategy));
       }
       if (dynamicCompareGrid) {
         dynamicCompareGrid.classList.toggle("editor-only", isDynamic);
-        dynamicCompareGrid.classList.toggle("compare-only", isCompare);
+        dynamicCompareGrid.classList.toggle("compare-only", isCompare || isStrategy);
       }
 
       if (historyForecastSection) {
@@ -3629,7 +3578,6 @@
       const inventoryInsightsSection = document.getElementById("inventoryInsightsSection");
       const profitabilitySection = document.getElementById("profitabilitySection");
       const adminControlsSection = document.getElementById("adminControlsSection");
-      const xaiSection = document.getElementById("xaiSection");
       const dynamicCompareSection = document.getElementById("dynamicCompareSection");
       const dynamicCompareTitle = document.getElementById("dynamicCompareTitle");
       const dynamicCompareGrid = dynamicCompareSection?.querySelector(".dynamic-grid");
@@ -3640,7 +3588,6 @@
       const chartDownloadBtn = document.getElementById("chartDownloadBtn");
       const modeToggleBtn = document.getElementById("modeToggleBtn");
       const adminDashBtn = document.getElementById("adminDashBtn");
-      const strategyNavBtn = document.getElementById("strategyNavBtn");
       const compareNavBtn = document.getElementById("compareNavBtn");
       const adminUploadNavBtn = document.getElementById("adminUploadNavBtn");
       const canUseStrategy = isAdmin || isInventoryManager;
@@ -3648,14 +3595,13 @@
       if (inventoryInsightsSection) inventoryInsightsSection.style.display = (isAdmin || isInventoryManager) ? "" : "none";
       if (profitabilitySection) profitabilitySection.style.display = isAdmin ? "" : "none";
       if (adminControlsSection) adminControlsSection.style.display = isAdmin ? "" : "none";
-      if (xaiSection) xaiSection.style.display = canUseStrategy ? "" : "none";
       if (dynamicCompareSection) dynamicCompareSection.style.display = "";
       if (dynamicEditorCard) dynamicEditorCard.style.display = (isAdmin || isInventoryManager) ? "" : "none";
       if (dynamicCompareCard) dynamicCompareCard.style.display = "";
       if (dynamicCompareTitle) {
         dynamicCompareTitle.textContent = isViewer
-          ? "Product Comparison"
-          : "Dynamic Dataset Editor and Product Comparison";
+          ? "Hybrid Product Comparison"
+          : "Dynamic Dataset Editor and Hybrid Product Comparison";
       }
       if (dynamicCompareGrid) {
         dynamicCompareGrid.classList.toggle("compare-only", isViewer);
@@ -3665,8 +3611,11 @@
       if (chartDownloadBtn) chartDownloadBtn.style.display = isViewer ? "none" : "";
       if (modeToggleBtn) modeToggleBtn.disabled = false;
       if (adminDashBtn) adminDashBtn.style.display = isAdmin ? "" : "none";
-      if (strategyNavBtn) strategyNavBtn.style.display = canUseStrategy ? "" : "none";
-      if (compareNavBtn) compareNavBtn.style.display = "";
+      if (compareNavBtn) {
+        compareNavBtn.style.display = "";
+        const compareLabel = compareNavBtn.querySelector(".menu-text");
+        if (compareLabel) compareLabel.textContent = canUseStrategy ? "Hybrid Compare" : "Platform Compare";
+      }
       if (adminUploadNavBtn) adminUploadNavBtn.style.display = isAdmin ? "" : "none";
       if (!canUseStrategy) {
         setStrategyPanelOpen(false);
@@ -3733,17 +3682,25 @@
       if (impactEl) impactEl.textContent = "Revenue Impact: -";
       if (tableBody) tableBody.innerHTML = "<tr><td colspan='4'>No simulation run yet.</td></tr>";
       if (recEl) recEl.textContent = "Recommendation will appear here.";
-      setStrategyStatus("Set inputs and click Run Simulation.");
+      setStrategyStatus("Set shared inputs and click Run Hybrid.");
+    }
+
+    function getHybridStrategyInputState() {
+      return {
+        product: String(document.getElementById("cmpProduct")?.value || document.getElementById("strategyProduct")?.value || "").trim(),
+        platform: String(document.getElementById("cmpPlatform1")?.value || document.getElementById("strategyPlatform")?.value || "").trim(),
+        fromDate: String(document.getElementById("cmpFromDate")?.value || document.getElementById("strategyFromDate")?.value || "").trim(),
+        toDate: String(document.getElementById("cmpToDate")?.value || document.getElementById("strategyToDate")?.value || "").trim(),
+        priceChangePct: toNum(document.getElementById("cmpPriceChange")?.value || document.getElementById("strategyPriceChange")?.value || 0),
+        discountPct: Math.max(0, toNum(document.getElementById("cmpDiscount")?.value || document.getElementById("strategyDiscount")?.value || 0)),
+      };
     }
 
     function markStrategyPending() {
-      const product = String(document.getElementById("strategyProduct")?.value || "-").trim() || "-";
-      const platform = String(document.getElementById("strategyPlatform")?.value || "-").trim() || "-";
-      const fromDate = String(document.getElementById("strategyFromDate")?.value || "-").trim() || "-";
-      const toDate = String(document.getElementById("strategyToDate")?.value || "-").trim() || "-";
+      const { product, platform, fromDate, toDate } = getHybridStrategyInputState();
       const summaryEl = document.getElementById("strategySummaryText");
-      if (summaryEl) summaryEl.textContent = `Simulation for ${product} on ${platform} from ${fromDate} to ${toDate}.`;
-      setStrategyStatus("Inputs changed. Click Run Simulation to update values.");
+      if (summaryEl) summaryEl.textContent = `Simulation for ${product || "-"} on ${platform || "-"} from ${fromDate || "-"} to ${toDate || "-"}.`;
+      setStrategyStatus("Inputs changed. Click Run Hybrid to update values.");
     }
 
     function normalizePlatformName(rawValue) {
@@ -4054,15 +4011,9 @@
     }
 
     async function runStrategySimulation() {
-      const product = String(document.getElementById("strategyProduct")?.value || "").trim();
-      const platform = String(document.getElementById("strategyPlatform")?.value || "").trim();
-      const fromDate = String(document.getElementById("strategyFromDate")?.value || "").trim();
-      const toDate = String(document.getElementById("strategyToDate")?.value || "").trim();
-      const priceInputEl = document.getElementById("strategyPriceChange");
-      const discountInputEl = document.getElementById("strategyDiscount");
-      let priceChangePct = toNum(priceInputEl?.value || 0);
-      let discountPct = Math.max(0, toNum(discountInputEl?.value || 0));
-      document.getElementById("strategySummaryText").textContent = `Simulation for ${product || "-"} on ${platform || "-"} from ${fromDate || "-"} to ${toDate || "-"}.`;
+      const { product, platform, fromDate, toDate, priceChangePct, discountPct } = getHybridStrategyInputState();
+      const introSummaryEl = document.getElementById("strategySummaryText");
+      if (introSummaryEl) introSummaryEl.textContent = `Simulation for ${product || "-"} on ${platform || "-"} from ${fromDate || "-"} to ${toDate || "-"}.`;
       if (!product || !platform || !fromDate || !toDate) {
         setStrategyStatus("Select product, platform, and date range.");
         return;
@@ -4106,11 +4057,16 @@
       const priceDeltaCls = priceDelta > 0 ? "delta-pos" : (priceDelta < 0 ? "delta-neg" : "");
       const revenueDeltaCls = revenueDelta > 0 ? "delta-pos" : (revenueDelta < 0 ? "delta-neg" : "");
 
-      document.getElementById("strategyBaseDemand").textContent = `Baseline Demand: ${formatStrategyNumber(result.avgDemand)} units/day`;
-      document.getElementById("strategySimDemand").textContent = `Predicted Demand: ${formatStrategyNumber(result.simDemand)} units/day`;
-      document.getElementById("strategyRevenueImpact").textContent = `Revenue Impact: ${formatStrategySigned(result.revenueChangePct)}%`;
-      document.getElementById("strategySummaryText").textContent = `Simulation for ${product} on ${platform} from ${fromDate} to ${toDate}.`;
-      document.getElementById("strategyTableBody").innerHTML = `
+      const baseDemandEl = document.getElementById("strategyBaseDemand");
+      const simDemandEl = document.getElementById("strategySimDemand");
+      const impactEl = document.getElementById("strategyRevenueImpact");
+      const summaryEl = document.getElementById("strategySummaryText");
+      const tableBodyEl = document.getElementById("strategyTableBody");
+      if (baseDemandEl) baseDemandEl.textContent = `Baseline Demand: ${formatStrategyNumber(result.avgDemand)} units/day`;
+      if (simDemandEl) simDemandEl.textContent = `Predicted Demand: ${formatStrategyNumber(result.simDemand)} units/day`;
+      if (impactEl) impactEl.textContent = `Revenue Impact: ${formatStrategySigned(result.revenueChangePct)}%`;
+      if (summaryEl) summaryEl.textContent = `Simulation for ${product} on ${platform} from ${fromDate} to ${toDate}.`;
+      if (tableBodyEl) tableBodyEl.innerHTML = `
         <tr>
           <td class="metric-label">Avg Demand</td>
           <td class="value-cell">${formatStrategyNumber(result.avgDemand)}</td>
@@ -4136,7 +4092,8 @@
           </td>
         </tr>
       `;
-      document.getElementById("strategyRecommendation").textContent = buildStrategyRecommendation(
+      const recommendationEl = document.getElementById("strategyRecommendation");
+      if (recommendationEl) recommendationEl.textContent = buildStrategyRecommendation(
         platform,
         result,
         byPlatform,
@@ -4147,10 +4104,10 @@
     }
 
     async function syncStrategyInputsForProductChange() {
-      const productEl = document.getElementById("strategyProduct");
-      const platformEl = document.getElementById("strategyPlatform");
-      const fromEl = document.getElementById("strategyFromDate");
-      const toEl = document.getElementById("strategyToDate");
+      const productEl = document.getElementById("cmpProduct") || document.getElementById("strategyProduct");
+      const platformEl = document.getElementById("cmpPlatform1") || document.getElementById("strategyPlatform");
+      const fromEl = document.getElementById("cmpFromDate") || document.getElementById("strategyFromDate");
+      const toEl = document.getElementById("cmpToDate") || document.getElementById("strategyToDate");
       const product = String(productEl?.value || "").trim();
       if (!product || !fromEl || !toEl) return;
 
@@ -4438,8 +4395,8 @@
     }
 
     function applyStrategyDateDefaults(force = false) {
-      const fromEl = document.getElementById("strategyFromDate");
-      const toEl = document.getElementById("strategyToDate");
+      const fromEl = document.getElementById("cmpFromDate") || document.getElementById("strategyFromDate");
+      const toEl = document.getElementById("cmpToDate") || document.getElementById("strategyToDate");
       if (!fromEl || !toEl) return;
       const bounds = getStrategyDateBounds();
       if (force || !String(fromEl.value || "").trim()) {
@@ -4789,6 +4746,33 @@
       } else {
         setCompareStatus(`Compared ${payload.product || product} (${payload.from || fromDate} to ${payload.to || toDate}) across ${payload.platform_1 || platform1} vs ${payload.platform_2 || platform2}.${fallbackNote}`);
       }
+    }
+
+    function syncHybridInputsToStrategy() {
+      markStrategyPending();
+    }
+
+    async function runHybridWorkflow() {
+      const mode = String(document.getElementById("cmpDemoMode")?.value || "both").trim().toLowerCase();
+      syncHybridInputsToStrategy();
+
+      if (mode === "strategy") {
+        setCompareStatus("Running hybrid strategy view...");
+        await runStrategySimulation();
+        setCompareStatus("Hybrid strategy simulation completed.");
+        return;
+      }
+
+      if (mode === "compare") {
+        setCompareStatus("Running hybrid platform comparison...");
+        await runDynamicComparison();
+        return;
+      }
+
+      setCompareStatus("Running hybrid strategy and platform comparison...");
+      await runStrategySimulation();
+      await runDynamicComparison();
+      setCompareStatus("Hybrid workflow completed for strategy and platform comparison.");
     }
 
     async function applyRoleUi() {
@@ -5533,9 +5517,9 @@
 
       const fromIso = normalizeToIsoDate(fromDate);
       const toIso = normalizeToIsoDate(toDate);
-      const strategyProductEl = document.getElementById("strategyProduct");
-      const strategyFromEl = document.getElementById("strategyFromDate");
-      const strategyToEl = document.getElementById("strategyToDate");
+      const strategyProductEl = document.getElementById("cmpProduct") || document.getElementById("strategyProduct");
+      const strategyFromEl = document.getElementById("cmpFromDate") || document.getElementById("strategyFromDate");
+      const strategyToEl = document.getElementById("cmpToDate") || document.getElementById("strategyToDate");
       if (strategyProductEl && category && Array.isArray(dynamicProductOptions) && dynamicProductOptions.includes(category)) {
         strategyProductEl.value = category;
       }
@@ -5555,7 +5539,7 @@
       const forecastAnchorDate = anchorForForecast.toISOString().slice(0, 10);
 
       try {
-        resetXaiPanel("Demand Strategy Simulator is ready. Set strategy inputs and run.");
+        resetXaiPanel("Hybrid strategy simulator is ready. Set strategy inputs and run.");
         const requestAnchor = currentMode === "forecast" ? forecastAnchorDate : toDate;
         const data = await fetchForecastPayloadCached({
           category,
@@ -6512,14 +6496,6 @@
       navigateToResultsSection("reports");
     });
 
-    const strategyNavBtn = document.getElementById("strategyNavBtn");
-    if (strategyNavBtn) {
-      strategyNavBtn.addEventListener("click", () => {
-        if (currentResultsSection !== "strategy") {
-          navigateToResultsSection("strategy");
-        }
-      });
-    }
     const dynamicToolsNavBtn = document.getElementById("dynamicToolsNavBtn");
     if (dynamicToolsNavBtn) {
       dynamicToolsNavBtn.addEventListener("click", () => {
@@ -6593,9 +6569,9 @@
     if (cmpRunBtn) {
       cmpRunBtn.addEventListener("click", async () => {
         try {
-          await runDynamicComparison();
+          await runHybridWorkflow();
         } catch (err) {
-          setCompareStatus(String(err?.message || "Comparison failed."));
+          setCompareStatus(String(err?.message || "Hybrid workflow failed."));
         }
       });
     }
@@ -6638,6 +6614,18 @@
       el.addEventListener("change", () => {
         markStrategyPending();
       });
+    });
+    ["cmpProduct", "cmpPlatform1", "cmpFromDate", "cmpToDate", "cmpPriceChange", "cmpDiscount"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("change", () => {
+        syncHybridInputsToStrategy();
+      });
+      if (el.tagName === "INPUT") {
+        el.addEventListener("input", () => {
+          syncHybridInputsToStrategy();
+        });
+      }
     });
     const cmpPlatform1El = document.getElementById("cmpPlatform1");
     const cmpPlatform2El = document.getElementById("cmpPlatform2");
