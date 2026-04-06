@@ -2106,6 +2106,17 @@ body.dashboard-layout .page-footer {
   color: #5f7f9e;
 }
 
+body.dashboard-layout.dashboard-no-sidebar .page-shell,
+body.dashboard-layout.dashboard-no-sidebar .page-footer {
+  width: min(1740px, calc(100% - 44px));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+body.dashboard-layout.dashboard-no-sidebar .page-shell {
+  margin-top: 26px;
+}
+
 body.dashboard-layout.sidebar-collapsed .top-nav {
   width: 70px;
   padding: 12px 10px;

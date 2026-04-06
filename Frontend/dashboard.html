@@ -16,57 +16,8 @@
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
-<body class="dashboard-layout">
+<body class="dashboard-layout dashboard-no-sidebar">
   <div class="mesh-bg" aria-hidden="true"></div>
-
-  <nav class="top-nav">
-    <div class="logo-section">
-      <a class="logo-link" href="/dashboard" aria-label="DemandIQ Home">
-        <img class="logo-icon" src="/assets/img/demandiq_icon.svg" alt="" aria-hidden="true" />
-        <span class="logo-wordmark">Demand<span class="iq">IQ</span></span>
-      </a>
-    </div>
-    <div class="sidebar-toggle-row">
-      <button id="sidebarToggleBtn" class="hamburger-btn" type="button" aria-label="Toggle sidebar" title="Toggle sidebar">
-        <span class="bars"><span></span></span>
-      </button>
-    </div>
-    <div class="sidebar-meta">
-      <span id="userMetaChip" class="meta-chip user-pill" title="Signed-in user">User: ...</span>
-      <span id="roleMetaChip" class="meta-chip role-pill" title="Signed-in role">Role: ...</span>
-    </div>
-    <div class="sidebar-content">
-      <section class="platform-card">
-        <p class="platform-label">Main Branch</p>
-        <strong class="platform-title">Forecast Workspace</strong>
-        <span id="dashboardTime" class="platform-time">--:--:--</span>
-      </section>
-      <div class="menu-group">
-        <p class="group-title">Forecast Branch</p>
-        <a href="/dashboard" class="menu-item active">
-          <span class="menu-text">Prediction Dashboard</span>
-        </a>
-        <button id="navReports" class="menu-item" type="button">
-          <span class="menu-text">Results Report</span>
-        </button>
-        <button id="pastDemandBtn" class="menu-item" type="button">
-          <span class="menu-text">Past Demand Report</span>
-        </button>
-      </div>
-      <div class="menu-group">
-        <p class="group-title">Support Branch</p>
-        <button id="downloadBtn" class="menu-item" type="button">Download Center</button>
-        <a href="/about-project" class="menu-item">
-          <span class="menu-text">Project Overview</span>
-        </a>
-        <button id="adminDashBtn" class="menu-item" type="button" style="display:none;">Admin Control</button>
-      </div>
-      <div class="sidebar-divider"></div>
-      <div class="logout-section">
-        <button id="logoutBtn" class="menu-item nav-btn-logout" type="button">Logout</button>
-      </div>
-    </div>
-  </nav>
 
   <main class="page-shell preload">
     <section class="dashboard-topbar">
@@ -81,7 +32,7 @@
       </div>
       <div class="dashboard-top-actions">
         <div class="signed-in-card">
-          <div class="signed-in-avatar">DI</div>
+          <div id="signedInAvatar" class="signed-in-avatar">U</div>
           <div>
             <p class="signed-in-label">Signed In</p>
             <strong id="topUserName">Loading user...</strong>
@@ -98,15 +49,6 @@
         <p class="dashboard-hero-desc">Choose a category, city, store, and date range to generate demand projections, compare movement, and monitor inventory risk in one place.</p>
         <p class="dashboard-hero-meta">Target Variable: <strong>Units Sold</strong></p>
         <p id="roleHint" class="dashboard-hero-meta">Loading access level...</p>
-      </div>
-      <div class="dashboard-hero-actions">
-        <span id="liveModeStatus" class="meta-chip role-pill" title="Live simulation status">Live: checking...</span>
-        <button id="liveClearBtn" class="top-action-btn" type="button" style="display:none;">Clear Live</button>
-        <button id="liveTickBtn" class="top-action-btn" type="button" style="display:none;">Tick Once</button>
-        <button id="liveStartBtn" class="top-action-btn" type="button" style="display:none;">Start Live</button>
-        <button id="liveStopBtn" class="top-action-btn" type="button" style="display:none;">Stop Live</button>
-        <button id="syncBtn" class="top-action-btn" type="button">Sync</button>
-        <button id="refreshBtn" class="top-action-btn top-action-btn-primary" type="button">Refresh</button>
       </div>
     </section>
 

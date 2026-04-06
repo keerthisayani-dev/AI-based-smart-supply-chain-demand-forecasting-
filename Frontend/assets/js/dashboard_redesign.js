@@ -30,6 +30,7 @@ const userMetaChipEl = document.getElementById("userMetaChip");
 const roleMetaChipEl = document.getElementById("roleMetaChip");
 const roleHintEl = document.getElementById("roleHint");
 const topUserNameEl = document.getElementById("topUserName");
+const signedInAvatarEl = document.getElementById("signedInAvatar");
 const dashboardTimeEl = document.getElementById("dashboardTime");
 const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
 const refreshBtnEl = document.getElementById("refreshBtn");
@@ -279,6 +280,16 @@ function formatMaybeWhole(value) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+function buildUserInitials(fullName) {
+  const parts = String(fullName || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+  if (!parts.length) return "U";
+  return parts.map((part) => part.charAt(0).toUpperCase()).join("");
 }
 
 function setElementText(id, value) {
@@ -2134,6 +2145,7 @@ async function applyRoleUi() {
     if (userMetaChipEl) userMetaChipEl.textContent = `User: ${fullName}`;
     if (roleMetaChipEl) roleMetaChipEl.textContent = `Role: ${roleTitle}`;
     if (topUserNameEl) topUserNameEl.textContent = fullName;
+    if (signedInAvatarEl) signedInAvatarEl.textContent = buildUserInitials(fullName);
 
     const adminDashBtn = document.getElementById("adminDashBtn");
     if (adminDashBtn) adminDashBtn.style.display = role === "admin" ? "" : "none";

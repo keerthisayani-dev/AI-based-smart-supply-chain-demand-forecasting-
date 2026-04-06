@@ -176,18 +176,18 @@
     .sidebar-content {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
       align-items: stretch;
       width: 100%;
       flex: 1 1 auto;
       min-height: 0;
-      margin-top: 2px;
+      margin-top: 4px;
     }
 
     .menu-group {
       margin-top: 0;
       display: grid;
-      gap: 6px;
+      gap: 8px;
     }
 
     .menu-item {
@@ -199,7 +199,7 @@
       color: #1f2937;
       text-decoration: none;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
       line-height: 1;
       border-radius: 12px;
       padding: 12px 14px;
@@ -2527,18 +2527,19 @@
 
       body.results-layout .group-title {
         display: block;
-        margin: 0 2px 2px;
+        margin: 0 4px 2px;
         font-size: 11px;
-        letter-spacing: 1px;
+        letter-spacing: 0.14em;
         color: #6d8dad;
         font-weight: 700;
+        text-transform: uppercase;
       }
 
       body.results-layout .sidebar-divider {
         display: block;
         height: 1px;
         background: rgba(149, 183, 202, 0.16);
-        margin-top: 2px;
+        margin-top: 6px;
       }
 
       body.results-layout .menu-item.active {
@@ -2821,20 +2822,10 @@
 
     <div class="sidebar-content">
       <div class="menu-group">
-        <a href="/dashboard" id="navDashboard" class="menu-item">
-          <i data-lucide="layout-dashboard" class="menu-icon"></i>
-          <span class="menu-text">Prediction Dashboard</span>
-        </a>
-        <a href="#" id="navReports" class="menu-item active">
-          <i data-lucide="file-text" class="menu-icon"></i>
-          <span class="menu-text">Results Report</span>
-        </a>
-      </div>
-
-      <div class="menu-group">
+        <p class="group-title">Analytics</p>
         <button class="menu-item" id="modeToggleBtn" type="button">
           <i data-lucide="line-chart" class="menu-icon"></i>
-          <span class="menu-text">Past Demand Report</span>
+          <span class="menu-text">Past Demand View</span>
         </button>
         <button class="menu-item optional-toggle" id="compareNavBtn" type="button">
           <i data-lucide="git-compare-arrows" class="menu-icon"></i>
@@ -2844,10 +2835,22 @@
           <i data-lucide="history" class="menu-icon"></i>
           <span class="menu-text">History Log</span>
         </button>
+      </div>
+
+      <div class="menu-group">
+        <p class="group-title">Admin</p>
         <button class="menu-item optional-toggle" id="adminUploadNavBtn" type="button" style="display:none;">
           <i data-lucide="upload" class="menu-icon"></i>
           <span class="menu-text">Admin Upload Hub</span>
         </button>
+        <button class="menu-item" id="adminDashBtn" type="button" style="display:none;">
+          <i data-lucide="shield-check" class="menu-icon"></i>
+          <span class="menu-text">Admin Control</span>
+        </button>
+      </div>
+
+      <div class="menu-group">
+        <p class="group-title">Resources</p>
         <div class="download-dropdown" id="downloadDropdown">
           <button class="download-toggle menu-item" id="downloadToggleBtn" type="button" aria-haspopup="menu" aria-expanded="false">
             <span class="menu-text"><i data-lucide="download" class="menu-icon"></i>Download Center</span>
@@ -2861,17 +2864,18 @@
       </div>
 
       <div class="menu-group">
+        <p class="group-title">Insights</p>
         <a href="/about-project" id="navAbout" class="menu-item">
           <i data-lucide="info" class="menu-icon"></i>
           <span class="menu-text">Project Overview</span>
         </a>
+      </div>
+
+      <div class="menu-group">
+        <p class="group-title">Navigation</p>
         <button class="menu-item" id="backBtn" type="button">
           <i data-lucide="arrow-left" class="menu-icon"></i>
-          <span class="menu-text">Back To Login</span>
-        </button>
-        <button class="menu-item" id="adminDashBtn" type="button" style="display:none;">
-          <i data-lucide="shield-check" class="menu-icon"></i>
-          <span class="menu-text">Admin Control</span>
+          <span class="menu-text">Back To Dashboard</span>
         </button>
       </div>
       <div class="sidebar-divider"></div>
@@ -3316,7 +3320,25 @@
     const resultsPayloadCache = new Map();
     const resultsPayloadInflight = new Map();
     const RESULTS_PAYLOAD_CACHE_TTL_MS = 10 * 60 * 1000;
-    const RESULTS_BOOTSTRAP = window.__DEMANDIQ_RESULTS_BOOTSTRAP__ || {};
+    const RESULTS_PREFETCH_KEY = "demandiq_results_prefetch_v1";
+    function readResultsPrefetch() {
+      try {
+        const raw = sessionStorage.getItem(RESULTS_PREFETCH_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        sessionStorage.removeItem(RESULTS_PREFETCH_KEY);
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch (_) {
+        return {};
+      }
+    }
+    const RESULTS_BOOTSTRAP = (() => {
+      const prefetched = readResultsPrefetch();
+      if (prefetched && typeof prefetched === "object" && prefetched.forecast_payload) {
+        return prefetched;
+      }
+      return window.__DEMANDIQ_RESULTS_BOOTSTRAP__ || {};
+    })();
     const DYNAMIC_OPTIONS_CACHE_KEY = "results_dynamic_options_cache_v1";
     const DYNAMIC_OPTIONS_CACHE_TTL_MS = 10 * 60 * 1000;
     let strategyCacheWarmStarted = false;
@@ -6484,10 +6506,13 @@
       }
     });
 
-    document.getElementById("navReports").addEventListener("click", (e) => {
-      e.preventDefault();
-      navigateToResultsSection("reports");
-    });
+    const navReportsBtn = document.getElementById("navReports");
+    if (navReportsBtn) {
+      navReportsBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        navigateToResultsSection("reports");
+      });
+    }
 
     const dynamicToolsNavBtn = document.getElementById("dynamicToolsNavBtn");
     if (dynamicToolsNavBtn) {

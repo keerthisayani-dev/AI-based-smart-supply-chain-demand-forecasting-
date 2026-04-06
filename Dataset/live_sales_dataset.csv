@@ -1,4 +1,43 @@
 date,store id,product id,category,location,inventory level,units sold,units ordered,demand forecast,price,discount,weather condition,holiday/promotion,competitor pricing,seasonality,record_id,region,city,state,country,store_name
+2024-01-01,S004,P0007,Electronics,East,182.977,56.256,58.378,57.7,54.94,8.75,Sunny,0.0,51.87,Winter,live-1775109907-002,East,Patna,Bihar,India,Retail Hub 4
+2025-01-01,S001,P0015,Toys,South,1821.106,130.954,161.157,141.13,68.29,0.01,Sunny,0.0,70.31,Winter,live-1775109907-004,South,Chennai,Tamil Nadu,India,Retail Hub 1
+2025-01-01,S003,P0005,Electronics,West,2023.247,156.48,166.202,159.61,82.0,23.55,Snowy,0.0,80.03,Winter,live-1775109961-002,West,Ahmedabad,Gujarat,India,Retail Hub 3
+2025-01-01,S001,P0002,Groceries,North,1342.645,147.27,147.27,156.51,33.15,15.9,Snowy,0.0,33.22,Winter,live-1775109961-004,North,Dehradun,Uttarakhand,India,Retail Hub 1
+2025-01-01,S006,P0021,EV Vehicles,East,1330.35,94.608,108.8,97.82,49.11,0.24,Cloudy,0.0,49.09,Winter,live-1775110009-002,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-01,S001,P0006,Toys,East,1589.305,136.835,143.377,138.31,42.18,25.32,Snowy,0.0,39.8,Winter,live-1775110009-003,East,Ranchi,Jharkhand,India,Retail Hub 1
+2023-12-31,S003,P0008,Groceries,West,325.172,257.751,257.751,275.67,86.64,0.0,Snowy,1.0,88.71,Winter,live-1775110049-002,West,Panaji,Goa,India,Retail Hub 3
+2025-01-01,S003,P0020,Groceries,East,1998.146,132.992,158.51,138.64,77.57,15.8,Rainy,0.0,78.89,Winter,live-1775110049-004,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-01,S003,P0002,Groceries,North,1685.138,131.309,159.916,137.82,61.13,12.68,Cloudy,0.0,60.35,Winter,live-1775110089-001,North,Chandigarh,Chandigarh,India,Retail Hub 3
+2025-01-01,S001,P0014,Electronics,West,1740.419,136.891,157.1,141.63,70.33,17.71,Sunny,0.0,72.54,Winter,live-1775110089-002,West,Ahmedabad,Gujarat,India,Retail Hub 1
+2025-01-01,S006,P0008,Furniture,West,1738.306,129.312,129.312,139.47,79.79,0.38,Sunny,0.0,79.57,Winter,live-1775110089-003,West,Surat,Gujarat,India,Retail Hub
+2025-01-01,S004,P0018,Electronics,North,1584.291,163.781,163.781,175.73,29.01,22.1,Snowy,0.0,27.61,Winter,live-1775110089-004,North,Jaipur,Rajasthan,India,Retail Hub 4
+2025-01-01,S004,P0018,Clothing,West,1892.921,186.895,186.895,201.77,11.38,2.01,Cloudy,1.0,10.82,Winter,live-1775110121-001,West,Panaji,Goa,India,Retail Hub 4
+2025-01-01,S006,P0020,Groceries,West,1848.064,102.898,127.69,111.09,57.1,0.97,Cloudy,0.0,54.96,Winter,live-1775110121-003,West,Ahmedabad,Gujarat,India,Retail Hub
+2025-01-01,S006,P0026,Sports Equipment,East,1343.568,126.321,132.855,127.65,63.94,7.86,Sunny,0.0,66.29,Winter,live-1775110161-002,East,Guwahati,Assam,India,Retail Hub
+2025-01-01,S006,P0018,Electronics,East,1486.612,98.327,128.508,103.12,25.26,20.57,Sunny,0.0,25.07,Winter,live-1775110161-003,East,Kolkata,West Bengal,India,Retail Hub
+2023-12-31,S002,P0003,Furniture,South,265.79,107.568,107.568,110.69,63.48,0.0,Snowy,0.0,60.54,Winter,live-1775110161-004,South,Bengaluru,Karnataka,India,Retail Hub 2
+2024-01-01,S002,P0012,Furniture,North,399.46,27.223,124.537,27.93,40.68,0.0,Rainy,0.0,42.63,Winter,live-1775110242-002,North,New Delhi,Delhi,India,Retail Hub 2
+2024-01-01,S005,P0008,Electronics,South,233.587,20.052,225.988,21.3,64.5,4.33,Sunny,0.0,62.38,Winter,live-1775110242-003,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-01,S006,P0029,Office Supplies,South,1333.164,152.839,152.839,164.77,68.83,10.71,Rainy,0.0,64.81,Winter,live-1775110283-002,South,Hyderabad,Telangana,India,Retail Hub
+2024-01-01,S003,P0020,Furniture,South,333.324,176.745,176.745,179.34,92.51,12.44,Cloudy,0.0,87.37,Winter,live-1775110283-003,South,Chennai,Tamil Nadu,India,Retail Hub 3
+2025-01-01,S005,P0007,Groceries,South,1726.854,167.022,191.017,172.06,62.04,0.0,Cloudy,0.0,61.72,Winter,live-1775110361-002,South,Coimbatore,Tamil Nadu,India,Retail Hub 5
+2025-01-01,S003,P0027,Beauty & Personal Care,East,1889.249,172.081,172.818,180.54,56.5,2.83,Rainy,0.0,54.48,Winter,live-1775110361-003,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-01,S002,P0020,Toys,West,1874.913,130.789,162.207,134.98,30.41,22.85,Sunny,0.0,28.73,Winter,live-1775110361-004,West,Surat,Gujarat,India,Retail Hub 2
+2023-12-30,S002,P0007,Toys,North,360.59,69.758,69.758,75.19,45.0,13.0,Rainy,0.0,46.08,Winter,live-1775110420-004,North,New Delhi,Delhi,India,Retail Hub 2
+2025-01-01,S002,P0019,Toys,East,1725.101,142.711,147.103,150.87,50.45,20.16,Snowy,0.0,50.79,Winter,live-1775110477-001,East,Guwahati,Assam,India,Retail Hub 2
+2023-12-31,S001,P0011,Clothing,North,328.331,320.317,320.317,339.94,70.08,19.18,Snowy,0.0,67.12,Winter,live-1775110477-002,North,Lucknow,Uttar Pradesh,India,Retail Hub 1
+2025-01-01,S005,P0016,Furniture,East,1907.639,175.152,182.739,179.94,58.12,15.21,Cloudy,0.0,60.81,Winter,live-1775110477-004,East,Patna,Bihar,India,Retail Hub 5
+2025-01-01,S001,P0013,Electronics,West,1296.377,109.229,123.631,115.22,89.14,13.91,Rainy,0.0,89.74,Winter,live-1775110539-001,West,Surat,Gujarat,India,Retail Hub 1
+2023-12-31,S005,P0013,Clothing,North,312.688,261.806,261.806,271.71,79.35,4.78,Cloudy,0.0,77.26,Winter,live-1775110539-004,North,Chandigarh,Chandigarh,India,Retail Hub 5
+2025-01-01,S006,P0020,Toys,West,1646.683,114.397,139.74,122.32,30.63,20.93,Sunny,0.0,31.03,Winter,live-1775110617-001,West,Surat,Gujarat,India,Retail Hub
+2024-01-01,S001,P0012,Groceries,West,105.624,66.178,74.401,70.85,67.46,21.41,Sunny,0.0,66.84,Winter,live-1775110617-003,West,Surat,Gujarat,India,Retail Hub 1
+2024-01-01,S002,P0008,Furniture,South,307.976,14.987,146.094,15.15,36.22,11.49,Rainy,0.0,34.13,Winter,live-1775110669-001,South,Chennai,Tamil Nadu,India,Retail Hub 2
+2025-01-01,S005,P0004,Furniture,South,1622.132,131.849,131.849,141.11,46.41,33.27,Snowy,0.0,45.82,Winter,live-1775110669-002,South,Kochi,Kerala,India,Retail Hub 5
+2025-01-01,S005,P0022,Semiconductors,West,1638.509,146.518,160.904,152.96,56.42,8.12,Sunny,0.0,57.37,Winter,live-1775110669-004,West,Surat,Gujarat,India,Retail Hub 5
+2024-01-01,S001,P0009,Toys,South,128.813,51.199,122.522,53.06,31.42,0.38,Rainy,0.0,31.03,Winter,live-1775110728-001,South,Bengaluru,Karnataka,India,Retail Hub 1
+2024-01-01,S005,P0008,Furniture,South,359.687,17.625,157.366,18.59,36.11,11.68,Rainy,0.0,34.46,Winter,live-1775110728-002,South,Chennai,Tamil Nadu,India,Retail Hub 5
+2025-01-01,S003,P0006,Furniture,North,1905.573,118.137,118.137,122.35,65.43,25.27,Snowy,0.0,64.87,Winter,live-1775110728-004,North,Dehradun,Uttarakhand,India,Retail Hub 3
+2025-01-01,S002,P0006,Furniture,North,1866.158,124.578,124.578,131.34,66.09,24.83,Snowy,1.0,63.14,Winter,live-1775110780-004,North,Dehradun,Uttarakhand,India,Retail Hub 2
 2025-01-01,S002,P0025,Home Appliances,West,1494.198,152.646,159.626,161.34,57.9,26.57,Rainy,0.0,55.26,Winter,live-1775069661-001,West,Surat,Gujarat,India,Retail Hub 2
 2025-01-01,S001,P0014,Clothing,West,1561.458,142.643,160.005,151.65,72.15,26.92,Sunny,0.0,68.46,Winter,live-1775069661-002,West,Pune,Maharashtra,India,Retail Hub 1
 2025-01-01,S001,P0023,Pharmaceuticals,East,1393.171,148.769,148.769,155.44,56.02,10.31,Cloudy,0.0,55.29,Winter,live-1775069661-003,East,Bhubaneswar,Odisha,India,Retail Hub 1
@@ -7,75 +46,858 @@ date,store id,product id,category,location,inventory level,units sold,units orde
 2024-01-01,S006,P0009,Toys,South,112.171,51.86,109.198,53.62,32.62,1.3,Rainy,0.0,32.99,Winter,live-1775072086-002,South,Bengaluru,Karnataka,India,Retail Hub
 2025-01-01,S001,P0027,Beauty & Personal Care,East,1739.18,144.094,163.067,154.43,55.42,2.61,Rainy,0.0,53.0,Winter,live-1775072086-003,East,Kolkata,West Bengal,India,Retail Hub 1
 2024-01-01,S004,P0008,Electronics,South,214.164,17.469,226.358,17.77,64.76,5.39,Sunny,0.0,65.25,Winter,live-1775072086-004,South,Hyderabad,Telangana,India,Retail Hub 4
-2025-01-02,S001,P0023,Pharmaceuticals,East,1330.088,139.715,155.707,150.59,57.0,11.05,Cloudy,0.0,58.51,Winter,live-1775109907-001,East,Bhubaneswar,Odisha,India,Retail Hub 1
-2024-01-01,S004,P0007,Electronics,East,182.977,56.256,58.378,57.7,54.94,8.75,Sunny,0.0,51.87,Winter,live-1775109907-002,East,Patna,Bihar,India,Retail Hub 4
-2025-01-01,S006,Automotive Parts,Automotive Parts,East,276.24,188.191,198.657,191.49,69.42,11.66,Sunny,0.0,69.14,Winter,live-1775109907-003,Nan,Unknown,Unknown,India,Retail Hub
-2025-01-01,S001,P0015,Toys,South,1821.106,130.954,161.157,141.13,68.29,0.01,Sunny,0.0,70.31,Winter,live-1775109907-004,South,Chennai,Tamil Nadu,India,Retail Hub 1
-2025-01-01,S006,P0003,Clothing,South,1328.716,119.261,119.261,125.77,78.95,3.5,Rainy,1.0,76.55,Winter,live-1775109961-001,South,Chennai,Tamil Nadu,India,Retail Hub
-2025-01-01,S003,P0005,Electronics,West,2023.247,156.48,166.202,159.61,82.0,23.55,Snowy,0.0,80.03,Winter,live-1775109961-002,West,Ahmedabad,Gujarat,India,Retail Hub 3
-2025-01-01,S002,P0025,Home Appliances,East,1586.957,140.854,157.244,142.57,71.27,25.26,Rainy,0.0,72.05,Winter,live-1775109961-003,East,Kolkata,West Bengal,India,Retail Hub 2
-2025-01-01,S001,P0002,Groceries,North,1342.645,147.27,147.27,156.51,33.15,15.9,Snowy,0.0,33.22,Winter,live-1775109961-004,North,Dehradun,Uttarakhand,India,Retail Hub 1
-2025-01-01,S002,P0025,Home Appliances,South,1450.192,142.615,147.46,145.4,66.03,9.24,Snowy,0.0,63.34,Winter,live-1775110009-001,South,Hyderabad,Telangana,India,Retail Hub 2
-2025-01-01,S006,P0021,EV Vehicles,East,1330.35,94.608,108.8,97.82,49.11,0.24,Cloudy,0.0,49.09,Winter,live-1775110009-002,East,Bhubaneswar,Odisha,India,Retail Hub
-2025-01-01,S001,P0006,Toys,East,1589.305,136.835,143.377,138.31,42.18,25.32,Snowy,0.0,39.8,Winter,live-1775110009-003,East,Ranchi,Jharkhand,India,Retail Hub 1
-2024-01-01,S006,P0020,Toys,West,147.605,34.141,172.042,35.52,60.07,0.16,Snowy,0.0,58.97,Winter,live-1775110009-004,West,Mumbai,Maharashtra,India,Retail Hub
-2025-01-01,S006,P0025,Home Appliances,East,1294.115,133.921,133.921,140.74,69.45,16.86,Sunny,1.0,65.58,Winter,live-1775110049-001,East,Guwahati,Assam,India,Retail Hub
-2023-12-31,S003,P0008,Groceries,West,325.172,257.751,257.751,275.67,86.64,0.0,Snowy,1.0,88.71,Winter,live-1775110049-002,West,Panaji,Goa,India,Retail Hub 3
-2024-01-01,S003,P0011,Electronics,East,434.099,261.108,293.904,269.18,74.92,0.0,Cloudy,0.0,73.63,Winter,live-1775110049-003,East,Patna,Bihar,India,Retail Hub 3
-2025-01-01,S003,P0020,Groceries,East,1998.146,132.992,158.51,138.64,77.57,15.8,Rainy,0.0,78.89,Winter,live-1775110049-004,East,Bhubaneswar,Odisha,India,Retail Hub 3
-2025-01-01,S003,P0002,Groceries,North,1685.138,131.309,159.916,137.82,61.13,12.68,Cloudy,0.0,60.35,Winter,live-1775110089-001,North,Chandigarh,Chandigarh,India,Retail Hub 3
-2025-01-01,S001,P0014,Electronics,West,1740.419,136.891,157.1,141.63,70.33,17.71,Sunny,0.0,72.54,Winter,live-1775110089-002,West,Ahmedabad,Gujarat,India,Retail Hub 1
-2025-01-01,S006,P0008,Furniture,West,1738.306,129.312,129.312,139.47,79.79,0.38,Sunny,0.0,79.57,Winter,live-1775110089-003,West,Surat,Gujarat,India,Retail Hub
-2025-01-01,S004,P0018,Electronics,North,1584.291,163.781,163.781,175.73,29.01,22.1,Snowy,0.0,27.61,Winter,live-1775110089-004,North,Jaipur,Rajasthan,India,Retail Hub 4
-2025-01-01,S004,P0018,Clothing,West,1892.921,186.895,186.895,201.77,11.38,2.01,Cloudy,1.0,10.82,Winter,live-1775110121-001,West,Panaji,Goa,India,Retail Hub 4
-2025-01-01,S001,P0014,Toys,West,1640.58,133.222,133.222,139.69,66.23,6.63,Snowy,0.0,68.25,Winter,live-1775110121-002,West,Panaji,Goa,India,Retail Hub 1
-2025-01-01,S006,P0020,Groceries,West,1848.064,102.898,127.69,111.09,57.1,0.97,Cloudy,0.0,54.96,Winter,live-1775110121-003,West,Ahmedabad,Gujarat,India,Retail Hub
-2024-01-01,S003,P0002,Electronics,East,174.104,28.135,32.146,28.67,91.36,0.0,Snowy,0.0,91.81,Winter,live-1775110121-004,East,Bhubaneswar,Odisha,India,Retail Hub 3
-2024-01-01,S004,P0019,Clothing,South,271.489,187.588,196.378,195.36,90.49,5.1,Snowy,0.0,88.97,Winter,live-1775110161-001,South,Hyderabad,Telangana,India,Retail Hub 4
-2025-01-01,S006,P0026,Sports Equipment,East,1343.568,126.321,132.855,127.65,63.94,7.86,Sunny,0.0,66.29,Winter,live-1775110161-002,East,Guwahati,Assam,India,Retail Hub
-2025-01-01,S006,P0018,Electronics,East,1486.612,98.327,128.508,103.12,25.26,20.57,Sunny,0.0,25.07,Winter,live-1775110161-003,East,Kolkata,West Bengal,India,Retail Hub
-2023-12-31,S002,P0003,Furniture,South,265.79,107.568,107.568,110.69,63.48,0.0,Snowy,0.0,60.54,Winter,live-1775110161-004,South,Bengaluru,Karnataka,India,Retail Hub 2
-2025-01-01,S006,P0025,Home Appliances,South,1258.252,128.165,142.202,134.06,66.18,6.91,Snowy,1.0,65.58,Winter,live-1775110202-001,South,Hyderabad,Telangana,India,Retail Hub
-2025-01-01,S003,P0021,EV Vehicles,East,1418.026,130.553,142.044,134.35,50.32,24.05,Rainy,0.0,49.87,Winter,live-1775110202-002,East,Guwahati,Assam,India,Retail Hub 3
-2023-12-31,S001,P0017,Furniture,West,152.989,42.673,198.325,45.54,93.91,18.67,Cloudy,1.0,89.29,Winter,live-1775110202-003,West,Ahmedabad,Gujarat,India,Retail Hub 1
-2025-01-01,S005,P0017,Electronics,North,1530.128,192.737,192.737,199.1,21.52,0.21,Snowy,1.0,21.8,Winter,live-1775110202-004,North,Lucknow,Uttar Pradesh,India,Retail Hub 5
-2023-12-31,S001,P0018,Groceries,South,429.021,373.689,373.689,397.55,90.54,20.94,Sunny,0.0,93.69,Winter,live-1775110242-001,South,Chennai,Tamil Nadu,India,Retail Hub 1
-2024-01-01,S002,P0012,Furniture,North,399.46,27.223,124.537,27.93,40.68,0.0,Rainy,0.0,42.63,Winter,live-1775110242-002,North,New Delhi,Delhi,India,Retail Hub 2
-2024-01-01,S005,P0008,Electronics,South,233.587,20.052,225.988,21.3,64.5,4.33,Sunny,0.0,62.38,Winter,live-1775110242-003,South,Hyderabad,Telangana,India,Retail Hub 5
-2025-01-01,S004,P0029,Office Supplies,East,1933.272,170.469,177.368,173.26,62.86,4.6,Sunny,0.0,60.7,Winter,live-1775110242-004,East,Bhubaneswar,Odisha,India,Retail Hub 4
-2025-01-01,S006,P0003,Furniture,South,1298.408,118.264,144.707,124.33,25.15,4.81,Sunny,0.0,25.33,Winter,live-1775110283-001,South,Coimbatore,Tamil Nadu,India,Retail Hub
-2025-01-01,S006,P0029,Office Supplies,South,1333.164,152.839,152.839,164.77,68.83,10.71,Rainy,0.0,64.81,Winter,live-1775110283-002,South,Hyderabad,Telangana,India,Retail Hub
-2024-01-01,S003,P0020,Furniture,South,333.324,176.745,176.745,179.34,92.51,12.44,Cloudy,0.0,87.37,Winter,live-1775110283-003,South,Chennai,Tamil Nadu,India,Retail Hub 3
-2025-01-01,S005,P0021,EV Vehicles,East,1787.615,126.182,138.565,135.31,50.84,1.87,Cloudy,1.0,50.29,Winter,live-1775110283-004,East,Bhubaneswar,Odisha,India,Retail Hub 5
-2025-01-01,S005,P0030,Industrial Tools,East,2334.844,194.933,194.933,197.74,62.54,19.63,Sunny,0.0,59.33,Winter,live-1775110361-001,East,Kolkata,West Bengal,India,Retail Hub 5
-2025-01-01,S005,P0007,Groceries,South,1726.854,167.022,191.017,172.06,62.04,0.0,Cloudy,0.0,61.72,Winter,live-1775110361-002,South,Coimbatore,Tamil Nadu,India,Retail Hub 5
-2025-01-01,S003,P0027,Beauty & Personal Care,East,1889.249,172.081,172.818,180.54,56.5,2.83,Rainy,0.0,54.48,Winter,live-1775110361-003,East,Kolkata,West Bengal,India,Retail Hub 3
-2025-01-01,S002,P0020,Toys,West,1874.913,130.789,162.207,134.98,30.41,22.85,Sunny,0.0,28.73,Winter,live-1775110361-004,West,Surat,Gujarat,India,Retail Hub 2
-2025-01-01,S006,P0023,Pharmaceuticals,East,1153.913,116.935,138.208,123.41,66.52,13.41,Sunny,0.0,68.32,Winter,live-1775110420-001,East,Guwahati,Assam,India,Retail Hub
-2023-12-31,S001,P0012,Furniture,South,221.486,181.134,188.892,190.3,72.55,10.75,Snowy,1.0,69.5,Winter,live-1775110420-002,South,Bengaluru,Karnataka,India,Retail Hub 1
-2025-01-01,S002,P0028,Pet Supplies,East,1516.702,199.201,199.201,209.22,70.46,8.53,Snowy,1.0,71.75,Winter,live-1775110420-003,East,Kolkata,West Bengal,India,Retail Hub 2
-2023-12-30,S002,P0007,Toys,North,360.59,69.758,69.758,75.19,45.0,13.0,Rainy,0.0,46.08,Winter,live-1775110420-004,North,New Delhi,Delhi,India,Retail Hub 2
-2025-01-01,S002,P0019,Toys,East,1725.101,142.711,147.103,150.87,50.45,20.16,Snowy,0.0,50.79,Winter,live-1775110477-001,East,Guwahati,Assam,India,Retail Hub 2
-2023-12-31,S001,P0011,Clothing,North,328.331,320.317,320.317,339.94,70.08,19.18,Snowy,0.0,67.12,Winter,live-1775110477-002,North,Lucknow,Uttar Pradesh,India,Retail Hub 1
-2025-01-01,S004,P0026,Sports Equipment,South,1762.276,181.419,184.537,187.19,62.18,2.84,Rainy,0.0,63.91,Winter,live-1775110477-003,South,Hyderabad,Telangana,India,Retail Hub 4
-2025-01-01,S005,P0016,Furniture,East,1907.639,175.152,182.739,179.94,58.12,15.21,Cloudy,0.0,60.81,Winter,live-1775110477-004,East,Patna,Bihar,India,Retail Hub 5
-2025-01-01,S001,P0013,Electronics,West,1296.377,109.229,123.631,115.22,89.14,13.91,Rainy,0.0,89.74,Winter,live-1775110539-001,West,Surat,Gujarat,India,Retail Hub 1
-2023-12-31,S003,P0016,Clothing,South,154.522,64.821,139.863,69.26,69.35,12.34,Snowy,0.0,67.74,Winter,live-1775110539-002,South,Bengaluru,Karnataka,India,Retail Hub 3
-2025-01-01,S005,P0022,Semiconductors,South,1671.76,134.118,143.471,136.92,58.8,3.82,Rainy,0.0,56.38,Winter,live-1775110539-003,South,Hyderabad,Telangana,India,Retail Hub 5
-2023-12-31,S005,P0013,Clothing,North,312.688,261.806,261.806,271.71,79.35,4.78,Cloudy,0.0,77.26,Winter,live-1775110539-004,North,Chandigarh,Chandigarh,India,Retail Hub 5
-2025-01-01,S006,P0020,Toys,West,1646.683,114.397,139.74,122.32,30.63,20.93,Sunny,0.0,31.03,Winter,live-1775110617-001,West,Surat,Gujarat,India,Retail Hub
-2025-01-01,S003,P0023,Pharmaceuticals,East,1317.412,144.674,144.674,150.34,65.63,10.72,Sunny,0.0,62.96,Winter,live-1775110617-002,East,Guwahati,Assam,India,Retail Hub 3
-2024-01-01,S001,P0012,Groceries,West,105.624,66.178,74.401,70.85,67.46,21.41,Sunny,0.0,66.84,Winter,live-1775110617-003,West,Surat,Gujarat,India,Retail Hub 1
-2025-01-01,S006,P0001,Clothing,West,1488.236,135.089,135.089,138.21,53.27,7.71,Cloudy,1.0,53.97,Winter,live-1775110617-004,West,Ahmedabad,Gujarat,India,Retail Hub
-2024-01-01,S002,P0008,Furniture,South,307.976,14.987,146.094,15.15,36.22,11.49,Rainy,0.0,34.13,Winter,live-1775110669-001,South,Chennai,Tamil Nadu,India,Retail Hub 2
-2025-01-01,S005,P0004,Furniture,South,1622.132,131.849,131.849,141.11,46.41,33.27,Snowy,0.0,45.82,Winter,live-1775110669-002,South,Kochi,Kerala,India,Retail Hub 5
-2025-01-01,S002,P0026,Sports Equipment,East,1472.026,154.198,170.392,161.15,59.53,6.48,Rainy,0.0,59.42,Winter,live-1775110669-003,East,Bhubaneswar,Odisha,India,Retail Hub 2
-2025-01-01,S005,P0022,Semiconductors,West,1638.509,146.518,160.904,152.96,56.42,8.12,Sunny,0.0,57.37,Winter,live-1775110669-004,West,Surat,Gujarat,India,Retail Hub 5
-2024-01-01,S001,P0009,Toys,South,128.813,51.199,122.522,53.06,31.42,0.38,Rainy,0.0,31.03,Winter,live-1775110728-001,South,Bengaluru,Karnataka,India,Retail Hub 1
-2024-01-01,S005,P0008,Furniture,South,359.687,17.625,157.366,18.59,36.11,11.68,Rainy,0.0,34.46,Winter,live-1775110728-002,South,Chennai,Tamil Nadu,India,Retail Hub 5
-2025-01-01,S004,P0027,Beauty & Personal Care,West,1871.403,190.438,201.583,196.7,52.63,9.82,Sunny,0.0,50.16,Winter,live-1775110728-003,West,Surat,Gujarat,India,Retail Hub 4
-2025-01-01,S003,P0006,Furniture,North,1905.573,118.137,118.137,122.35,65.43,25.27,Snowy,0.0,64.87,Winter,live-1775110728-004,North,Dehradun,Uttarakhand,India,Retail Hub 3
-2025-01-01,S006,P0022,Semiconductors,South,1241.492,122.886,122.886,127.78,58.82,5.41,Rainy,0.0,61.0,Winter,live-1775110780-001,South,Hyderabad,Telangana,India,Retail Hub
-2025-01-01,S004,P0022,Semiconductors,East,1439.31,157.292,157.292,162.42,53.1,12.69,Sunny,1.0,50.11,Winter,live-1775110780-002,East,Guwahati,Assam,India,Retail Hub 4
-2025-01-01,S006,P0028,Pet Supplies,East,1309.233,171.737,171.737,176.14,68.59,8.46,Snowy,1.0,67.75,Winter,live-1775110780-003,East,Kolkata,West Bengal,India,Retail Hub
-2025-01-01,S002,P0006,Furniture,North,1866.158,124.578,124.578,131.34,66.09,24.83,Snowy,1.0,63.14,Winter,live-1775110780-004,North,Dehradun,Uttarakhand,India,Retail Hub 2
+2025-01-01,S005,P0024,Automotive Parts,East,1875.781,171.279,171.279,184.92,53.49,9.69,Snowy,0.0,52.56,Winter,live-1775113498-001,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-01,S003,P0027,Beauty & Personal Care,South,1873.766,152.008,188.855,156.99,69.85,19.14,Sunny,0.0,70.68,Winter,live-1775113498-002,South,Hyderabad,Telangana,India,Retail Hub 3
+2023-12-31,S003,P0013,Clothing,North,275.702,208.12,208.12,212.44,77.48,6.82,Cloudy,0.0,73.37,Winter,live-1775113498-003,North,Chandigarh,Chandigarh,India,Retail Hub 3
+2025-01-01,S006,P0021,EV Vehicles,East,1178.175,125.211,144.324,129.56,59.47,19.07,Cloudy,0.0,61.87,Winter,live-1775113498-004,East,Kolkata,West Bengal,India,Retail Hub
+2025-01-01,S005,P0018,Electronics,North,1695.198,174.181,174.181,186.64,29.89,23.5,Snowy,0.0,29.77,Winter,live-1775113498-005,North,Jaipur,Rajasthan,India,Retail Hub 5
+2024-01-01,S005,P0008,Furniture,East,182.259,102.55,168.851,109.21,58.78,16.9,Snowy,0.0,59.92,Winter,live-1775113498-006,East,Kolkata,West Bengal,India,Retail Hub 5
+2024-01-01,S001,P0010,Groceries,North,145.141,45.528,45.528,48.14,21.4,10.74,Snowy,0.0,20.39,Winter,live-1775113498-007,North,Lucknow,Uttar Pradesh,India,Retail Hub 1
+2025-01-01,S002,P0025,Home Appliances,East,1736.783,153.479,156.977,157.44,56.1,16.82,Rainy,0.0,54.46,Winter,live-1775113498-008,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-01,S002,P0030,Industrial Tools,East,1894.285,173.669,173.669,178.53,60.45,21.94,Sunny,0.0,62.73,Winter,live-1775113498-009,East,Kolkata,West Bengal,India,Retail Hub 2
+2025-01-01,S002,P0029,Office Supplies,South,1596.139,174.797,174.797,177.68,71.63,12.87,Rainy,0.0,69.99,Winter,live-1775113498-010,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-01,S001,P0028,Pet Supplies,South,1982.481,150.719,196.852,158.8,67.32,17.69,Snowy,0.0,63.78,Winter,live-1775113498-011,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-01,S001,P0023,Pharmaceuticals,South,1359.527,150.265,153.588,154.26,53.96,20.22,Snowy,0.0,54.24,Winter,live-1775113498-012,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-01,S001,P0022,Semiconductors,East,1386.671,131.272,151.294,137.82,62.45,12.78,Snowy,0.0,59.42,Winter,live-1775113498-013,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-01,S002,P0026,Sports Equipment,East,1580.091,155.047,165.833,164.85,58.52,13.84,Snowy,1.0,60.66,Winter,live-1775113498-014,East,Kolkata,West Bengal,India,Retail Hub 2
+2025-01-01,S005,P0019,Toys,East,2067.744,165.74,170.989,167.96,52.06,23.93,Snowy,0.0,54.1,Winter,live-1775113498-015,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-01,S002,P0024,Automotive Parts,South,1262.053,158.489,158.489,162.61,65.03,3.37,Cloudy,1.0,63.44,Winter,live-1775113543-001,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-01,S001,P0027,Beauty & Personal Care,East,1185.017,141.677,152.366,152.34,59.16,8.36,Rainy,0.0,61.53,Winter,live-1775113543-002,East,Guwahati,Assam,India,Retail Hub 1
+2024-01-01,S002,P0019,Clothing,South,284.574,171.462,188.262,183.41,92.54,6.59,Snowy,0.0,91.15,Winter,live-1775113543-003,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-01,S005,P0021,EV Vehicles,East,1660.404,145.221,165.838,151.41,51.49,23.05,Rainy,0.0,49.91,Winter,live-1775113543-004,East,Guwahati,Assam,India,Retail Hub 5
+2024-01-01,S004,P0004,Electronics,South,146.976,33.787,214.876,35.85,56.69,0.18,Sunny,0.0,59.1,Winter,live-1775113543-005,South,Coimbatore,Tamil Nadu,India,Retail Hub 4
+2025-01-01,S003,P0002,Furniture,West,1588.775,155.265,155.265,165.77,30.63,6.7,Sunny,1.0,31.1,Winter,live-1775113543-006,West,Surat,Gujarat,India,Retail Hub 3
+2024-01-01,S006,P0013,Groceries,East,342.701,100.754,100.754,102.42,78.81,2.42,Cloudy,0.0,74.08,Winter,live-1775113543-007,East,Kolkata,West Bengal,India,Retail Hub
+2025-01-01,S005,P0025,Home Appliances,South,1758.448,172.838,172.838,178.5,68.44,9.06,Snowy,1.0,66.76,Winter,live-1775113543-008,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-01,S003,P0030,Industrial Tools,South,1678.203,181.201,181.201,183.95,71.83,10.39,Sunny,0.0,70.26,Winter,live-1775113543-009,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S004,P0029,Office Supplies,East,1952.464,171.492,180.596,184.0,61.28,7.39,Sunny,0.0,57.96,Winter,live-1775113543-010,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2025-01-01,S002,P0028,Pet Supplies,West,1529.875,157.662,174.478,160.06,61.51,18.87,Cloudy,0.0,57.98,Winter,live-1775113543-011,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-01,S001,P0023,Pharmaceuticals,East,1213.976,124.003,141.223,133.51,61.23,3.95,Snowy,0.0,61.53,Winter,live-1775113543-012,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-02,S001,P0022,Semiconductors,East,1338.652,126.264,158.356,130.13,63.39,12.95,Snowy,0.0,59.65,Winter,live-1775113543-013,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-01,S006,P0026,Sports Equipment,West,1410.911,174.75,174.75,188.29,61.98,3.8,Rainy,1.0,60.5,Winter,live-1775113543-014,West,Surat,Gujarat,India,Retail Hub
+2025-01-01,S005,P0016,Toys,North,2221.173,153.361,153.361,159.21,43.43,10.37,Sunny,0.0,45.24,Winter,live-1775113543-015,North,Chandigarh,Chandigarh,India,Retail Hub 5
+2025-01-01,S002,Automotive Parts,Automotive Parts,East,285.268,213.79,226.274,228.32,68.55,9.8,Sunny,0.0,70.34,Winter,live-1775113594-001,Nan,Unknown,Unknown,India,Retail Hub 2
+2025-01-02,S001,P0027,Beauty & Personal Care,East,1090.755,152.45,154.218,154.33,59.96,8.29,Rainy,0.0,58.81,Winter,live-1775113594-002,East,Guwahati,Assam,India,Retail Hub 1
+2023-12-31,S003,P0011,Clothing,North,374.735,301.469,308.41,315.19,69.26,18.21,Snowy,0.0,71.46,Winter,live-1775113594-003,North,Lucknow,Uttar Pradesh,India,Retail Hub 3
+2025-01-01,S005,P0021,EV Vehicles,East,1598.023,192.635,192.635,202.14,62.44,21.36,Cloudy,1.0,65.56,Winter,live-1775113594-004,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-01,S003,P0018,Electronics,East,1738.637,154.673,154.673,165.2,24.65,18.68,Sunny,1.0,23.58,Winter,live-1775113594-005,East,Kolkata,West Bengal,India,Retail Hub 3
+2024-01-01,S006,P0009,Furniture,North,305.229,211.518,218.355,214.27,55.32,12.61,Cloudy,0.0,55.32,Winter,live-1775113594-006,North,Lucknow,Uttar Pradesh,India,Retail Hub
+2023-12-31,S006,P0008,Groceries,West,286.349,217.468,217.468,231.75,86.7,0.0,Snowy,0.0,85.67,Winter,live-1775113594-007,West,Panaji,Goa,India,Retail Hub
+2025-01-01,S001,P0025,Home Appliances,West,1443.084,131.714,162.568,141.38,59.1,29.87,Rainy,0.0,61.48,Winter,live-1775113594-008,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-01,S006,P0030,Industrial Tools,South,1357.355,176.937,176.937,187.98,67.53,10.63,Sunny,1.0,67.8,Winter,live-1775113594-009,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-01,S003,P0029,Office Supplies,East,1798.585,186.093,186.826,191.97,62.91,5.87,Sunny,0.0,62.4,Winter,live-1775113594-010,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-01,S001,P0028,Pet Supplies,East,1678.81,144.209,170.54,154.35,60.21,17.52,Rainy,0.0,62.11,Winter,live-1775113594-011,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-01,S005,P0023,Pharmaceuticals,South,1778.839,156.124,164.984,165.84,54.74,22.18,Snowy,0.0,55.95,Winter,live-1775113594-012,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-01,S002,P0022,Semiconductors,East,1313.44,133.696,150.292,135.42,53.42,9.69,Sunny,0.0,54.43,Winter,live-1775113594-013,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-01,S003,P0026,Sports Equipment,South,1636.043,170.06,187.619,182.4,61.71,2.14,Rainy,0.0,61.04,Winter,live-1775113594-014,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S002,P0011,Toys,West,1649.75,161.062,174.528,172.53,38.76,15.25,Snowy,0.0,36.85,Winter,live-1775113594-015,West,Ahmedabad,Gujarat,India,Retail Hub 2
+2025-01-01,S004,P0024,Automotive Parts,East,1792.755,138.775,157.002,143.54,53.92,11.4,Snowy,0.0,53.27,Winter,live-1775113686-001,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-01,S005,P0027,Beauty & Personal Care,West,2003.875,178.981,189.998,182.79,52.4,11.78,Sunny,0.0,52.01,Winter,live-1775113686-002,West,Surat,Gujarat,India,Retail Hub 5
+2023-12-31,S006,P0013,Clothing,North,245.402,207.849,207.849,210.26,76.07,5.6,Cloudy,0.0,72.35,Winter,live-1775113686-003,North,Chandigarh,Chandigarh,India,Retail Hub
+2025-01-01,S003,P0021,EV Vehicles,West,1429.605,153.82,163.745,162.83,48.94,6.47,Cloudy,0.0,47.01,Winter,live-1775113686-004,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-01,S006,P0012,Electronics,North,1302.983,120.863,123.31,128.69,55.14,10.95,Snowy,0.0,52.01,Winter,live-1775113686-005,North,Chandigarh,Chandigarh,India,Retail Hub
+2023-12-31,S005,P0013,Furniture,West,354.097,304.645,304.645,323.72,20.43,22.95,Rainy,1.0,20.8,Winter,live-1775113686-006,West,Panaji,Goa,India,Retail Hub 5
+2025-01-01,S005,P0011,Groceries,West,2154.57,155.474,155.474,160.55,103.52,12.26,Cloudy,0.0,101.45,Winter,live-1775113686-007,West,Pune,Maharashtra,India,Retail Hub 5
+2025-01-02,S002,P0025,Home Appliances,East,1667.072,139.975,154.372,142.13,56.3,19.2,Rainy,0.0,54.38,Winter,live-1775113686-008,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-01,S002,P0030,Industrial Tools,East,1821.329,159.131,192.326,164.94,75.24,14.82,Rainy,0.0,78.57,Winter,live-1775113686-009,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-01,S005,P0029,Office Supplies,West,2191.511,183.164,185.893,187.79,68.28,25.48,Cloudy,0.0,64.79,Winter,live-1775113686-010,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-01,S005,P0028,Pet Supplies,West,1857.444,173.514,190.162,175.42,64.49,18.75,Cloudy,0.0,62.2,Winter,live-1775113686-011,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-01,S006,P0023,Pharmaceuticals,East,1254.121,143.683,149.499,155.12,53.01,6.73,Cloudy,1.0,51.57,Winter,live-1775113686-012,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-01,S002,P0022,Semiconductors,West,1408.365,117.617,157.871,126.69,54.92,9.1,Sunny,0.0,52.37,Winter,live-1775113686-013,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-01,S003,P0026,Sports Equipment,East,1609.056,149.606,154.329,160.01,58.23,14.39,Snowy,0.0,59.51,Winter,live-1775113686-014,East,Kolkata,West Bengal,India,Retail Hub 3
+2023-12-31,S001,P0019,Toys,South,306.308,11.868,62.284,12.18,23.05,3.73,Snowy,1.0,21.68,Winter,live-1775113686-015,South,Kochi,Kerala,India,Retail Hub 1
+2025-01-01,S003,P0024,Automotive Parts,West,1469.089,150.272,150.272,152.63,53.33,6.09,Sunny,0.0,50.19,Winter,live-1775113712-001,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-02,S001,P0027,Beauty & Personal Care,East,1658.737,132.794,159.684,141.64,56.31,4.13,Rainy,0.0,59.07,Winter,live-1775113712-002,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-01,S004,P0009,Clothing,East,1483.185,143.179,155.812,153.43,47.21,3.43,Snowy,0.0,49.39,Winter,live-1775113712-003,East,Ranchi,Jharkhand,India,Retail Hub 4
+2025-01-01,S001,P0021,EV Vehicles,East,1418.687,104.115,108.636,111.32,48.82,2.99,Cloudy,0.0,46.07,Winter,live-1775113712-004,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2024-01-01,S003,P0008,Electronics,South,211.114,19.582,209.931,20.26,62.15,6.71,Sunny,1.0,60.87,Winter,live-1775113712-005,South,Hyderabad,Telangana,India,Retail Hub 3
+2024-01-01,S003,P0008,Furniture,South,299.355,16.835,138.031,17.33,37.0,10.45,Rainy,1.0,38.33,Winter,live-1775113712-006,South,Chennai,Tamil Nadu,India,Retail Hub 3
+2024-01-01,S002,P0010,Groceries,North,146.093,47.84,47.84,50.1,21.84,9.15,Snowy,1.0,22.22,Winter,live-1775113712-007,North,Lucknow,Uttar Pradesh,India,Retail Hub 2
+2025-01-01,S004,P0025,Home Appliances,East,1710.638,140.268,141.02,148.53,71.31,18.33,Sunny,1.0,68.68,Winter,live-1775113712-008,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-01,S003,P0030,Industrial Tools,East,1609.481,162.627,178.734,165.6,65.24,11.14,Snowy,0.0,67.12,Winter,live-1775113712-009,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-01,S005,P0029,Office Supplies,South,1820.626,219.634,219.634,222.67,71.48,13.54,Rainy,1.0,72.78,Winter,live-1775113712-010,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-01,S003,P0028,Pet Supplies,South,2170.059,183.32,208.656,187.4,70.9,16.86,Snowy,0.0,73.98,Winter,live-1775113712-011,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S005,P0023,Pharmaceuticals,West,1877.725,169.232,188.9,180.02,55.36,18.43,Rainy,0.0,55.5,Winter,live-1775113712-012,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-01,S006,P0022,Semiconductors,South,1223.509,131.575,131.575,137.7,58.87,4.83,Rainy,1.0,59.18,Winter,live-1775113712-013,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-01,S004,P0026,Sports Equipment,West,1811.363,204.416,204.416,211.36,63.2,4.5,Rainy,1.0,65.3,Winter,live-1775113712-014,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S003,P0006,Toys,East,1749.169,143.448,146.686,147.17,43.64,25.04,Snowy,0.0,41.55,Winter,live-1775113712-015,East,Ranchi,Jharkhand,India,Retail Hub 3
+2025-01-01,S003,P0024,Automotive Parts,East,1649.29,144.887,170.902,149.07,60.0,2.82,Snowy,0.0,60.86,Winter,live-1775113750-001,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-01,S002,P0027,Beauty & Personal Care,West,1685.073,152.734,164.025,163.12,50.36,12.47,Sunny,0.0,49.76,Winter,live-1775113750-002,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-01,S006,P0001,Clothing,East,1528.728,157.704,157.704,162.48,11.47,13.15,Rainy,1.0,11.67,Winter,live-1775113750-003,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-01,S004,P0021,EV Vehicles,South,1600.065,159.784,159.784,164.02,50.17,17.09,Snowy,1.0,48.59,Winter,live-1775113750-004,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-01,S005,P0011,Electronics,West,2299.254,192.55,192.55,205.28,93.62,7.43,Cloudy,1.0,94.18,Winter,live-1775113750-005,West,Mumbai,Maharashtra,India,Retail Hub 5
+2023-12-31,S001,P0017,Furniture,West,108.913,39.905,176.157,41.1,95.3,19.88,Cloudy,0.0,92.75,Winter,live-1775113750-006,West,Ahmedabad,Gujarat,India,Retail Hub 1
+2025-01-01,S002,P0005,Groceries,North,1779.949,106.884,111.896,109.49,14.21,13.18,Snowy,0.0,14.71,Winter,live-1775113750-007,North,New Delhi,Delhi,India,Retail Hub 2
+2025-01-01,S003,P0025,Home Appliances,West,1593.499,161.993,161.993,165.12,58.51,27.46,Rainy,1.0,59.31,Winter,live-1775113750-008,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-01,S001,P0030,Industrial Tools,East,1808.555,182.213,182.213,185.55,60.23,20.35,Sunny,1.0,60.47,Winter,live-1775113750-009,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-01,S004,P0029,Office Supplies,East,1715.176,160.709,209.099,163.45,67.18,24.21,Rainy,0.0,66.57,Winter,live-1775113750-010,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-01,S004,P0028,Pet Supplies,West,1725.383,175.234,175.234,182.81,62.9,17.57,Cloudy,1.0,59.47,Winter,live-1775113750-011,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S005,P0023,Pharmaceuticals,East,1561.175,162.612,162.612,174.84,67.14,14.8,Sunny,0.0,69.43,Winter,live-1775113750-012,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-01,S003,P0022,Semiconductors,East,1382.782,145.901,145.901,151.83,53.78,12.6,Sunny,1.0,55.01,Winter,live-1775113750-013,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-01,S001,P0026,Sports Equipment,East,1467.485,152.005,152.005,161.67,57.73,11.51,Snowy,0.0,58.7,Winter,live-1775113750-014,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-01,S005,P0018,Toys,North,1523.9,151.284,151.284,158.45,86.08,2.97,Snowy,0.0,85.92,Winter,live-1775113750-015,North,Lucknow,Uttar Pradesh,India,Retail Hub 5
+2025-01-01,S006,Automotive Parts,Automotive Parts,East,280.628,187.37,197.798,190.85,70.03,11.86,Sunny,0.0,73.49,Winter,live-1775113788-001,Nan,Unknown,Unknown,India,Retail Hub
+2025-01-01,S003,P0027,Beauty & Personal Care,East,2164.723,187.277,201.204,199.18,69.26,24.27,Sunny,0.0,69.16,Winter,live-1775113788-002,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2023-12-31,S006,P0016,Clothing,South,113.658,63.874,110.742,65.91,67.37,9.22,Snowy,0.0,66.77,Winter,live-1775113788-003,South,Bengaluru,Karnataka,India,Retail Hub
+2025-01-01,S006,P0021,EV Vehicles,East,1174.488,133.159,133.159,141.5,51.08,20.06,Rainy,0.0,48.61,Winter,live-1775113788-004,East,Guwahati,Assam,India,Retail Hub
+2025-01-01,S003,P0008,Electronics,West,1575.595,166.863,166.863,169.56,62.95,1.3,Sunny,0.0,59.89,Winter,live-1775113788-005,West,Panaji,Goa,India,Retail Hub 3
+2025-01-01,S003,P0003,Furniture,South,1530.467,153.207,161.023,155.54,25.1,4.96,Sunny,1.0,25.38,Winter,live-1775113788-006,South,Coimbatore,Tamil Nadu,India,Retail Hub 3
+2023-12-31,S005,P0008,Groceries,West,318.384,257.987,257.987,263.8,85.82,1.03,Snowy,0.0,82.54,Winter,live-1775113788-007,West,Panaji,Goa,India,Retail Hub 5
+2025-01-01,S001,P0025,Home Appliances,South,1329.921,145.228,145.228,153.59,65.95,8.13,Snowy,0.0,65.49,Winter,live-1775113788-008,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-02,S003,P0030,Industrial Tools,South,1576.503,187.68,187.68,196.3,72.78,11.51,Sunny,0.0,68.82,Winter,live-1775113788-009,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S005,P0029,Office Supplies,East,1849.083,192.575,208.858,202.11,69.35,26.63,Rainy,1.0,71.83,Winter,live-1775113788-010,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-01,S004,P0028,Pet Supplies,East,1880.434,195.873,195.873,198.18,59.74,31.31,Snowy,1.0,58.13,Winter,live-1775113788-011,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-01,S003,P0023,Pharmaceuticals,South,1483.998,169.822,169.822,174.18,53.21,21.28,Snowy,1.0,52.07,Winter,live-1775113788-012,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S002,P0022,Semiconductors,East,1233.081,114.94,124.079,116.51,57.23,9.58,Snowy,0.0,56.58,Winter,live-1775113788-013,East,Kolkata,West Bengal,India,Retail Hub 2
+2025-01-01,S005,P0026,Sports Equipment,East,1860.007,174.332,174.332,179.87,66.97,9.23,Sunny,0.0,68.41,Winter,live-1775113788-014,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-01,S004,P0018,Toys,North,1382.505,142.765,142.765,149.53,83.1,2.88,Snowy,0.0,83.3,Winter,live-1775113788-015,North,Lucknow,Uttar Pradesh,India,Retail Hub 4
+2025-01-01,S005,P0024,Automotive Parts,East,2108.946,170.271,197.024,178.67,66.99,23.09,Rainy,0.0,66.43,Winter,live-1775114527-001,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-02,S005,P0027,Beauty & Personal Care,West,1901.823,199.271,211.871,202.06,52.79,10.37,Sunny,1.0,51.92,Winter,live-1775114527-002,West,Surat,Gujarat,India,Retail Hub 5
+2024-01-01,S005,P0012,Clothing,North,110.535,58.686,58.686,62.53,52.32,12.72,Rainy,1.0,51.39,Winter,live-1775114527-003,North,Dehradun,Uttarakhand,India,Retail Hub 5
+2025-01-01,S006,P0021,EV Vehicles,West,1157.911,134.703,134.703,138.04,47.54,7.67,Cloudy,0.0,47.37,Winter,live-1775114527-004,West,Surat,Gujarat,India,Retail Hub
+2024-01-01,S003,P0011,Electronics,East,353.412,312.62,312.62,331.57,75.65,0.0,Cloudy,0.0,74.83,Winter,live-1775114527-005,East,Patna,Bihar,India,Retail Hub 3
+2023-12-31,S001,P0012,Furniture,South,172.221,209.71,209.71,225.44,69.9,11.66,Snowy,1.0,66.96,Winter,live-1775114527-006,South,Bengaluru,Karnataka,India,Retail Hub 1
+2025-01-01,S006,P0007,Groceries,South,1246.667,139.566,149.049,145.95,61.75,1.4,Cloudy,1.0,63.6,Winter,live-1775114527-007,South,Coimbatore,Tamil Nadu,India,Retail Hub
+2025-01-02,S003,P0025,Home Appliances,West,1487.937,156.166,163.465,157.97,58.4,29.93,Rainy,0.0,55.24,Winter,live-1775114527-008,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-01,S005,P0030,Industrial Tools,East,2293.811,202.327,202.327,212.79,62.72,22.9,Sunny,1.0,60.25,Winter,live-1775114527-009,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-01,S005,P0029,Office Supplies,East,2165.476,196.828,211.43,210.99,64.38,5.86,Sunny,0.0,62.23,Winter,live-1775114527-010,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-01,S006,P0028,Pet Supplies,East,1446.052,150.939,164.826,160.44,59.11,27.69,Snowy,0.0,59.37,Winter,live-1775114527-011,East,Guwahati,Assam,India,Retail Hub
+2025-01-02,S005,P0023,Pharmaceuticals,West,1794.4,181.144,183.96,185.04,56.18,17.88,Rainy,0.0,53.19,Winter,live-1775114527-012,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-01,S005,P0022,Semiconductors,South,1650.824,169.826,169.826,177.92,58.22,6.11,Rainy,1.0,55.23,Winter,live-1775114527-013,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-01,S004,P0026,Sports Equipment,South,1732.547,185.591,195.216,190.08,60.88,0.0,Rainy,0.0,58.12,Winter,live-1775114527-014,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-01,S005,P0011,Toys,West,1960.052,205.639,208.631,221.42,39.95,15.77,Snowy,1.0,41.36,Winter,live-1775114527-015,West,Ahmedabad,Gujarat,India,Retail Hub 5
+2025-01-01,S001,P0024,Automotive Parts,West,1303.918,136.82,136.82,138.79,51.54,6.74,Sunny,0.0,50.49,Winter,live-1775114682-001,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-01,S006,P0027,Beauty & Personal Care,East,1691.303,162.299,168.451,165.95,63.49,20.89,Sunny,0.0,64.56,Winter,live-1775114682-002,East,Bhubaneswar,Odisha,India,Retail Hub
+2024-01-01,S001,P0019,Clothing,South,241.796,201.38,201.38,216.29,90.08,4.1,Snowy,1.0,92.81,Winter,live-1775114682-003,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-01,S002,P0021,EV Vehicles,East,1482.226,96.648,126.077,104.01,48.45,3.85,Cloudy,0.0,48.64,Winter,live-1775114682-004,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-01,S002,P0013,Electronics,West,1967.016,118.029,135.84,120.26,32.27,8.23,Cloudy,0.0,31.5,Winter,live-1775114682-005,West,Panaji,Goa,India,Retail Hub 2
+2025-01-01,S004,P0009,Furniture,South,2091.527,168.699,180.805,179.15,60.6,17.72,Rainy,0.0,57.65,Winter,live-1775114682-006,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-01,S005,P0011,Groceries,North,1578.549,138.889,138.899,144.08,90.59,3.87,Cloudy,0.0,88.21,Winter,live-1775114682-007,North,Dehradun,Uttarakhand,India,Retail Hub 5
+2025-01-02,S001,P0025,Home Appliances,West,1368.049,130.46,155.56,135.08,58.9,28.61,Rainy,0.0,58.77,Winter,live-1775114682-008,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-01,S004,P0030,Industrial Tools,West,1826.273,158.753,158.753,165.8,64.01,9.49,Rainy,0.0,65.65,Winter,live-1775114682-009,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S006,P0029,Office Supplies,East,1672.724,154.377,190.997,160.61,61.11,17.38,Sunny,0.0,60.34,Winter,live-1775114682-010,East,Guwahati,Assam,India,Retail Hub
+2025-01-01,S003,P0028,Pet Supplies,East,1548.96,179.898,179.898,185.61,69.49,10.83,Snowy,0.0,65.51,Winter,live-1775114682-011,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-01,S005,P0023,Pharmaceuticals,East,1740.629,202.81,202.81,209.81,55.43,9.02,Cloudy,1.0,56.31,Winter,live-1775114682-012,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-01,S002,P0022,Semiconductors,South,1412.698,137.756,137.756,142.91,59.61,4.34,Rainy,0.0,57.96,Winter,live-1775114682-013,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-01,S001,P0026,Sports Equipment,South,1466.38,157.777,182.297,164.93,59.93,2.2,Rainy,0.0,57.4,Winter,live-1775114682-014,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-01,S002,P0010,Toys,North,1626.506,134.023,151.334,139.29,16.04,15.77,Snowy,0.0,15.15,Winter,live-1775114682-015,North,Lucknow,Uttar Pradesh,India,Retail Hub 2
+2025-01-01,S001,P0024,Automotive Parts,East,1562.551,131.853,157.381,137.74,62.74,22.07,Rainy,0.0,62.01,Winter,live-1775114770-001,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-01,S005,P0027,Beauty & Personal Care,East,2408.005,169.876,191.54,175.35,67.79,23.57,Sunny,0.0,69.77,Winter,live-1775114770-002,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-01,S004,P0014,Clothing,West,1823.924,166.234,170.378,173.71,73.15,28.59,Sunny,0.0,71.69,Winter,live-1775114770-003,West,Pune,Maharashtra,India,Retail Hub 4
+2025-01-01,S001,P0021,EV Vehicles,East,1257.676,136.304,153.59,144.19,62.73,18.16,Cloudy,0.0,63.92,Winter,live-1775114770-004,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-01,S003,P0013,Electronics,West,1425.308,118.876,140.322,127.62,89.4,10.12,Rainy,0.0,88.5,Winter,live-1775114770-005,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-01,S001,P0009,Furniture,South,1802.655,167.969,181.615,181.11,58.62,16.37,Rainy,1.0,58.93,Winter,live-1775114770-006,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-01,S004,P0002,Groceries,South,1925.658,165.36,172.165,178.13,42.19,0.0,Cloudy,0.0,42.3,Winter,live-1775114770-007,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-01,S001,P0025,Home Appliances,East,1491.532,138.681,145.839,145.59,70.82,23.58,Rainy,0.0,66.79,Winter,live-1775114770-008,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-01,S001,P0030,Industrial Tools,East,1431.656,182.186,182.186,186.96,63.3,10.41,Snowy,1.0,63.79,Winter,live-1775114770-009,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-01,S003,P0029,Office Supplies,East,1573.821,165.076,204.202,177.79,65.91,24.94,Rainy,0.0,66.37,Winter,live-1775114770-010,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-02,S005,P0028,Pet Supplies,West,1763.448,181.375,182.435,192.46,65.51,16.93,Cloudy,0.0,67.4,Winter,live-1775114770-011,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-01,S004,P0023,Pharmaceuticals,East,1618.455,154.146,154.146,163.58,55.08,7.88,Cloudy,0.0,52.19,Winter,live-1775114770-012,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2025-01-01,S001,P0022,Semiconductors,South,1288.937,115.069,120.642,120.27,57.59,4.9,Rainy,0.0,55.57,Winter,live-1775114770-013,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-01,S006,P0026,Sports Equipment,South,1385.096,163.204,163.204,174.14,61.26,0.53,Rainy,1.0,63.53,Winter,live-1775114770-014,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-01,S005,P0006,Toys,East,1806.727,141.868,151.711,144.23,18.74,16.49,Sunny,0.0,17.84,Winter,live-1775114770-015,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-02,S006,Automotive Parts,Automotive Parts,East,307.636,173.073,209.001,184.01,70.06,12.27,Sunny,0.0,69.69,Winter,live-1775114801-001,Nan,Unknown,Unknown,India,Retail Hub
+2025-01-01,S002,P0027,Beauty & Personal Care,South,1834.713,155.597,174.424,157.67,70.78,22.11,Sunny,0.0,71.1,Winter,live-1775114801-002,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-01,S001,P0001,Clothing,West,1599.093,135.374,135.374,144.7,52.22,10.82,Cloudy,1.0,49.53,Winter,live-1775114801-003,West,Ahmedabad,Gujarat,India,Retail Hub 1
+2025-01-01,S005,P0021,EV Vehicles,South,1764.562,146.035,172.23,151.44,50.57,19.18,Snowy,0.0,51.96,Winter,live-1775114801-004,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-01,S005,P0017,Electronics,North,1544.36,165.369,165.775,168.38,21.42,3.34,Snowy,0.0,20.78,Winter,live-1775114801-005,North,Lucknow,Uttar Pradesh,India,Retail Hub 5
+2025-01-01,S006,P0019,Furniture,West,1344.188,107.253,118.92,109.21,52.19,12.71,Rainy,0.0,50.03,Winter,live-1775114801-006,West,Pune,Maharashtra,India,Retail Hub
+2024-01-01,S002,P0013,Groceries,East,398.089,101.065,106.683,104.04,76.0,0.0,Cloudy,0.0,77.0,Winter,live-1775114801-007,East,Kolkata,West Bengal,India,Retail Hub 2
+2025-01-01,S002,P0025,Home Appliances,East,1613.084,136.16,155.308,143.25,70.7,23.77,Rainy,0.0,70.29,Winter,live-1775114801-008,East,Kolkata,West Bengal,India,Retail Hub 2
+2025-01-01,S005,P0030,Industrial Tools,East,1908.337,196.076,196.076,204.04,66.89,10.89,Snowy,0.0,66.33,Winter,live-1775114801-009,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-01,S001,P0029,Office Supplies,East,1751.895,185.801,194.379,193.66,59.86,18.59,Sunny,0.0,61.95,Winter,live-1775114801-010,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-01,S002,P0028,Pet Supplies,East,1522.087,156.941,174.925,159.25,71.24,9.15,Snowy,0.0,72.72,Winter,live-1775114801-011,East,Kolkata,West Bengal,India,Retail Hub 2
+2025-01-02,S006,P0023,Pharmaceuticals,East,1185.26,128.554,167.2,132.72,54.02,7.61,Cloudy,0.0,53.1,Winter,live-1775114801-012,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-01,S004,P0022,Semiconductors,West,1571.335,133.201,149.969,139.4,55.3,7.62,Sunny,0.0,52.73,Winter,live-1775114801-013,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-02,S001,P0026,Sports Equipment,East,1399.556,150.954,167.394,154.71,58.73,11.27,Snowy,0.0,60.66,Winter,live-1775114801-014,East,Kolkata,West Bengal,India,Retail Hub 1
+2023-12-31,S006,P0001,Toys,South,352.236,112.194,112.194,114.13,72.45,0.0,Snowy,0.0,71.24,Winter,live-1775114801-015,South,Kochi,Kerala,India,Retail Hub
+2025-01-01,S003,P0024,Automotive Parts,East,1731.567,157.7,167.758,167.21,63.17,19.47,Rainy,0.0,62.33,Winter,live-1775114848-001,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-01,S005,P0027,Beauty & Personal Care,South,2089.309,220.548,220.548,225.58,69.13,19.03,Sunny,1.0,67.32,Winter,live-1775114848-002,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-01,S006,P0003,Clothing,South,1345.343,92.626,104.141,96.65,80.55,3.58,Rainy,0.0,82.47,Winter,live-1775114848-003,South,Chennai,Tamil Nadu,India,Retail Hub
+2025-01-01,S005,P0021,EV Vehicles,East,1791.695,126.047,135.215,136.0,50.17,0.52,Cloudy,0.0,51.04,Winter,live-1775114848-004,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-01,S005,P0020,Electronics,South,2197.031,136.476,152.392,143.91,10.87,4.21,Sunny,0.0,10.71,Winter,live-1775114848-005,South,Bengaluru,Karnataka,India,Retail Hub 5
+2024-01-01,S006,P0008,Furniture,East,156.165,92.859,142.154,94.95,54.52,12.5,Snowy,0.0,51.73,Winter,live-1775114848-006,East,Kolkata,West Bengal,India,Retail Hub
+2024-01-01,S004,P0012,Groceries,West,111.157,83.638,83.638,87.01,70.67,23.09,Sunny,0.0,69.79,Winter,live-1775114848-007,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S004,P0025,Home Appliances,South,1705.487,141.964,174.104,148.8,69.88,6.45,Snowy,0.0,70.0,Winter,live-1775114848-008,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-02,S004,P0030,Industrial Tools,West,1724.725,162.637,164.728,169.08,65.14,11.66,Rainy,1.0,64.12,Winter,live-1775114848-009,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S003,P0029,Office Supplies,West,1918.323,174.732,189.485,176.55,67.96,21.19,Cloudy,0.0,66.58,Winter,live-1775114848-010,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-01,S006,P0028,Pet Supplies,East,1340.627,131.205,161.531,136.64,68.44,8.11,Snowy,0.0,66.22,Winter,live-1775114848-011,East,Kolkata,West Bengal,India,Retail Hub
+2025-01-02,S005,P0023,Pharmaceuticals,South,1711.552,147.409,175.665,149.15,56.01,22.93,Snowy,0.0,57.84,Winter,live-1775114848-012,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-01,S003,P0022,Semiconductors,East,1302.557,137.103,137.103,138.83,59.78,10.03,Snowy,0.0,61.9,Winter,live-1775114848-013,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-02,S004,P0026,Sports Equipment,West,1737.446,186.239,206.631,190.99,64.49,6.93,Rainy,0.0,61.48,Winter,live-1775114848-014,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S005,P0003,Toys,East,1619.983,143.631,154.151,153.49,22.42,9.57,Snowy,0.0,21.97,Winter,live-1775114848-015,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-02,S001,P0024,Automotive Parts,East,1509.981,129.323,159.241,138.74,62.12,20.07,Rainy,0.0,60.08,Winter,live-1775114899-001,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-02,S003,P0027,Beauty & Personal Care,South,1748.082,186.879,186.879,191.58,69.5,19.18,Sunny,1.0,69.8,Winter,live-1775114899-002,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S004,P0016,Clothing,West,1686.075,168.967,169.882,170.97,19.94,18.92,Cloudy,1.0,20.59,Winter,live-1775114899-003,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-02,S003,P0021,EV Vehicles,West,1343.843,146.087,169.914,151.65,50.02,8.55,Cloudy,0.0,48.37,Winter,live-1775114899-004,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-01,S001,P0016,Electronics,East,1225.732,147.966,159.821,154.16,39.73,8.6,Sunny,0.0,40.71,Winter,live-1775114899-005,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-01,S003,P0019,Furniture,West,1596.243,113.61,130.208,117.55,51.53,13.44,Rainy,0.0,49.24,Winter,live-1775114899-006,West,Pune,Maharashtra,India,Retail Hub 3
+2023-12-31,S002,P0010,Groceries,East,86.635,43.097,67.587,44.12,76.2,21.95,Rainy,1.0,72.38,Winter,live-1775114899-007,East,Patna,Bihar,India,Retail Hub 2
+2025-01-01,S004,P0025,Home Appliances,East,1792.943,167.575,167.575,171.04,74.21,25.38,Rainy,0.0,76.76,Winter,live-1775114899-008,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-01,S006,P0030,Industrial Tools,East,1597.865,156.122,180.266,163.88,74.44,13.56,Rainy,1.0,73.02,Winter,live-1775114899-009,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-02,S003,P0029,Office Supplies,West,1824.934,207.397,207.397,215.86,67.05,22.59,Cloudy,1.0,70.15,Winter,live-1775114899-010,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-01,S006,P0028,Pet Supplies,West,1350.212,145.711,150.598,153.05,61.34,15.06,Cloudy,0.0,61.12,Winter,live-1775114899-011,West,Surat,Gujarat,India,Retail Hub
+2025-01-01,S003,P0023,Pharmaceuticals,East,1333.429,135.607,137.126,140.9,65.86,13.47,Sunny,0.0,64.17,Winter,live-1775114899-012,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-01,S001,P0022,Semiconductors,East,1173.716,110.995,130.499,113.4,57.35,11.38,Snowy,0.0,59.74,Winter,live-1775114899-013,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-02,S002,P0026,Sports Equipment,East,1512.563,154.831,164.245,156.49,58.36,14.9,Snowy,0.0,59.81,Winter,live-1775114899-014,East,Kolkata,West Bengal,India,Retail Hub 2
+2025-01-01,S004,P0001,Toys,North,1798.122,199.532,199.532,214.15,94.84,0.0,Sunny,1.0,95.91,Winter,live-1775114899-015,North,Dehradun,Uttarakhand,India,Retail Hub 4
+2025-01-02,S002,Automotive Parts,Automotive Parts,East,314.876,204.848,231.674,220.35,68.72,12.08,Sunny,0.0,70.36,Winter,live-1775114941-001,Nan,Unknown,Unknown,India,Retail Hub 2
+2025-01-03,S003,P0027,Beauty & Personal Care,South,1622.408,202.122,202.122,214.13,69.67,21.09,Sunny,0.0,69.19,Winter,live-1775114941-002,South,Hyderabad,Telangana,India,Retail Hub 3
+2023-12-31,S005,P0016,Clothing,South,172.909,75.175,149.378,80.07,69.07,8.93,Snowy,0.0,71.55,Winter,live-1775114941-003,South,Bengaluru,Karnataka,India,Retail Hub 5
+2025-01-02,S001,P0021,EV Vehicles,East,1165.292,147.304,151.082,156.35,63.92,16.21,Cloudy,0.0,64.5,Winter,live-1775114941-004,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-01,S003,P0012,Electronics,North,1877.958,156.233,156.233,159.78,37.56,0.0,Cloudy,1.0,38.26,Winter,live-1775114941-005,North,Dehradun,Uttarakhand,India,Retail Hub 3
+2023-12-31,S002,P0013,Furniture,West,312.281,270.851,270.851,292.3,19.06,19.88,Rainy,1.0,18.73,Winter,live-1775114941-006,West,Panaji,Goa,India,Retail Hub 2
+2023-12-31,S005,P0010,Groceries,East,119.621,46.147,87.236,48.7,79.43,21.4,Rainy,0.0,77.92,Winter,live-1775114941-007,East,Patna,Bihar,India,Retail Hub 5
+2025-01-01,S006,P0025,Home Appliances,East,1556.394,128.378,159.663,135.28,57.9,14.22,Rainy,0.0,57.33,Winter,live-1775114941-008,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-01,S004,P0030,Industrial Tools,East,1747.635,178.684,194.595,188.16,64.63,10.01,Snowy,0.0,63.79,Winter,live-1775114941-009,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-01,S003,P0029,Office Supplies,South,1613.531,156.298,163.094,165.77,70.07,11.69,Rainy,0.0,70.16,Winter,live-1775114941-010,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S004,P0028,Pet Supplies,East,1737.123,154.968,200.069,167.25,72.08,9.22,Snowy,0.0,70.47,Winter,live-1775114941-011,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-01,S001,P0023,Pharmaceuticals,West,1450.344,141.041,147.21,149.21,55.34,14.59,Rainy,1.0,53.87,Winter,live-1775114941-012,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-02,S003,P0022,Semiconductors,East,1279.438,180.197,180.197,186.44,53.92,13.47,Sunny,1.0,54.64,Winter,live-1775114941-013,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-01,S002,P0026,Sports Equipment,South,1584.615,172.387,190.869,179.46,60.59,0.0,Rainy,0.0,62.53,Winter,live-1775114941-014,South,Hyderabad,Telangana,India,Retail Hub 2
+2023-12-31,S001,P0001,Toys,North,351.057,32.094,53.839,34.15,51.28,3.5,Sunny,0.0,50.32,Winter,live-1775114941-015,North,Jaipur,Rajasthan,India,Retail Hub 1
+2025-01-01,S004,P0024,Automotive Parts,West,1582.272,129.86,137.509,134.49,52.93,6.11,Sunny,0.0,52.06,Winter,live-1775114994-001,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S005,P0027,Beauty & Personal Care,East,1549.817,192.513,199.18,198.16,60.89,6.07,Rainy,0.0,60.81,Winter,live-1775114994-002,East,Guwahati,Assam,India,Retail Hub 5
+2024-01-01,S004,P0019,Clothing,South,280.016,197.708,210.62,211.74,91.98,5.87,Snowy,0.0,95.25,Winter,live-1775114994-003,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-01,S002,P0021,EV Vehicles,West,1399.969,152.508,152.508,160.66,48.81,8.35,Cloudy,0.0,49.53,Winter,live-1775114994-004,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-01,S003,P0007,Electronics,North,1746.159,175.558,179.815,185.66,54.25,17.85,Sunny,0.0,53.94,Winter,live-1775114994-005,North,Jaipur,Rajasthan,India,Retail Hub 3
+2023-12-31,S006,P0013,Furniture,West,279.148,217.716,217.716,224.13,19.44,17.32,Rainy,0.0,18.37,Winter,live-1775114994-006,West,Panaji,Goa,India,Retail Hub
+2023-12-31,S004,P0008,Groceries,West,338.97,254.134,254.134,269.38,91.56,0.47,Snowy,0.0,91.22,Winter,live-1775114994-007,West,Panaji,Goa,India,Retail Hub 4
+2025-01-01,S005,P0025,Home Appliances,East,1919.383,151.555,163.78,155.03,73.72,25.17,Rainy,0.0,75.34,Winter,live-1775114994-008,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-02,S003,P0030,Industrial Tools,East,1508.527,163.435,191.076,176.18,65.87,12.27,Snowy,0.0,67.46,Winter,live-1775114994-009,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-02,S006,P0029,Office Supplies,East,1575.517,170.212,204.102,174.72,61.31,16.03,Sunny,1.0,57.91,Winter,live-1775114994-010,East,Guwahati,Assam,India,Retail Hub
+2025-01-03,S005,P0028,Pet Supplies,West,1644.451,183.994,197.683,193.21,64.93,16.54,Cloudy,0.0,62.56,Winter,live-1775114994-011,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-01,S003,P0023,Pharmaceuticals,East,1333.759,139.555,139.555,147.28,62.38,4.26,Snowy,0.0,64.05,Winter,live-1775114994-012,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-01,S001,P0022,Semiconductors,East,1237.817,137.046,137.046,145.38,53.18,10.54,Sunny,1.0,52.38,Winter,live-1775114994-013,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-01,S004,P0026,Sports Equipment,East,1806.117,174.572,189.761,183.24,59.45,14.55,Snowy,1.0,58.32,Winter,live-1775114994-014,East,Kolkata,West Bengal,India,Retail Hub 4
+2024-01-01,S005,P0020,Toys,East,205.778,20.146,208.591,21.5,99.69,22.23,Snowy,0.0,99.35,Winter,live-1775114994-015,East,Patna,Bihar,India,Retail Hub 5
+2025-01-03,S002,Automotive Parts,Automotive Parts,East,327.438,204.949,255.857,218.05,67.75,12.86,Sunny,0.0,67.84,Winter,live-1775115040-001,Nan,Unknown,Unknown,India,Retail Hub 2
+2025-01-02,S005,P0027,Beauty & Personal Care,East,2318.509,167.29,190.333,178.74,66.85,25.44,Sunny,0.0,68.25,Winter,live-1775115040-002,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2023-12-31,S004,P0011,Clothing,North,398.04,368.453,368.453,382.78,73.64,21.42,Snowy,0.0,70.12,Winter,live-1775115040-003,North,Lucknow,Uttar Pradesh,India,Retail Hub 4
+2025-01-01,S006,P0021,EV Vehicles,South,1239.035,125.591,125.591,132.99,48.49,15.74,Snowy,0.0,49.64,Winter,live-1775115040-004,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-01,S006,P0019,Electronics,West,1533.879,118.416,125.301,119.63,63.96,8.23,Sunny,0.0,64.51,Winter,live-1775115040-005,West,Ahmedabad,Gujarat,India,Retail Hub
+2025-01-01,S002,P0004,Furniture,South,1295.739,126.383,126.383,130.59,42.5,30.81,Snowy,1.0,43.23,Winter,live-1775115040-006,South,Kochi,Kerala,India,Retail Hub 2
+2024-01-01,S004,P0008,Groceries,West,380.445,231.815,264.299,241.55,91.58,1.76,Snowy,0.0,94.42,Winter,live-1775115040-007,West,Panaji,Goa,India,Retail Hub 4
+2025-01-01,S003,P0025,Home Appliances,East,1609.363,139.864,139.864,142.33,72.32,14.27,Sunny,0.0,68.77,Winter,live-1775115040-008,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-02,S005,P0030,Industrial Tools,East,2151.974,221.039,221.039,230.51,61.97,23.97,Sunny,0.0,64.79,Winter,live-1775115040-009,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-02,S001,P0029,Office Supplies,East,1642.329,166.759,184.94,171.48,59.17,17.88,Sunny,0.0,55.99,Winter,live-1775115040-010,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-01,S001,P0028,Pet Supplies,East,1428.77,157.468,182.402,161.4,70.97,11.49,Snowy,0.0,71.23,Winter,live-1775115040-011,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-01,S005,P0023,Pharmaceuticals,East,1604.526,158.16,179.051,163.72,65.14,4.35,Snowy,0.0,67.55,Winter,live-1775115040-012,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-01,S003,P0022,Semiconductors,East,1529.446,149.303,160.582,160.65,62.13,13.91,Snowy,1.0,58.82,Winter,live-1775115040-013,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-01,S002,P0026,Sports Equipment,East,1473.373,154.141,169.684,155.77,60.57,5.74,Rainy,0.0,61.83,Winter,live-1775115040-014,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-01,S001,P0019,Toys,East,1595.618,146.292,146.292,148.53,49.81,24.01,Snowy,0.0,46.87,Winter,live-1775115040-015,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-01,S003,P0024,Automotive Parts,South,1336.755,198.817,198.817,201.98,67.46,3.32,Cloudy,1.0,63.54,Winter,live-1775115146-001,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S005,P0027,Beauty & Personal Care,East,2248.351,161.348,201.006,167.66,56.56,2.29,Rainy,0.0,56.8,Winter,live-1775115146-002,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-01,S001,P0015,Clothing,East,1654.334,124.089,144.835,130.39,62.28,11.53,Rainy,0.0,61.9,Winter,live-1775115146-003,East,Patna,Bihar,India,Retail Hub 1
+2025-01-01,S003,P0021,EV Vehicles,East,1416.744,167.716,167.716,176.76,51.53,24.71,Rainy,1.0,53.98,Winter,live-1775115146-004,East,Guwahati,Assam,India,Retail Hub 3
+2024-01-01,S003,P0002,Electronics,East,166.918,28.685,28.734,30.17,93.18,2.2,Snowy,0.0,95.53,Winter,live-1775115146-005,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2024-01-01,S006,P0020,Furniture,South,279.972,139.6,139.6,149.06,86.31,8.68,Cloudy,0.0,84.61,Winter,live-1775115146-006,South,Chennai,Tamil Nadu,India,Retail Hub
+2025-01-01,S004,P0003,Groceries,North,1476.919,152.711,152.711,161.36,40.97,3.54,Cloudy,0.0,38.88,Winter,live-1775115146-007,North,Jaipur,Rajasthan,India,Retail Hub 4
+2025-01-02,S006,P0025,Home Appliances,East,1484.309,130.782,166.837,137.14,58.32,12.8,Rainy,1.0,57.29,Winter,live-1775115146-008,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-01,S002,P0030,Industrial Tools,South,1631.031,175.464,182.134,183.44,71.33,12.55,Sunny,0.0,70.65,Winter,live-1775115146-009,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-01,S002,P0029,Office Supplies,East,1938.648,176.674,206.908,188.24,61.06,18.63,Sunny,0.0,57.65,Winter,live-1775115146-010,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-01,S002,P0028,Pet Supplies,East,1705.201,194.464,194.464,202.89,61.12,30.97,Snowy,1.0,57.48,Winter,live-1775115146-011,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-01,S006,P0023,Pharmaceuticals,East,1152.316,114.542,136.195,122.1,67.51,11.87,Sunny,0.0,64.33,Winter,live-1775115146-012,East,Guwahati,Assam,India,Retail Hub
+2025-01-02,S003,P0022,Semiconductors,East,1464.122,154.179,177.689,162.15,62.44,14.86,Snowy,1.0,62.92,Winter,live-1775115146-013,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-03,S002,P0026,Sports Equipment,East,1426.89,179.37,179.977,185.64,58.04,15.03,Snowy,0.0,58.5,Winter,live-1775115146-014,East,Kolkata,West Bengal,India,Retail Hub 2
+2025-01-01,S001,P0014,Toys,West,1646.6,128.426,128.426,136.71,66.48,6.63,Snowy,0.0,64.5,Winter,live-1775115146-015,West,Panaji,Goa,India,Retail Hub 1
+2025-01-01,S001,Automotive Parts,Automotive Parts,East,319.75,184.529,197.216,196.64,68.02,7.94,Sunny,0.0,65.93,Winter,live-1775115196-001,Nan,Unknown,Unknown,India,Retail Hub 1
+2025-01-02,S005,P0027,Beauty & Personal Care,East,1467.246,203.997,222.846,214.17,61.16,5.6,Rainy,0.0,57.97,Winter,live-1775115196-002,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-01,S005,P0001,Clothing,West,2058.033,169.826,169.826,177.81,54.21,10.58,Cloudy,1.0,51.83,Winter,live-1775115196-003,West,Ahmedabad,Gujarat,India,Retail Hub 5
+2025-01-01,S002,P0021,EV Vehicles,East,1394.305,139.921,147.539,146.09,50.73,25.45,Rainy,0.0,48.39,Winter,live-1775115196-004,East,Guwahati,Assam,India,Retail Hub 2
+2024-01-01,S003,P0010,Electronics,South,310.29,200.37,218.309,210.65,31.09,11.94,Rainy,0.0,31.57,Winter,live-1775115196-005,South,Coimbatore,Tamil Nadu,India,Retail Hub 3
+2025-01-01,S004,P0015,Furniture,North,2210.988,173.061,179.826,182.17,80.08,0.0,Cloudy,0.0,80.94,Winter,live-1775115196-006,North,Dehradun,Uttarakhand,India,Retail Hub 4
+2025-01-01,S001,P0020,Groceries,East,1432.082,146.822,146.906,154.93,81.3,28.81,Snowy,0.0,84.7,Winter,live-1775115196-007,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-02,S004,P0025,Home Appliances,East,1639.709,154.083,154.083,163.4,72.74,16.77,Sunny,0.0,72.48,Winter,live-1775115196-008,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-02,S004,P0030,Industrial Tools,East,1676.286,167.813,217.1,179.21,64.46,10.62,Snowy,0.0,62.88,Winter,live-1775115196-009,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-02,S002,P0029,Office Supplies,South,1493.954,158.783,186.595,166.67,73.4,12.36,Rainy,0.0,73.98,Winter,live-1775115196-010,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-02,S004,P0028,Pet Supplies,East,1688.288,151.872,198.526,157.13,73.32,9.75,Snowy,0.0,72.84,Winter,live-1775115196-011,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-02,S001,P0023,Pharmaceuticals,East,1311.254,143.301,165.164,145.47,55.8,9.89,Cloudy,0.0,55.92,Winter,live-1775115196-012,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-01,S004,P0022,Semiconductors,East,1450.877,140.875,145.395,150.11,53.18,13.26,Sunny,0.0,50.4,Winter,live-1775115196-013,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-01,S001,P0026,Sports Equipment,East,1384.847,154.581,184.454,162.38,60.55,7.64,Rainy,0.0,60.61,Winter,live-1775115196-014,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-01,S006,P0005,Toys,South,1409.829,125.161,125.161,129.43,93.42,4.44,Cloudy,0.0,95.31,Winter,live-1775115196-015,South,Coimbatore,Tamil Nadu,India,Retail Hub
+2025-01-01,S006,P0024,Automotive Parts,West,1239.221,129.544,129.544,137.0,52.13,7.13,Sunny,0.0,52.3,Winter,live-1775115242-001,West,Surat,Gujarat,India,Retail Hub
+2025-01-01,S004,P0027,Beauty & Personal Care,West,1860.956,190.603,190.712,195.12,53.49,12.51,Sunny,0.0,55.35,Winter,live-1775115242-002,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S002,P0003,Clothing,South,1618.738,110.887,123.743,119.19,81.09,4.38,Rainy,0.0,82.72,Winter,live-1775115242-003,South,Chennai,Tamil Nadu,India,Retail Hub 2
+2025-01-02,S005,P0021,EV Vehicles,East,1714.527,126.995,143.603,128.91,51.16,2.5,Cloudy,0.0,53.21,Winter,live-1775115242-004,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-01,S004,P0006,Electronics,North,1745.956,144.113,144.113,146.63,65.52,7.8,Rainy,1.0,65.77,Winter,live-1775115242-005,North,New Delhi,Delhi,India,Retail Hub 4
+2024-01-01,S002,P0020,Furniture,South,346.047,147.58,153.558,157.78,87.8,8.53,Cloudy,0.0,86.4,Winter,live-1775115242-006,South,Chennai,Tamil Nadu,India,Retail Hub 2
+2025-01-01,S006,P0018,Groceries,East,1593.065,117.333,129.482,119.84,32.32,0.0,Snowy,0.0,33.2,Winter,live-1775115242-007,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-02,S001,P0025,Home Appliances,East,1423.468,149.485,160.093,156.91,71.8,25.0,Rainy,1.0,69.02,Winter,live-1775115242-008,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-02,S006,P0030,Industrial Tools,South,1239.866,179.599,179.599,183.21,67.82,11.14,Sunny,0.0,66.21,Winter,live-1775115242-009,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-01,S004,P0029,Office Supplies,West,2113.424,198.978,204.367,210.5,69.02,25.9,Cloudy,0.0,65.76,Winter,live-1775115242-010,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S002,P0028,Pet Supplies,South,2048.673,166.892,193.324,169.46,67.18,18.16,Snowy,0.0,66.65,Winter,live-1775115242-011,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-03,S001,P0023,Pharmaceuticals,East,1211.897,172.042,183.273,181.36,56.21,11.97,Cloudy,0.0,54.04,Winter,live-1775115242-012,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-01,S003,P0022,Semiconductors,South,1462.336,123.564,139.32,130.01,60.38,6.35,Rainy,0.0,60.18,Winter,live-1775115242-013,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S002,P0026,Sports Equipment,West,1713.4,145.905,175.959,151.07,64.51,5.84,Rainy,0.0,64.95,Winter,live-1775115242-014,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-01,S005,P0010,Toys,North,2310.365,214.641,214.641,223.71,18.84,3.76,Cloudy,1.0,19.12,Winter,live-1775115242-015,North,Dehradun,Uttarakhand,India,Retail Hub 5
+2025-01-04,S002,Automotive Parts,Automotive Parts,East,288.733,251.983,251.983,259.7,66.99,11.96,Sunny,0.0,64.51,Winter,live-1775115278-001,Nan,Unknown,Unknown,India,Retail Hub 2
+2025-01-02,S002,P0027,Beauty & Personal Care,West,1619.59,153.94,162.222,159.53,51.29,12.22,Sunny,0.0,50.38,Winter,live-1775115278-002,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-02,S005,P0001,Clothing,West,1951.435,179.637,179.637,183.85,54.74,10.68,Cloudy,1.0,55.87,Winter,live-1775115278-003,West,Ahmedabad,Gujarat,India,Retail Hub 5
+2025-01-01,S004,P0021,EV Vehicles,East,1460.453,170.706,170.706,182.85,60.8,19.25,Cloudy,1.0,58.7,Winter,live-1775115278-004,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-01,S003,P0007,Electronics,South,1294.142,157.948,167.627,159.71,27.85,28.92,Sunny,1.0,27.22,Winter,live-1775115278-005,South,Kochi,Kerala,India,Retail Hub 3
+2025-01-01,S004,P0014,Furniture,South,1896.281,184.269,184.269,197.84,52.3,26.67,Cloudy,1.0,53.84,Winter,live-1775115278-006,South,Kochi,Kerala,India,Retail Hub 4
+2025-01-01,S005,P0018,Groceries,East,2158.994,149.991,158.969,154.99,33.36,2.21,Snowy,0.0,33.39,Winter,live-1775115278-007,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-01,S001,P0025,Home Appliances,East,1615.189,144.692,144.692,150.86,54.2,12.97,Rainy,0.0,52.02,Winter,live-1775115278-008,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-03,S003,P0030,Industrial Tools,South,1451.214,221.809,221.809,233.41,72.89,11.16,Sunny,0.0,75.81,Winter,live-1775115278-009,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S001,P0029,Office Supplies,East,1373.82,149.543,166.983,158.22,63.29,24.2,Rainy,0.0,61.19,Winter,live-1775115278-010,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-01,S005,P0028,Pet Supplies,East,1848.613,203.468,203.468,215.53,72.44,12.68,Snowy,0.0,69.13,Winter,live-1775115278-011,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-01,S003,P0023,Pharmaceuticals,West,1626.817,155.366,155.366,157.35,56.8,16.55,Rainy,0.0,59.3,Winter,live-1775115278-012,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-01,S003,P0022,Semiconductors,West,1382.445,131.988,140.107,139.76,54.05,6.77,Sunny,0.0,51.99,Winter,live-1775115278-013,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-01,S006,P0026,Sports Equipment,East,1396.302,144.363,162.239,151.88,56.77,13.32,Snowy,0.0,57.85,Winter,live-1775115278-014,East,Kolkata,West Bengal,India,Retail Hub
+2024-01-01,S005,P0020,Toys,West,182.153,44.997,194.817,47.66,64.88,2.36,Snowy,0.0,67.0,Winter,live-1775115278-015,West,Mumbai,Maharashtra,India,Retail Hub 5
+2025-01-01,S005,P0024,Automotive Parts,West,1770.928,142.83,151.785,149.52,55.83,5.6,Sunny,0.0,53.59,Winter,live-1775115316-001,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-03,S002,P0027,Beauty & Personal Care,West,1527.325,180.945,180.945,189.36,52.12,13.22,Sunny,0.0,53.01,Winter,live-1775115316-002,West,Surat,Gujarat,India,Retail Hub 2
+2024-01-01,S005,P0003,Clothing,North,200.75,182.066,187.924,193.98,80.45,22.56,Snowy,1.0,80.78,Winter,live-1775115316-003,North,New Delhi,Delhi,India,Retail Hub 5
+2025-01-01,S001,P0021,EV Vehicles,East,1252.763,134.132,134.132,136.83,50.47,23.41,Rainy,1.0,49.71,Winter,live-1775115316-004,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-01,S005,P0005,Electronics,West,2373.683,207.041,207.041,217.51,85.56,26.93,Snowy,1.0,86.84,Winter,live-1775115316-005,West,Ahmedabad,Gujarat,India,Retail Hub 5
+2025-01-01,S002,P0006,Furniture,North,1933.956,147.019,156.318,149.09,22.43,3.85,Rainy,0.0,21.44,Winter,live-1775115316-006,North,Jaipur,Rajasthan,India,Retail Hub 2
+2025-01-01,S005,P0002,Groceries,South,2033.352,179.945,179.945,186.37,42.47,0.0,Cloudy,0.0,40.95,Winter,live-1775115316-007,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-01,S004,P0025,Home Appliances,West,1711.831,176.086,176.287,183.32,60.46,27.71,Rainy,1.0,59.2,Winter,live-1775115316-008,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-02,S006,P0030,Industrial Tools,East,1521.872,143.804,177.941,153.52,76.29,15.06,Rainy,0.0,74.96,Winter,live-1775115316-009,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-02,S005,P0029,Office Supplies,West,2082.735,176.557,180.476,179.02,67.85,27.1,Cloudy,0.0,64.92,Winter,live-1775115316-010,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-02,S006,P0028,Pet Supplies,East,1360.934,150.786,182.161,158.05,60.32,28.52,Snowy,0.0,61.64,Winter,live-1775115316-011,East,Guwahati,Assam,India,Retail Hub
+2025-01-03,S005,P0023,Pharmaceuticals,West,1647.165,212.575,212.575,228.2,57.17,16.26,Rainy,0.0,58.75,Winter,live-1775115316-012,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-01,S006,P0022,Semiconductors,East,1060.472,111.315,116.115,117.38,57.85,8.55,Snowy,0.0,60.61,Winter,live-1775115316-013,East,Kolkata,West Bengal,India,Retail Hub
+2025-01-01,S004,P0026,Sports Equipment,East,1618.974,200.827,200.827,213.17,61.33,6.97,Rainy,1.0,59.13,Winter,live-1775115316-014,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2024-01-02,S005,P0020,Toys,West,202.606,44.092,196.041,44.9,65.94,1.71,Snowy,0.0,62.28,Winter,live-1775115316-015,West,Mumbai,Maharashtra,India,Retail Hub 5
+2025-01-03,S006,Automotive Parts,Automotive Parts,East,198.501,224.589,224.589,237.94,71.09,14.03,Sunny,1.0,68.93,Winter,live-1775115371-001,Nan,Unknown,Unknown,India,Retail Hub
+2025-01-01,S006,P0027,Beauty & Personal Care,South,1547.646,164.119,172.883,169.61,68.61,20.24,Sunny,1.0,70.46,Winter,live-1775115371-002,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-01,S006,P0001,Clothing,West,1512.902,100.576,120.186,104.98,54.04,9.77,Cloudy,0.0,56.1,Winter,live-1775115371-003,West,Ahmedabad,Gujarat,India,Retail Hub
+2025-01-03,S003,P0021,EV Vehicles,West,1260.95,153.164,171.173,154.76,49.97,9.37,Cloudy,0.0,51.1,Winter,live-1775115371-004,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-01,S003,P0011,Electronics,West,1978.995,162.744,184.051,170.24,90.83,5.91,Cloudy,0.0,86.72,Winter,live-1775115371-005,West,Mumbai,Maharashtra,India,Retail Hub 3
+2024-01-01,S004,P0008,Furniture,East,159.352,107.831,155.372,113.71,56.98,13.49,Snowy,0.0,53.84,Winter,live-1775115371-006,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-01,S001,P0011,Groceries,West,1633.041,123.065,124.728,132.86,96.92,10.18,Cloudy,0.0,92.78,Winter,live-1775115371-007,West,Pune,Maharashtra,India,Retail Hub 1
+2025-01-02,S001,P0025,Home Appliances,South,1209.746,182.153,182.153,193.17,67.54,9.38,Snowy,1.0,67.01,Winter,live-1775115371-008,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-03,S006,P0030,Industrial Tools,East,1424.324,158.737,188.984,163.84,77.85,17.36,Rainy,0.0,73.72,Winter,live-1775115371-009,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-03,S005,P0029,Office Supplies,West,1989.259,180.266,198.267,192.24,69.52,27.63,Cloudy,0.0,71.58,Winter,live-1775115371-010,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-02,S001,P0028,Pet Supplies,South,1878.897,187.598,188.019,199.46,68.14,18.82,Snowy,1.0,65.1,Winter,live-1775115371-011,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-01,S001,P0023,Pharmaceuticals,East,1254.485,122.946,146.597,132.31,68.63,12.81,Sunny,0.0,70.42,Winter,live-1775115371-012,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-01,S005,P0022,Semiconductors,East,1479.201,164.538,164.538,176.24,61.01,11.06,Snowy,1.0,58.38,Winter,live-1775115371-013,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-02,S004,P0026,Sports Equipment,South,1662.101,174.937,202.279,182.15,60.9,1.04,Rainy,0.0,59.04,Winter,live-1775115371-014,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-02,S005,P0006,Toys,East,1742.002,130.552,149.407,132.15,18.68,15.18,Sunny,0.0,19.58,Winter,live-1775115371-015,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-02,S003,P0024,Automotive Parts,East,1557.203,168.638,182.651,180.61,59.25,3.22,Snowy,1.0,57.07,Winter,live-1775115407-001,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-02,S005,P0027,Beauty & Personal Care,South,1963.916,231.995,231.995,245.8,70.34,20.13,Sunny,0.0,67.83,Winter,live-1775115407-002,South,Hyderabad,Telangana,India,Retail Hub 5
+2024-01-01,S002,P0009,Clothing,East,168.189,15.172,147.164,15.81,23.11,5.24,Rainy,0.0,23.01,Winter,live-1775115407-003,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-02,S001,P0021,EV Vehicles,East,1338.729,120.01,120.979,125.74,49.63,3.43,Cloudy,1.0,50.47,Winter,live-1775115407-004,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-01,S003,P0020,Electronics,South,1935.793,151.091,158.437,157.48,11.24,6.19,Sunny,1.0,11.77,Winter,live-1775115407-005,South,Bengaluru,Karnataka,India,Retail Hub 3
+2024-01-01,S004,P0017,Furniture,East,410.613,298.483,298.483,309.97,47.62,20.78,Snowy,0.0,49.61,Winter,live-1775115407-006,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2024-01-01,S001,P0013,Groceries,East,375.337,102.919,109.407,105.42,76.32,1.77,Cloudy,0.0,76.35,Winter,live-1775115407-007,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-02,S003,P0025,Home Appliances,East,1544.928,130.87,145.342,132.73,72.22,15.7,Sunny,0.0,69.77,Winter,live-1775115407-008,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-01,S001,P0030,Industrial Tools,West,1564.664,150.888,165.922,159.04,65.37,10.27,Rainy,1.0,66.54,Winter,live-1775115407-009,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-03,S001,P0029,Office Supplies,East,1524.523,173.967,182.132,176.47,59.24,19.21,Sunny,0.0,56.91,Winter,live-1775115407-010,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-02,S003,P0028,Pet Supplies,East,1456.547,166.82,171.688,177.05,68.51,11.24,Snowy,0.0,68.89,Winter,live-1775115407-011,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-04,S005,P0023,Pharmaceuticals,West,1515.796,246.775,246.775,255.45,57.15,16.27,Rainy,0.0,55.35,Winter,live-1775115407-012,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-02,S003,P0022,Semiconductors,East,1218.909,158.899,158.899,167.22,59.91,9.31,Snowy,1.0,60.05,Winter,live-1775115407-013,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-02,S006,P0026,Sports Equipment,South,1315.296,150.176,164.193,160.46,62.43,1.27,Rainy,0.0,61.74,Winter,live-1775115407-014,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-01,S006,P0001,Toys,East,1580.92,126.273,126.273,128.75,57.5,24.3,Snowy,0.0,58.27,Winter,live-1775115407-015,East,Kolkata,West Bengal,India,Retail Hub
+2025-01-02,S003,P0024,Automotive Parts,South,1218.104,192.922,199.604,194.87,67.39,2.4,Cloudy,0.0,67.19,Winter,live-1775115440-001,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-03,S005,P0027,Beauty & Personal Care,East,2216.554,204.378,204.378,213.12,65.89,27.26,Sunny,0.0,64.61,Winter,live-1775115440-002,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-01,S004,P0019,Clothing,West,1658.768,177.324,177.324,181.3,76.92,19.0,Cloudy,1.0,73.27,Winter,live-1775115440-003,West,Mumbai,Maharashtra,India,Retail Hub 4
+2025-01-03,S001,P0021,EV Vehicles,East,1076.716,179.662,179.662,190.79,64.19,14.55,Cloudy,1.0,63.89,Winter,live-1775115440-004,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-01,S004,P0009,Electronics,North,1673.283,145.389,152.039,157.01,49.0,2.52,Sunny,0.0,50.27,Winter,live-1775115440-005,North,Chandigarh,Chandigarh,India,Retail Hub 4
+2025-01-01,S001,P0006,Furniture,North,1782.949,152.056,152.056,161.66,21.47,5.27,Rainy,0.0,22.05,Winter,live-1775115440-006,North,Jaipur,Rajasthan,India,Retail Hub 1
+2025-01-01,S002,P0014,Groceries,South,1666.935,179.636,179.636,190.91,30.6,6.25,Cloudy,1.0,29.53,Winter,live-1775115440-007,South,Bengaluru,Karnataka,India,Retail Hub 2
+2025-01-01,S002,P0025,Home Appliances,South,1492.034,125.108,160.814,129.28,65.83,8.08,Snowy,0.0,62.0,Winter,live-1775115440-008,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-02,S002,P0030,Industrial Tools,East,1700.668,188.578,193.477,202.51,75.42,14.86,Rainy,1.0,71.13,Winter,live-1775115440-009,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-02,S002,P0029,Office Supplies,East,1840.924,180.017,202.573,191.22,60.49,16.9,Sunny,0.0,60.94,Winter,live-1775115440-010,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-02,S002,P0028,Pet Supplies,South,1952.109,169.001,197.205,181.65,68.1,16.51,Snowy,0.0,70.04,Winter,live-1775115440-011,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-01,S006,P0023,Pharmaceuticals,South,1225.988,139.338,139.338,143.33,52.33,20.42,Snowy,0.0,50.48,Winter,live-1775115440-012,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-02,S003,P0022,Semiconductors,West,1326.807,118.404,153.814,121.59,54.78,8.02,Sunny,0.0,56.26,Winter,live-1775115440-013,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-03,S004,P0026,Sports Equipment,South,1581.074,184.968,226.014,198.76,61.23,2.56,Rainy,0.0,57.83,Winter,live-1775115440-014,South,Hyderabad,Telangana,India,Retail Hub 4
+2024-01-01,S002,P0020,Toys,East,166.585,17.023,190.58,17.29,96.99,19.44,Snowy,0.0,98.2,Winter,live-1775115440-015,East,Patna,Bihar,India,Retail Hub 2
+2025-01-01,S002,P0024,Automotive Parts,West,1486.379,129.119,146.577,133.97,52.73,8.28,Sunny,0.0,49.69,Winter,live-1775115466-001,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-01,S004,P0027,Beauty & Personal Care,East,2073.012,184.396,193.599,190.87,58.31,2.53,Rainy,0.0,55.81,Winter,live-1775115466-002,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-01,S004,P0001,Clothing,West,1977.151,121.457,136.939,130.2,56.2,11.01,Cloudy,0.0,57.51,Winter,live-1775115466-003,West,Ahmedabad,Gujarat,India,Retail Hub 4
+2025-01-02,S004,P0021,EV Vehicles,East,1358.082,163.04,171.421,172.75,62.22,21.47,Cloudy,0.0,63.13,Winter,live-1775115466-004,East,Kolkata,West Bengal,India,Retail Hub 4
+2024-01-01,S006,P0004,Electronics,South,135.134,24.995,188.523,26.19,55.7,0.0,Sunny,0.0,53.43,Winter,live-1775115466-005,South,Coimbatore,Tamil Nadu,India,Retail Hub
+2023-12-31,S003,P0012,Furniture,South,253.434,160.394,183.314,172.27,70.18,8.98,Snowy,0.0,69.73,Winter,live-1775115466-006,South,Bengaluru,Karnataka,India,Retail Hub 3
+2025-01-01,S002,P0020,Groceries,East,1869.769,170.165,170.165,181.02,76.67,12.22,Rainy,1.0,77.79,Winter,live-1775115466-007,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-01,S004,P0025,Home Appliances,East,1964.339,180.908,180.908,184.73,57.11,15.09,Rainy,1.0,59.17,Winter,live-1775115466-008,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2025-01-01,S005,P0030,Industrial Tools,West,2009.114,179.697,187.252,190.49,66.38,9.93,Rainy,0.0,64.36,Winter,live-1775115466-009,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-02,S004,P0029,Office Supplies,East,1637.868,165.473,209.833,171.87,68.59,23.71,Rainy,0.0,70.84,Winter,live-1775115466-010,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-01,S006,P0028,Pet Supplies,East,1598.145,146.091,166.169,156.19,61.36,17.08,Rainy,0.0,60.73,Winter,live-1775115466-011,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-01,S004,P0023,Pharmaceuticals,West,1783.696,141.715,162.826,149.97,55.33,16.75,Rainy,0.0,57.25,Winter,live-1775115466-012,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-02,S002,P0022,Semiconductors,East,1226.324,150.208,150.208,160.58,52.93,9.2,Sunny,1.0,53.35,Winter,live-1775115466-013,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-02,S004,P0026,Sports Equipment,East,1511.383,204.626,204.626,214.24,60.45,7.63,Rainy,0.0,57.42,Winter,live-1775115466-014,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2025-01-01,S004,P0001,Toys,East,2002.513,144.27,144.27,150.18,57.05,25.37,Snowy,0.0,53.99,Winter,live-1775115466-015,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-01,S001,P0024,Automotive Parts,East,1436.043,144.088,144.088,154.06,51.46,12.95,Snowy,1.0,52.98,Winter,live-1775115493-001,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-02,S005,P0027,Beauty & Personal Care,East,2196.808,159.352,210.435,164.89,56.71,4.59,Rainy,0.0,59.05,Winter,live-1775115493-002,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-01,S006,P0016,Clothing,West,1300.081,116.981,127.767,124.36,19.46,16.11,Cloudy,0.0,20.27,Winter,live-1775115493-003,West,Surat,Gujarat,India,Retail Hub
+2025-01-01,S003,P0021,EV Vehicles,East,1572.378,118.435,124.755,124.04,51.33,4.42,Cloudy,0.0,49.09,Winter,live-1775115493-004,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2024-01-01,S001,P0010,Electronics,South,265.92,206.264,206.264,222.26,30.02,10.56,Rainy,0.0,30.01,Winter,live-1775115493-005,South,Coimbatore,Tamil Nadu,India,Retail Hub 1
+2025-01-02,S003,P0003,Furniture,South,1458.419,160.135,177.222,165.64,25.33,6.6,Sunny,0.0,24.19,Winter,live-1775115493-006,South,Coimbatore,Tamil Nadu,India,Retail Hub 3
+2024-01-01,S005,P0010,Groceries,North,192.671,48.185,55.424,49.23,22.32,11.59,Snowy,0.0,23.12,Winter,live-1775115493-007,North,Lucknow,Uttar Pradesh,India,Retail Hub 5
+2025-01-02,S004,P0025,Home Appliances,East,1873.771,166.506,189.584,177.55,57.57,16.28,Rainy,0.0,59.91,Winter,live-1775115493-008,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2025-01-01,S003,P0030,Industrial Tools,East,2035.053,170.86,170.86,173.56,61.72,22.17,Sunny,0.0,63.04,Winter,live-1775115493-009,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-01,S002,P0029,Office Supplies,East,1519.747,179.481,179.481,192.36,67.41,22.67,Rainy,0.0,67.21,Winter,live-1775115493-010,East,Kolkata,West Bengal,India,Retail Hub 2
+2025-01-02,S002,P0028,Pet Supplies,West,1410.068,185.375,190.873,188.93,61.2,19.01,Cloudy,1.0,63.07,Winter,live-1775115493-011,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-03,S006,P0023,Pharmaceuticals,East,1114.923,134.481,180.889,144.71,53.41,10.07,Cloudy,0.0,55.04,Winter,live-1775115493-012,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-03,S003,P0022,Semiconductors,West,1279.848,122.067,146.219,126.51,54.78,6.06,Sunny,0.0,54.21,Winter,live-1775115493-013,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-02,S002,P0026,Sports Equipment,South,1523.503,154.068,185.094,164.47,60.25,1.77,Rainy,0.0,57.6,Winter,live-1775115493-014,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-01,S003,P0006,Toys,East,1608.221,136.646,138.656,143.2,18.65,17.18,Sunny,0.0,17.97,Winter,live-1775115493-015,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-01,S003,Automotive Parts,Automotive Parts,East,341.97,222.103,235.768,238.28,69.75,8.29,Sunny,0.0,70.71,Winter,live-1775115519-001,Nan,Unknown,Unknown,India,Retail Hub 3
+2025-01-01,S006,P0027,Beauty & Personal Care,East,1654.963,139.073,165.582,149.47,57.14,2.01,Rainy,0.0,55.04,Winter,live-1775115519-002,East,Kolkata,West Bengal,India,Retail Hub
+2025-01-01,S005,P0019,Clothing,West,1783.318,206.462,206.462,216.0,80.28,23.23,Cloudy,1.0,81.9,Winter,live-1775115519-003,West,Mumbai,Maharashtra,India,Retail Hub 5
+2025-01-02,S003,P0021,EV Vehicles,East,1282.84,210.71,210.71,224.26,52.38,26.69,Rainy,1.0,50.41,Winter,live-1775115519-004,East,Guwahati,Assam,India,Retail Hub 3
+2024-01-02,S003,P0008,Electronics,South,260.867,19.277,229.698,20.56,62.78,5.05,Sunny,0.0,59.55,Winter,live-1775115519-005,South,Hyderabad,Telangana,India,Retail Hub 3
+2024-01-01,S003,P0012,Furniture,South,219.868,157.264,174.638,159.58,70.14,8.95,Snowy,0.0,67.64,Winter,live-1775115519-006,South,Bengaluru,Karnataka,India,Retail Hub 3
+2025-01-01,S006,P0004,Groceries,West,1605.006,130.821,135.687,136.87,84.55,5.66,Snowy,1.0,83.97,Winter,live-1775115519-007,West,Mumbai,Maharashtra,India,Retail Hub
+2025-01-02,S005,P0025,Home Appliances,East,1844.347,140.894,162.831,149.69,73.27,27.09,Rainy,0.0,72.43,Winter,live-1775115519-008,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-02,S001,P0030,Industrial Tools,East,1328.896,168.364,190.936,175.43,62.97,10.35,Snowy,0.0,60.64,Winter,live-1775115519-009,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-04,S001,P0029,Office Supplies,East,1380.815,213.743,213.743,219.41,60.18,18.13,Sunny,1.0,59.63,Winter,live-1775115519-010,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-04,S005,P0028,Pet Supplies,West,1514.386,204.599,204.599,220.31,64.77,16.29,Cloudy,0.0,65.17,Winter,live-1775115519-011,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-01,S002,P0023,Pharmaceuticals,South,1478.212,138.632,155.792,145.5,54.58,20.32,Snowy,0.0,52.7,Winter,live-1775115519-012,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-02,S005,P0022,Semiconductors,South,1577.566,160.38,172.68,164.51,59.37,6.17,Rainy,0.0,60.76,Winter,live-1775115519-013,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-03,S004,P0026,Sports Equipment,East,1345.041,241.697,241.697,246.56,60.38,8.03,Rainy,1.0,56.9,Winter,live-1775115519-014,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2023-12-31,S003,P0019,Toys,South,341.22,11.469,65.414,11.67,22.84,3.32,Snowy,0.0,23.51,Winter,live-1775115519-015,South,Kochi,Kerala,India,Retail Hub 3
+2025-01-03,S003,P0024,Automotive Parts,East,1443.372,189.369,189.369,199.39,60.67,5.29,Snowy,0.0,60.03,Winter,live-1775115544-001,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-01,S002,P0027,Beauty & Personal Care,East,2099.186,161.192,183.69,166.83,66.59,23.19,Sunny,0.0,64.68,Winter,live-1775115544-002,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-01,S003,P0001,Clothing,West,1788.913,127.502,132.1,135.96,53.63,7.83,Cloudy,0.0,52.19,Winter,live-1775115544-003,West,Ahmedabad,Gujarat,India,Retail Hub 3
+2025-01-01,S004,P0021,EV Vehicles,West,1500.561,154.141,154.141,160.35,49.06,8.64,Cloudy,0.0,49.44,Winter,live-1775115544-004,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S002,P0013,Electronics,West,1399.827,124.913,132.739,132.85,89.58,12.62,Rainy,0.0,85.67,Winter,live-1775115544-005,West,Surat,Gujarat,India,Retail Hub 2
+2023-12-31,S003,P0017,Furniture,West,130.586,36.894,203.373,39.55,94.66,20.72,Cloudy,0.0,97.36,Winter,live-1775115544-006,West,Ahmedabad,Gujarat,India,Retail Hub 3
+2025-01-01,S005,P0013,Groceries,North,2022.82,149.007,151.008,150.76,65.7,3.01,Sunny,1.0,62.57,Winter,live-1775115544-007,North,New Delhi,Delhi,India,Retail Hub 5
+2025-01-02,S001,P0025,Home Appliances,East,1511.871,176.696,176.696,188.43,53.61,13.3,Rainy,1.0,55.48,Winter,live-1775115544-008,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-03,S005,P0030,Industrial Tools,East,1949.297,304.743,304.743,325.4,61.28,23.94,Sunny,1.0,63.86,Winter,live-1775115544-009,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-01,S001,P0029,Office Supplies,South,1435.967,164.846,164.846,168.98,71.24,14.25,Rainy,0.0,68.79,Winter,live-1775115544-010,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-02,S006,P0028,Pet Supplies,East,1551.435,131.105,167.685,140.1,61.39,15.18,Rainy,0.0,60.3,Winter,live-1775115544-011,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-02,S006,P0023,Pharmaceuticals,East,1078.754,125.797,141.176,133.69,67.63,11.51,Sunny,0.0,68.49,Winter,live-1775115544-012,East,Guwahati,Assam,India,Retail Hub
+2025-01-01,S005,P0022,Semiconductors,East,1611.805,134.65,156.653,140.66,53.82,11.77,Sunny,0.0,56.23,Winter,live-1775115544-013,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-01,S002,P0026,Sports Equipment,East,1563.368,158.855,161.294,160.97,65.55,11.57,Sunny,0.0,61.72,Winter,live-1775115544-014,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-01,S004,P0016,Toys,North,2004.046,160.12,160.12,166.75,42.63,10.44,Sunny,1.0,42.74,Winter,live-1775115544-015,North,Chandigarh,Chandigarh,India,Retail Hub 4
+2025-01-01,S006,P0024,Automotive Parts,East,1350.514,132.531,134.702,139.32,53.16,12.33,Snowy,0.0,50.33,Winter,live-1775115570-001,East,Guwahati,Assam,India,Retail Hub
+2025-01-04,S003,P0027,Beauty & Personal Care,South,1457.648,236.446,236.446,240.62,70.06,21.59,Sunny,0.0,66.75,Winter,live-1775115570-002,South,Hyderabad,Telangana,India,Retail Hub 3
+2024-01-01,S006,P0009,Clothing,East,165.953,14.158,126.3,14.46,23.48,4.05,Rainy,0.0,24.32,Winter,live-1775115570-003,East,Guwahati,Assam,India,Retail Hub
+2025-01-04,S001,P0021,EV Vehicles,East,950.602,191.826,193.142,200.45,63.45,14.1,Cloudy,0.0,63.26,Winter,live-1775115570-004,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-01,S002,P0011,Electronics,West,1927.507,134.059,167.853,144.47,89.29,6.49,Cloudy,0.0,86.23,Winter,live-1775115570-005,West,Mumbai,Maharashtra,India,Retail Hub 2
+2024-01-02,S006,P0009,Furniture,North,280.456,206.958,213.487,213.5,55.62,14.42,Cloudy,0.0,54.8,Winter,live-1775115570-006,North,Lucknow,Uttar Pradesh,India,Retail Hub
+2023-12-31,S004,P0017,Groceries,South,154.969,113.204,199.361,115.18,62.5,4.18,Sunny,1.0,64.44,Winter,live-1775115570-007,South,Chennai,Tamil Nadu,India,Retail Hub 4
+2025-01-03,S003,P0025,Home Appliances,East,1449.19,155.427,155.427,166.69,73.33,15.65,Sunny,0.0,72.88,Winter,live-1775115570-008,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-01,S005,P0030,Industrial Tools,South,1962.32,178.358,203.774,187.25,72.47,12.04,Sunny,0.0,70.3,Winter,live-1775115570-009,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-01,S001,P0029,Office Supplies,West,1702.893,180.424,180.424,193.09,64.68,20.16,Cloudy,1.0,67.02,Winter,live-1775115570-010,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-01,S006,P0028,Pet Supplies,South,1828.03,155.287,180.454,164.31,69.58,14.4,Snowy,1.0,65.81,Winter,live-1775115570-011,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-02,S005,P0023,Pharmaceuticals,East,1633.281,202.833,209.977,214.16,55.5,9.68,Cloudy,0.0,55.42,Winter,live-1775115570-012,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-01,S006,P0022,Semiconductors,East,1258.4,121.223,139.865,127.97,59.66,12.18,Snowy,0.0,61.45,Winter,live-1775115570-013,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-01,S003,P0026,Sports Equipment,East,1612.958,152.378,168.838,161.62,64.75,9.51,Sunny,0.0,65.22,Winter,live-1775115570-014,East,Guwahati,Assam,India,Retail Hub 3
+2024-01-01,S004,P0020,Toys,East,176.667,19.732,223.338,21.23,104.46,22.96,Snowy,0.0,106.23,Winter,live-1775115570-015,East,Patna,Bihar,India,Retail Hub 4
+2025-01-01,S006,P0024,Automotive Parts,East,1363.252,112.575,137.306,114.06,59.14,0.33,Snowy,0.0,60.71,Winter,live-1775115595-001,East,Kolkata,West Bengal,India,Retail Hub
+2025-01-01,S004,P0027,Beauty & Personal Care,East,1448.557,183.733,190.721,198.28,60.59,9.69,Rainy,0.0,59.94,Winter,live-1775115595-002,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-02,S002,P0003,Clothing,South,1585.197,99.857,121.943,104.42,82.31,4.22,Rainy,0.0,79.1,Winter,live-1775115595-003,South,Chennai,Tamil Nadu,India,Retail Hub 2
+2025-01-02,S005,P0021,EV Vehicles,East,1492.311,204.891,204.891,214.51,63.63,22.56,Cloudy,1.0,62.08,Winter,live-1775115595-004,East,Kolkata,West Bengal,India,Retail Hub 5
+2024-01-01,S006,P0002,Electronics,East,411.594,274.646,284.032,284.77,36.41,7.88,Sunny,0.0,37.26,Winter,live-1775115595-005,East,Patna,Bihar,India,Retail Hub
+2024-01-01,S002,P0009,Furniture,North,334.99,208.572,220.289,219.31,53.56,16.52,Cloudy,0.0,52.11,Winter,live-1775115595-006,North,Lucknow,Uttar Pradesh,India,Retail Hub 2
+2025-01-01,S004,P0020,Groceries,East,1695.189,146.259,162.784,157.22,83.39,26.41,Snowy,0.0,83.5,Winter,live-1775115595-007,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-03,S001,P0025,Home Appliances,East,1400.91,208.011,208.011,214.78,53.9,13.77,Rainy,0.0,51.57,Winter,live-1775115595-008,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-03,S002,P0030,Industrial Tools,East,1610.36,193.629,198.453,200.78,76.94,16.09,Rainy,0.0,72.91,Winter,live-1775115595-009,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-01,S005,P0029,Office Supplies,East,2257.362,244.271,244.271,251.25,63.26,21.58,Sunny,1.0,65.22,Winter,live-1775115595-010,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-05,S005,P0028,Pet Supplies,West,1423.374,210.04,226.779,226.73,65.95,16.65,Cloudy,0.0,63.46,Winter,live-1775115595-011,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-01,S002,P0023,Pharmaceuticals,West,1515.127,165.455,165.455,172.51,54.22,18.39,Rainy,1.0,54.64,Winter,live-1775115595-012,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-01,S001,P0022,Semiconductors,West,1295.345,119.328,151.012,126.61,54.65,6.17,Sunny,0.0,51.41,Winter,live-1775115595-013,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-02,S003,P0026,Sports Equipment,East,1545.486,149.729,164.501,158.71,58.41,15.93,Snowy,0.0,60.1,Winter,live-1775115595-014,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-01,S002,P0016,Toys,North,1833.675,122.218,130.612,126.83,41.7,10.82,Sunny,0.0,41.66,Winter,live-1775115595-015,North,Chandigarh,Chandigarh,India,Retail Hub 2
+2025-01-04,S006,Automotive Parts,Automotive Parts,East,304.947,223.631,241.521,229.64,71.16,12.19,Sunny,0.0,73.61,Winter,live-1775115624-001,Nan,Unknown,Unknown,India,Retail Hub
+2025-01-05,S003,P0027,Beauty & Personal Care,South,1287.135,259.438,263.765,264.73,69.06,23.78,Sunny,0.0,70.65,Winter,live-1775115624-002,South,Hyderabad,Telangana,India,Retail Hub 3
+2023-12-31,S002,P0013,Clothing,North,257.488,226.546,226.546,235.35,75.51,3.18,Cloudy,0.0,76.97,Winter,live-1775115624-003,North,Chandigarh,Chandigarh,India,Retail Hub 2
+2025-01-02,S003,P0021,EV Vehicles,East,1498.645,118.148,126.768,122.86,50.75,4.67,Cloudy,0.0,49.68,Winter,live-1775115624-004,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2024-01-01,S003,P0016,Electronics,East,151.724,55.693,187.965,58.33,89.41,14.47,Rainy,0.0,91.5,Winter,live-1775115624-005,East,Guwahati,Assam,India,Retail Hub 3
+2024-01-01,S001,P0012,Furniture,North,379.231,23.393,110.381,24.41,39.38,0.0,Rainy,0.0,37.94,Winter,live-1775115624-006,North,New Delhi,Delhi,India,Retail Hub 1
+2024-01-01,S006,P0008,Groceries,West,326.345,215.42,243.08,228.08,86.25,2.26,Snowy,0.0,83.68,Winter,live-1775115624-007,West,Panaji,Goa,India,Retail Hub
+2025-01-03,S002,P0025,Home Appliances,East,1575.626,148.643,169.221,154.87,56.27,20.88,Rainy,0.0,55.53,Winter,live-1775115624-008,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-02,S002,P0030,Industrial Tools,South,1525.442,172.095,180.411,185.4,71.9,13.58,Sunny,0.0,68.68,Winter,live-1775115624-009,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-01,S001,P0029,Office Supplies,East,1690.319,168.656,184.424,171.64,62.09,6.73,Sunny,1.0,62.5,Winter,live-1775115624-010,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-03,S002,P0028,Pet Supplies,South,1832.913,207.615,214.651,209.79,67.85,16.15,Snowy,1.0,71.14,Winter,live-1775115624-011,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-01,S003,P0023,Pharmaceuticals,East,1498.323,148.151,152.725,158.81,53.64,6.04,Cloudy,0.0,51.03,Winter,live-1775115624-012,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-02,S006,P0022,Semiconductors,East,1168.036,141.481,156.524,147.13,59.12,11.4,Snowy,1.0,57.84,Winter,live-1775115624-013,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-02,S002,P0026,Sports Equipment,East,1396.908,139.627,183.631,146.26,59.91,6.87,Rainy,0.0,58.15,Winter,live-1775115624-014,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-01,S006,P0016,Toys,North,1641.772,108.291,119.653,110.19,42.82,11.63,Sunny,0.0,42.26,Winter,live-1775115624-015,North,Chandigarh,Chandigarh,India,Retail Hub
+2025-01-04,S003,P0024,Automotive Parts,East,1345.293,214.624,214.624,217.17,59.92,5.37,Snowy,1.0,60.8,Winter,live-1775115652-001,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-04,S005,P0027,Beauty & Personal Care,East,2071.287,231.88,231.88,234.62,65.96,29.65,Sunny,0.0,62.85,Winter,live-1775115652-002,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-01,S003,P0017,Clothing,North,1861.87,147.708,147.708,159.25,74.44,13.93,Sunny,0.0,74.82,Winter,live-1775115652-003,North,Jaipur,Rajasthan,India,Retail Hub 3
+2025-01-04,S003,P0021,EV Vehicles,West,1194.113,152.701,171.047,158.33,50.54,10.5,Cloudy,0.0,49.22,Winter,live-1775115652-004,West,Surat,Gujarat,India,Retail Hub 3
+2024-01-03,S003,P0008,Electronics,South,317.61,19.033,227.061,20.33,63.97,6.39,Sunny,0.0,61.5,Winter,live-1775115652-005,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S004,P0010,Furniture,East,1856.906,164.675,164.675,171.66,84.8,14.75,Sunny,0.0,81.61,Winter,live-1775115652-006,East,Patna,Bihar,India,Retail Hub 4
+2025-01-01,S004,P0007,Groceries,South,1602.235,137.959,160.041,144.23,62.35,3.13,Cloudy,0.0,59.79,Winter,live-1775115652-007,South,Coimbatore,Tamil Nadu,India,Retail Hub 4
+2025-01-01,S003,P0025,Home Appliances,South,1586.176,132.75,165.03,139.6,69.37,10.25,Snowy,0.0,67.63,Winter,live-1775115652-008,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S006,P0030,Industrial Tools,West,1436.473,145.261,150.067,150.45,64.31,10.8,Rainy,0.0,60.84,Winter,live-1775115652-009,West,Surat,Gujarat,India,Retail Hub
+2025-01-02,S002,P0029,Office Supplies,East,1420.853,160.527,181.712,168.42,68.85,20.74,Rainy,0.0,71.59,Winter,live-1775115652-010,East,Kolkata,West Bengal,India,Retail Hub 2
+2025-01-03,S002,P0028,Pet Supplies,West,1273.6,200.753,200.753,208.0,61.21,20.4,Cloudy,0.0,58.81,Winter,live-1775115652-011,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-02,S004,P0023,Pharmaceuticals,East,1516.763,171.285,171.285,179.29,55.55,8.93,Cloudy,1.0,56.56,Winter,live-1775115652-012,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2025-01-02,S001,P0022,Semiconductors,East,1170.091,135.095,143.234,140.36,54.18,11.35,Sunny,0.0,55.54,Winter,live-1775115652-013,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-01,S005,P0026,Sports Equipment,East,1707.279,188.122,188.122,193.12,61.36,9.18,Rainy,0.0,58.12,Winter,live-1775115652-014,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-01,S004,P0020,Toys,West,2123.382,156.91,176.829,161.18,32.51,23.36,Sunny,0.0,33.36,Winter,live-1775115652-015,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-03,S001,P0024,Automotive Parts,East,1407.274,158.602,158.744,164.04,63.06,22.42,Rainy,0.0,64.42,Winter,live-1775115678-001,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-01,S001,P0027,Beauty & Personal Care,West,1581.682,147.526,181.004,152.31,52.31,9.67,Sunny,0.0,53.44,Winter,live-1775115678-002,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-02,S004,P0001,Clothing,West,1899.186,118.724,132.914,125.22,55.77,13.34,Cloudy,0.0,55.46,Winter,live-1775115678-003,West,Ahmedabad,Gujarat,India,Retail Hub 4
+2025-01-02,S005,P0021,EV Vehicles,East,1572.458,158.766,170.717,163.75,51.96,22.28,Rainy,0.0,53.37,Winter,live-1775115678-004,East,Guwahati,Assam,India,Retail Hub 5
+2024-01-01,S001,P0016,Electronics,East,143.12,54.841,182.808,58.17,86.26,16.32,Rainy,0.0,86.58,Winter,live-1775115678-005,East,Guwahati,Assam,India,Retail Hub 1
+2024-01-02,S003,P0008,Furniture,South,337.223,15.648,136.395,15.91,37.34,10.13,Rainy,0.0,38.2,Winter,live-1775115678-006,South,Chennai,Tamil Nadu,India,Retail Hub 3
+2023-12-31,S001,P0018,Groceries,South,409.971,392.109,392.109,413.04,89.82,18.57,Sunny,0.0,90.82,Winter,live-1775115678-007,South,Chennai,Tamil Nadu,India,Retail Hub 1
+2025-01-02,S002,P0025,Home Appliances,East,1567.688,124.541,159.072,130.12,70.9,25.1,Rainy,0.0,72.97,Winter,live-1775115678-008,East,Kolkata,West Bengal,India,Retail Hub 2
+2025-01-01,S002,P0030,Industrial Tools,West,1710.137,169.293,172.215,176.32,66.33,12.37,Rainy,0.0,66.38,Winter,live-1775115678-009,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-03,S003,P0029,Office Supplies,West,1705.621,208.374,230.652,213.51,68.45,20.69,Cloudy,0.0,66.87,Winter,live-1775115678-010,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-02,S005,P0028,Pet Supplies,East,1725.201,215.962,215.962,224.97,72.67,11.26,Snowy,0.0,69.68,Winter,live-1775115678-011,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-04,S001,P0023,Pharmaceuticals,East,1110.186,198.048,198.048,203.89,55.95,10.81,Cloudy,0.0,56.46,Winter,live-1775115678-012,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-02,S002,P0022,Semiconductors,South,1343.897,144.455,144.455,149.11,60.74,2.72,Rainy,0.0,62.14,Winter,live-1775115678-013,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-01,S001,P0026,Sports Equipment,West,1543.232,133.797,163.24,135.47,62.3,2.91,Rainy,0.0,60.58,Winter,live-1775115678-014,West,Surat,Gujarat,India,Retail Hub 1
+2023-12-30,S006,P0007,Toys,North,311.402,58.555,58.555,62.76,44.22,13.7,Rainy,0.0,45.21,Winter,live-1775115678-015,North,New Delhi,Delhi,India,Retail Hub
+2025-01-02,S004,P0024,Automotive Parts,East,1710.014,138.466,171.416,144.52,53.23,10.86,Snowy,0.0,54.52,Winter,live-1775115703-001,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-01,S001,P0027,Beauty & Personal Care,East,1908.93,158.985,171.643,167.3,65.42,23.75,Sunny,0.0,67.84,Winter,live-1775115703-002,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2023-12-31,S001,P0016,Clothing,South,106.348,70.995,118.151,74.56,70.19,11.77,Snowy,0.0,72.64,Winter,live-1775115703-003,South,Bengaluru,Karnataka,India,Retail Hub 1
+2025-01-02,S002,P0021,EV Vehicles,East,1444.256,90.978,131.808,96.87,48.73,2.85,Cloudy,0.0,48.92,Winter,live-1775115703-004,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-01,S006,P0007,Electronics,South,1090.236,119.735,155.305,127.53,28.51,27.34,Sunny,0.0,29.49,Winter,live-1775115703-005,South,Kochi,Kerala,India,Retail Hub
+2025-01-01,S005,P0002,Furniture,West,1787.908,158.936,173.39,170.83,45.08,8.37,Cloudy,0.0,45.68,Winter,live-1775115703-006,West,Mumbai,Maharashtra,India,Retail Hub 5
+2023-12-31,S003,P0018,Groceries,South,501.472,357.071,388.597,369.86,90.97,18.13,Sunny,0.0,86.58,Winter,live-1775115703-007,South,Chennai,Tamil Nadu,India,Retail Hub 3
+2025-01-03,S004,P0025,Home Appliances,East,1551.182,160.965,160.965,165.51,73.25,15.29,Sunny,0.0,72.58,Winter,live-1775115703-008,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-04,S006,P0030,Industrial Tools,East,1333.352,188.666,209.83,199.35,79.44,15.69,Rainy,0.0,78.54,Winter,live-1775115703-009,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-01,S004,P0029,Office Supplies,South,1773.221,167.677,181.312,179.62,73.25,14.45,Rainy,0.0,73.88,Winter,live-1775115703-010,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-02,S001,P0028,Pet Supplies,East,1600.643,133.704,170.101,139.82,60.74,16.06,Rainy,0.0,61.3,Winter,live-1775115703-011,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-02,S001,P0023,Pharmaceuticals,West,1359.389,136.963,144.288,141.2,55.29,16.25,Rainy,0.0,57.88,Winter,live-1775115703-012,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-03,S003,P0022,Semiconductors,East,1383.645,154.714,189.843,166.75,63.15,14.08,Snowy,0.0,64.2,Winter,live-1775115703-013,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-02,S001,P0026,Sports Equipment,West,1458.859,158.996,168.428,164.48,61.77,2.76,Rainy,1.0,63.65,Winter,live-1775115703-014,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-01,S003,P0019,Toys,East,1837.934,159.881,159.881,170.22,53.8,24.85,Snowy,0.0,54.65,Winter,live-1775115703-015,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-02,S001,Automotive Parts,Automotive Parts,East,281.572,177.354,213.413,190.34,68.64,7.97,Sunny,0.0,71.11,Winter,live-1775115728-001,Nan,Unknown,Unknown,India,Retail Hub 1
+2025-01-03,S005,P0027,Beauty & Personal Care,West,1793.577,201.797,225.698,208.71,52.7,11.74,Sunny,0.0,52.41,Winter,live-1775115728-002,West,Surat,Gujarat,India,Retail Hub 5
+2024-01-01,S002,P0013,Clothing,North,315.996,266.084,266.084,274.29,76.29,5.32,Cloudy,1.0,72.49,Winter,live-1775115728-003,North,Chandigarh,Chandigarh,India,Retail Hub 2
+2025-01-01,S003,P0021,EV Vehicles,South,1468.913,159.226,159.226,163.32,49.56,17.81,Snowy,1.0,49.13,Winter,live-1775115728-004,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-02,S003,P0011,Electronics,West,1914.472,145.307,187.33,153.93,90.35,8.13,Cloudy,0.0,93.79,Winter,live-1775115728-005,West,Mumbai,Maharashtra,India,Retail Hub 3
+2024-01-01,S001,P0009,Furniture,North,289.527,232.796,232.796,236.2,51.63,14.5,Cloudy,1.0,54.18,Winter,live-1775115728-006,North,Lucknow,Uttar Pradesh,India,Retail Hub 1
+2025-01-01,S004,P0011,Groceries,West,1993.588,150.868,150.868,157.61,100.7,8.75,Cloudy,1.0,94.69,Winter,live-1775115728-007,West,Pune,Maharashtra,India,Retail Hub 4
+2025-01-04,S003,P0025,Home Appliances,East,1349.444,202.449,202.449,212.17,73.0,17.49,Sunny,1.0,69.78,Winter,live-1775115728-008,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-01,S003,P0030,Industrial Tools,West,1704.821,141.471,150.596,146.54,64.95,9.23,Rainy,0.0,62.28,Winter,live-1775115728-009,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-02,S005,P0029,Office Supplies,East,2095.099,257.327,257.327,272.25,64.13,23.4,Sunny,1.0,65.81,Winter,live-1775115728-010,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-01,S003,P0028,Pet Supplies,East,1749.422,154.544,189.737,162.97,60.41,30.59,Snowy,0.0,62.82,Winter,live-1775115728-011,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-02,S001,P0023,Pharmaceuticals,South,1292.226,150.896,165.229,153.66,53.37,22.13,Snowy,0.0,53.85,Winter,live-1775115728-012,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-02,S004,P0022,Semiconductors,East,1377.88,144.208,144.208,148.26,54.35,11.71,Sunny,0.0,51.97,Winter,live-1775115728-013,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-01,S003,P0026,Sports Equipment,East,1472.445,162.607,188.545,164.77,58.66,5.51,Rainy,1.0,59.46,Winter,live-1775115728-014,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-02,S003,P0006,Toys,East,1659.0,135.734,139.647,138.13,43.3,25.57,Snowy,0.0,45.06,Winter,live-1775115728-015,East,Ranchi,Jharkhand,India,Retail Hub 3
+2025-01-01,S005,P0024,Automotive Parts,South,1600.831,180.671,202.109,186.14,68.7,0.87,Cloudy,0.0,71.86,Winter,live-1775115753-001,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-02,S004,P0027,Beauty & Personal Care,East,1969.901,185.752,209.237,195.39,57.98,2.59,Rainy,0.0,57.67,Winter,live-1775115753-002,East,Kolkata,West Bengal,India,Retail Hub 4
+2024-01-01,S003,P0003,Clothing,North,200.164,132.629,165.97,141.21,78.52,18.17,Snowy,0.0,82.09,Winter,live-1775115753-003,North,New Delhi,Delhi,India,Retail Hub 3
+2025-01-02,S006,P0021,EV Vehicles,West,1084.621,139.435,147.278,148.77,47.83,9.82,Cloudy,1.0,46.75,Winter,live-1775115753-004,West,Surat,Gujarat,India,Retail Hub
+2024-01-01,S005,P0016,Electronics,East,194.723,64.03,216.809,66.04,94.31,15.85,Rainy,0.0,94.1,Winter,live-1775115753-005,East,Guwahati,Assam,India,Retail Hub 5
+2024-01-02,S001,P0009,Furniture,North,290.19,289.67,289.67,308.81,51.4,13.77,Cloudy,1.0,51.56,Winter,live-1775115753-006,North,Lucknow,Uttar Pradesh,India,Retail Hub 1
+2025-01-02,S005,P0013,Groceries,North,1962.331,135.115,157.41,139.37,65.84,4.67,Sunny,0.0,63.21,Winter,live-1775115753-007,North,New Delhi,Delhi,India,Retail Hub 5
+2025-01-01,S006,P0025,Home Appliances,South,1273.415,121.039,144.882,127.33,65.18,9.56,Snowy,0.0,61.76,Winter,live-1775115753-008,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-01,S002,P0030,Industrial Tools,East,1637.354,140.234,166.331,150.73,65.49,10.64,Snowy,0.0,67.28,Winter,live-1775115753-009,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-02,S004,P0029,Office Supplies,West,1992.808,184.888,206.324,191.5,69.96,26.26,Cloudy,0.0,71.21,Winter,live-1775115753-010,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S004,P0028,Pet Supplies,East,1999.699,182.256,201.171,191.98,61.61,17.97,Rainy,0.0,63.38,Winter,live-1775115753-011,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2025-01-02,S001,P0023,Pharmaceuticals,East,1219.267,110.324,163.459,116.31,68.04,13.68,Sunny,0.0,66.34,Winter,live-1775115753-012,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-02,S001,P0022,Semiconductors,South,1238.262,112.614,115.137,117.96,58.07,6.95,Rainy,0.0,59.42,Winter,live-1775115753-013,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-02,S003,P0026,Sports Equipment,East,1386.595,150.868,196.579,153.76,58.71,7.43,Rainy,0.0,55.83,Winter,live-1775115753-014,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-01,S002,P0007,Toys,West,1566.897,129.698,130.096,132.67,64.53,26.84,Rainy,1.0,66.24,Winter,live-1775115753-015,West,Pune,Maharashtra,India,Retail Hub 2
+2025-01-02,S003,Automotive Parts,Automotive Parts,East,346.013,227.165,246.124,244.0,69.82,9.14,Sunny,1.0,69.57,Winter,live-1775115778-001,Nan,Unknown,Unknown,India,Retail Hub 3
+2025-01-04,S002,P0027,Beauty & Personal Care,West,1416.732,196.062,196.062,201.54,51.45,12.19,Sunny,0.0,51.46,Winter,live-1775115778-002,West,Surat,Gujarat,India,Retail Hub 2
+2023-12-29,S001,P0003,Clothing,South,391.439,260.123,260.849,278.96,16.59,11.34,Rainy,0.0,15.75,Winter,live-1775115778-003,South,Kochi,Kerala,India,Retail Hub 1
+2025-01-01,S003,P0021,EV Vehicles,East,1351.307,139.128,148.227,145.16,61.14,18.48,Cloudy,0.0,63.66,Winter,live-1775115778-004,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-01,S006,P0013,Electronics,West,1736.112,121.064,129.753,123.88,32.73,5.88,Cloudy,0.0,33.52,Winter,live-1775115778-005,West,Panaji,Goa,India,Retail Hub
+2025-01-01,S006,P0003,Furniture,South,1280.365,134.081,134.081,139.48,25.75,3.88,Sunny,0.0,24.32,Winter,live-1775115778-006,South,Coimbatore,Tamil Nadu,India,Retail Hub
+2025-01-02,S004,P0011,Groceries,West,1901.392,140.112,153.046,144.14,99.42,10.6,Cloudy,0.0,94.68,Winter,live-1775115778-007,West,Pune,Maharashtra,India,Retail Hub 4
+2025-01-01,S006,P0025,Home Appliances,West,1349.569,131.467,142.592,138.7,59.05,27.85,Rainy,0.0,57.22,Winter,live-1775115778-008,West,Surat,Gujarat,India,Retail Hub
+2025-01-04,S005,P0030,Industrial Tools,East,1775.717,366.248,366.248,387.24,62.22,24.45,Sunny,0.0,61.41,Winter,live-1775115778-009,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-02,S001,P0029,Office Supplies,East,1579.504,175.633,191.39,189.37,62.66,5.74,Sunny,0.0,63.43,Winter,live-1775115778-010,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-02,S006,P0028,Pet Supplies,South,1753.351,144.861,198.913,155.13,69.27,13.12,Snowy,0.0,71.57,Winter,live-1775115778-011,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-03,S001,P0023,Pharmaceuticals,West,1249.946,161.027,161.027,173.9,55.59,16.27,Rainy,1.0,52.56,Winter,live-1775115778-012,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-01,S004,P0022,Semiconductors,East,1633.996,142.788,155.446,153.66,60.4,13.42,Snowy,0.0,59.77,Winter,live-1775115778-013,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2025-01-01,S005,P0026,Sports Equipment,South,1861.613,222.515,222.515,234.69,61.07,1.89,Rainy,1.0,63.87,Winter,live-1775115778-014,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-01,S001,P0001,Toys,East,1645.778,125.679,135.595,135.14,56.61,26.92,Snowy,0.0,53.47,Winter,live-1775115778-015,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-02,S005,P0024,Automotive Parts,West,1662.4,167.201,168.097,176.6,57.08,8.04,Sunny,1.0,58.58,Winter,live-1775115804-001,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-02,S002,P0027,Beauty & Personal Care,East,1991.886,180.968,194.275,183.69,67.31,25.17,Sunny,1.0,67.18,Winter,live-1775115804-002,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2023-12-31,S003,P0016,Clothing,South,120.305,67.971,125.86,69.88,69.92,10.94,Snowy,0.0,71.89,Winter,live-1775115804-003,South,Bengaluru,Karnataka,India,Retail Hub 3
+2025-01-02,S002,P0021,EV Vehicles,West,1342.64,139.024,158.101,142.19,49.72,8.61,Cloudy,0.0,52.1,Winter,live-1775115804-004,West,Surat,Gujarat,India,Retail Hub 2
+2024-01-02,S004,P0004,Electronics,South,207.436,35.173,235.516,37.8,56.89,2.66,Sunny,0.0,57.63,Winter,live-1775115804-005,South,Coimbatore,Tamil Nadu,India,Retail Hub 4
+2025-01-01,S003,P0009,Furniture,South,1994.159,170.058,181.935,179.24,59.65,17.28,Rainy,1.0,60.87,Winter,live-1775115804-006,South,Hyderabad,Telangana,India,Retail Hub 3
+2023-12-31,S005,P0018,Groceries,South,625.682,410.918,410.918,425.83,97.14,21.02,Sunny,0.0,92.66,Winter,live-1775115804-007,South,Chennai,Tamil Nadu,India,Retail Hub 5
+2025-01-03,S001,P0025,Home Appliances,East,1313.43,178.882,178.882,192.45,72.01,25.67,Rainy,0.0,74.99,Winter,live-1775115804-008,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-01,S004,P0030,Industrial Tools,South,1832.331,186.015,191.798,195.66,73.81,12.12,Sunny,0.0,71.58,Winter,live-1775115804-009,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-01,S006,P0029,Office Supplies,East,1336.45,143.781,186.022,146.99,65.69,23.21,Rainy,0.0,68.82,Winter,live-1775115804-010,East,Kolkata,West Bengal,India,Retail Hub
+2025-01-02,S003,P0028,Pet Supplies,South,2051.568,207.034,228.757,209.96,71.38,15.95,Snowy,1.0,67.15,Winter,live-1775115804-011,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-02,S005,P0023,Pharmaceuticals,East,1461.525,167.654,174.222,180.93,67.09,16.75,Sunny,0.0,65.24,Winter,live-1775115804-012,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-02,S005,P0022,Semiconductors,East,1342.827,206.024,206.024,219.0,60.93,11.94,Snowy,1.0,60.95,Winter,live-1775115804-013,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-03,S002,P0026,Sports Equipment,East,1341.867,154.505,202.796,157.75,60.57,7.78,Rainy,0.0,60.11,Winter,live-1775115804-014,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2024-01-01,S006,P0020,Toys,West,142.338,28.684,175.734,29.04,60.89,0.98,Snowy,0.0,61.36,Winter,live-1775115804-015,West,Mumbai,Maharashtra,India,Retail Hub
+2025-01-03,S004,P0024,Automotive Parts,East,1657.458,144.752,186.701,154.92,54.29,9.33,Snowy,0.0,55.73,Winter,live-1775115831-001,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-01,S003,P0027,Beauty & Personal Care,West,1794.512,177.914,193.8,188.56,53.63,11.86,Sunny,0.0,54.37,Winter,live-1775115831-002,West,Surat,Gujarat,India,Retail Hub 3
+2024-01-01,S003,P0019,Clothing,South,274.386,184.43,202.845,196.13,93.1,6.15,Snowy,0.0,88.81,Winter,live-1775115831-003,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-02,S006,P0021,EV Vehicles,East,1116.378,114.89,157.324,122.46,59.42,21.15,Cloudy,0.0,62.13,Winter,live-1775115831-004,East,Kolkata,West Bengal,India,Retail Hub
+2024-01-01,S001,P0002,Electronics,East,162.29,23.633,31.902,24.05,91.34,2.01,Snowy,0.0,86.77,Winter,live-1775115831-005,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-01,S004,P0010,Furniture,West,1810.972,146.458,146.458,150.44,40.01,4.02,Rainy,1.0,39.41,Winter,live-1775115831-006,West,Mumbai,Maharashtra,India,Retail Hub 4
+2025-01-02,S005,P0011,Groceries,North,1498.5,148.546,148.546,155.93,91.58,5.52,Cloudy,1.0,93.28,Winter,live-1775115831-007,North,Dehradun,Uttarakhand,India,Retail Hub 5
+2025-01-01,S005,P0025,Home Appliances,East,1904.218,133.926,156.365,136.26,73.97,15.91,Sunny,0.0,75.84,Winter,live-1775115831-008,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-01,S001,P0030,Industrial Tools,South,1530.367,176.671,176.671,180.13,70.41,13.57,Sunny,0.0,69.57,Winter,live-1775115831-009,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-01,S002,P0029,Office Supplies,West,1897.688,174.962,187.352,184.6,67.85,22.3,Cloudy,0.0,64.28,Winter,live-1775115831-010,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-03,S004,P0028,Pet Supplies,East,1599.636,182.697,207.677,196.2,73.42,9.8,Snowy,0.0,73.25,Winter,live-1775115831-011,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-02,S003,P0023,Pharmaceuticals,East,1227.746,175.306,175.306,179.18,62.77,2.89,Snowy,1.0,63.21,Winter,live-1775115831-012,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-01,S005,P0022,Semiconductors,East,1807.261,149.767,161.885,154.79,63.32,14.69,Snowy,0.0,64.71,Winter,live-1775115831-013,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-04,S004,P0026,Sports Equipment,South,1499.572,187.286,242.74,193.54,61.84,2.65,Rainy,0.0,62.45,Winter,live-1775115831-014,South,Hyderabad,Telangana,India,Retail Hub 4
+2024-01-02,S004,P0020,Toys,East,249.23,20.88,215.912,21.85,104.55,21.85,Snowy,0.0,103.63,Winter,live-1775115831-015,East,Patna,Bihar,India,Retail Hub 4
+2025-01-03,S001,Automotive Parts,Automotive Parts,East,233.777,192.686,229.38,201.13,68.46,9.26,Sunny,0.0,70.96,Winter,live-1775115857-001,Nan,Unknown,Unknown,India,Retail Hub 1
+2025-01-06,S003,P0027,Beauty & Personal Care,South,1158.39,275.529,294.015,283.52,70.62,23.77,Sunny,1.0,68.2,Winter,live-1775115857-002,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S004,P0015,Clothing,East,1948.378,172.704,172.704,178.53,62.44,12.71,Rainy,1.0,61.64,Winter,live-1775115857-003,East,Patna,Bihar,India,Retail Hub 4
+2025-01-01,S002,P0021,EV Vehicles,South,1498.607,124.649,159.505,128.81,51.5,17.34,Snowy,0.0,48.79,Winter,live-1775115857-004,South,Hyderabad,Telangana,India,Retail Hub 2
+2024-01-01,S005,P0011,Electronics,East,463.327,363.37,363.37,385.59,79.41,1.24,Cloudy,0.0,80.84,Winter,live-1775115857-005,East,Patna,Bihar,India,Retail Hub 5
+2024-01-01,S006,P0012,Furniture,North,338.362,20.403,99.677,21.1,40.2,0.0,Rainy,0.0,40.17,Winter,live-1775115857-006,North,New Delhi,Delhi,India,Retail Hub
+2025-01-01,S003,P0011,Groceries,East,1714.815,135.812,135.812,138.12,88.51,6.49,Cloudy,0.0,84.91,Winter,live-1775115857-007,East,Ranchi,Jharkhand,India,Retail Hub 3
+2025-01-01,S002,P0025,Home Appliances,East,1526.254,128.54,129.908,136.04,69.68,15.91,Sunny,0.0,66.44,Winter,live-1775115857-008,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-02,S006,P0030,Industrial Tools,West,1376.79,144.376,158.831,151.62,65.53,9.05,Rainy,0.0,65.36,Winter,live-1775115857-009,West,Surat,Gujarat,India,Retail Hub
+2025-01-03,S002,P0029,Office Supplies,East,1679.267,233.137,233.137,241.43,61.28,16.29,Sunny,1.0,62.1,Winter,live-1775115857-010,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-02,S006,P0028,Pet Supplies,East,1257.394,143.717,163.937,154.9,70.08,10.42,Snowy,0.0,69.38,Winter,live-1775115857-011,East,Kolkata,West Bengal,India,Retail Hub
+2025-01-03,S005,P0023,Pharmaceuticals,East,1371.193,191.613,191.613,205.49,66.77,18.54,Sunny,0.0,69.48,Winter,live-1775115857-012,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-01,S004,P0022,Semiconductors,South,1612.484,134.231,147.474,142.07,59.96,7.5,Rainy,0.0,60.9,Winter,live-1775115857-013,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-03,S003,P0026,Sports Equipment,East,1324.807,156.728,214.041,162.0,59.03,8.04,Rainy,0.0,57.74,Winter,live-1775115857-014,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2023-12-31,S005,P0001,Toys,North,442.487,41.629,57.512,43.3,52.81,7.05,Sunny,0.0,51.55,Winter,live-1775115857-015,North,Jaipur,Rajasthan,India,Retail Hub 5
+2025-01-04,S001,Automotive Parts,Automotive Parts,East,299.647,210.567,251.133,220.95,67.45,11.64,Sunny,0.0,69.11,Winter,live-1775115886-001,Nan,Unknown,Unknown,India,Retail Hub 1
+2025-01-03,S005,P0027,Beauty & Personal Care,East,2097.592,170.283,219.307,182.28,56.02,2.71,Rainy,0.0,58.4,Winter,live-1775115886-002,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-01,S001,P0018,Clothing,West,1527.877,128.451,144.681,133.06,10.91,2.13,Cloudy,0.0,11.12,Winter,live-1775115886-003,West,Panaji,Goa,India,Retail Hub 1
+2025-01-02,S003,P0021,EV Vehicles,East,1273.683,153.543,155.178,161.47,62.38,17.23,Cloudy,0.0,63.28,Winter,live-1775115886-004,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-01,S002,P0007,Electronics,South,1232.613,136.529,158.803,143.46,27.91,26.31,Sunny,0.0,26.63,Winter,live-1775115886-005,South,Kochi,Kerala,India,Retail Hub 2
+2025-01-01,S003,P0016,Furniture,East,1276.49,120.253,134.233,129.36,75.98,26.86,Cloudy,0.0,79.05,Winter,live-1775115886-006,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-01,S003,P0007,Groceries,South,1497.665,164.281,164.281,175.98,63.11,2.77,Cloudy,0.0,65.59,Winter,live-1775115886-007,South,Coimbatore,Tamil Nadu,India,Retail Hub 3
+2025-01-03,S004,P0025,Home Appliances,East,1804.032,168.339,193.574,178.99,57.83,17.51,Rainy,0.0,58.92,Winter,live-1775115886-008,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2025-01-02,S005,P0030,Industrial Tools,East,1812.273,185.729,195.367,199.59,68.15,9.86,Snowy,0.0,64.32,Winter,live-1775115886-009,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-03,S004,P0029,Office Supplies,West,1892.833,201.645,209.988,207.28,69.14,27.66,Cloudy,0.0,66.01,Winter,live-1775115886-010,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S004,P0028,Pet Supplies,South,2393.316,163.9,217.617,175.19,71.6,17.24,Snowy,0.0,68.42,Winter,live-1775115886-011,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-02,S002,P0023,Pharmaceuticals,South,1412.828,135.899,172.31,139.33,55.47,19.57,Snowy,0.0,52.2,Winter,live-1775115886-012,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-02,S004,P0022,Semiconductors,South,1552.471,125.836,163.203,129.91,60.68,7.81,Rainy,0.0,60.68,Winter,live-1775115886-013,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-03,S002,P0026,Sports Equipment,South,1393.229,186.854,187.623,191.03,59.45,0.73,Rainy,0.0,60.84,Winter,live-1775115886-014,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-01,S004,P0019,Toys,East,1963.374,142.86,150.794,154.19,51.68,24.41,Snowy,0.0,53.66,Winter,live-1775115886-015,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-05,S003,P0024,Automotive Parts,East,1226.394,237.361,239.722,253.82,59.13,6.72,Snowy,0.0,61.7,Winter,live-1775115918-001,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-01,S004,P0027,Beauty & Personal Care,South,1920.517,195.063,195.063,206.37,70.44,22.51,Sunny,1.0,66.91,Winter,live-1775115918-002,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-01,S005,P0016,Clothing,West,1781.977,171.901,171.901,175.38,20.14,19.94,Cloudy,0.0,20.88,Winter,live-1775115918-003,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-01,S001,P0021,EV Vehicles,South,1375.086,132.851,133.934,140.9,50.24,17.49,Snowy,1.0,50.46,Winter,live-1775115918-004,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-02,S006,P0007,Electronics,South,1029.975,122.406,173.697,126.87,28.64,26.85,Sunny,0.0,28.12,Winter,live-1775115918-005,South,Kochi,Kerala,India,Retail Hub
+2024-01-01,S001,P0004,Furniture,East,318.6,184.647,187.372,198.78,24.48,9.56,Snowy,0.0,25.33,Winter,live-1775115918-006,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-01,S004,P0005,Groceries,North,1997.021,120.416,120.416,124.73,14.51,13.37,Snowy,1.0,14.98,Winter,live-1775115918-007,North,New Delhi,Delhi,India,Retail Hub 4
+2025-01-02,S005,P0025,Home Appliances,East,1842.386,120.756,160.189,123.81,73.53,17.58,Sunny,0.0,72.67,Winter,live-1775115918-008,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-02,S002,P0030,Industrial Tools,East,1565.589,125.997,158.143,129.63,64.89,12.39,Snowy,0.0,64.89,Winter,live-1775115918-009,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-01,S006,P0029,Office Supplies,West,1651.437,156.014,169.845,166.94,67.28,21.27,Cloudy,0.0,69.74,Winter,live-1775115918-010,West,Surat,Gujarat,India,Retail Hub
+2025-01-02,S002,P0028,Pet Supplies,East,1597.966,200.188,211.532,209.98,60.97,32.73,Snowy,0.0,62.6,Winter,live-1775115918-011,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-04,S005,P0023,Pharmaceuticals,East,1221.337,223.439,223.439,228.21,67.16,18.21,Sunny,0.0,68.21,Winter,live-1775115918-012,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-02,S001,P0022,Semiconductors,West,1209.463,150.306,167.292,157.96,55.54,6.88,Sunny,1.0,54.88,Winter,live-1775115918-013,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-02,S002,P0026,Sports Equipment,West,1650.58,146.245,182.432,156.84,64.05,7.26,Rainy,0.0,62.76,Winter,live-1775115918-014,West,Surat,Gujarat,India,Retail Hub 2
+2024-01-01,S001,P0006,Toys,South,405.761,254.201,289.969,269.25,76.88,16.99,Sunny,0.0,75.26,Winter,live-1775115918-015,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-02,S003,P0024,Automotive Parts,West,1377.496,139.905,150.325,145.23,54.25,7.26,Sunny,0.0,51.08,Winter,live-1775115950-001,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-01,S003,P0027,Beauty & Personal Care,East,1297.803,154.047,165.791,165.69,58.94,7.36,Rainy,0.0,57.92,Winter,live-1775115950-002,East,Guwahati,Assam,India,Retail Hub 3
+2024-01-01,S004,P0005,Clothing,South,369.544,243.141,243.141,254.87,49.68,9.76,Snowy,0.0,49.05,Winter,live-1775115950-003,South,Coimbatore,Tamil Nadu,India,Retail Hub 4
+2025-01-01,S001,P0021,EV Vehicles,West,1261.154,137.161,149.099,141.01,47.26,8.61,Cloudy,0.0,47.39,Winter,live-1775115950-004,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-01,S004,P0012,Electronics,North,2038.577,140.735,140.735,143.2,37.27,0.0,Cloudy,0.0,35.23,Winter,live-1775115950-005,North,Dehradun,Uttarakhand,India,Retail Hub 4
+2025-01-01,S001,P0003,Furniture,South,1345.634,150.613,150.613,158.82,24.29,4.92,Sunny,1.0,25.1,Winter,live-1775115950-006,South,Coimbatore,Tamil Nadu,India,Retail Hub 1
+2025-01-01,S004,P0004,Groceries,West,2023.784,142.047,149.689,151.08,82.41,7.46,Snowy,0.0,85.17,Winter,live-1775115950-007,West,Mumbai,Maharashtra,India,Retail Hub 4
+2025-01-04,S001,P0025,Home Appliances,East,1170.116,209.306,209.306,219.54,73.0,25.85,Rainy,0.0,71.37,Winter,live-1775115950-008,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-02,S002,P0030,Industrial Tools,West,1638.71,168.827,178.609,173.83,65.75,14.26,Rainy,0.0,68.38,Winter,live-1775115950-009,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-02,S003,P0029,Office Supplies,South,1537.813,166.689,178.158,174.0,71.81,12.41,Rainy,0.0,68.51,Winter,live-1775115950-010,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S003,P0028,Pet Supplies,West,1563.519,190.727,190.727,199.08,63.07,19.56,Cloudy,1.0,61.37,Winter,live-1775115950-011,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-05,S005,P0023,Pharmaceuticals,East,1097.41,265.292,265.292,280.17,67.75,17.11,Sunny,0.0,70.37,Winter,live-1775115950-012,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-01,S006,P0022,Semiconductors,West,1240.868,117.499,146.043,122.82,56.02,4.95,Sunny,0.0,53.77,Winter,live-1775115950-013,West,Surat,Gujarat,India,Retail Hub
+2025-01-02,S005,P0026,Sports Equipment,South,1712.738,244.951,244.951,253.85,60.23,1.61,Rainy,0.0,57.47,Winter,live-1775115950-014,South,Hyderabad,Telangana,India,Retail Hub 5
+2023-12-31,S006,P0001,Toys,North,333.724,31.209,47.951,33.61,52.32,6.12,Sunny,0.0,52.62,Winter,live-1775115950-015,North,Jaipur,Rajasthan,India,Retail Hub
+2025-01-02,S003,P0024,Automotive Parts,East,1642.323,160.795,172.729,164.04,63.55,17.85,Rainy,1.0,60.51,Winter,live-1775116012-001,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-03,S004,P0027,Beauty & Personal Care,East,1886.34,185.759,211.941,197.95,57.94,1.58,Rainy,0.0,60.7,Winter,live-1775116012-002,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-01,S005,P0001,Clothing,East,2122.226,196.118,196.118,200.27,11.78,13.04,Rainy,1.0,11.97,Winter,live-1775116012-003,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-03,S001,P0021,EV Vehicles,East,1255.501,132.804,132.804,138.41,50.51,2.18,Cloudy,0.0,50.91,Winter,live-1775116012-004,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2023-12-29,S006,P0005,Electronics,West,167.747,99.485,99.485,103.01,79.89,9.01,Cloudy,0.0,81.95,Winter,live-1775116012-005,West,Pune,Maharashtra,India,Retail Hub
+2024-01-02,S001,P0004,Furniture,East,245.663,196.552,196.552,209.77,24.81,8.13,Snowy,0.0,25.53,Winter,live-1775116012-006,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-02,S001,P0011,Groceries,West,1560.25,133.168,133.168,134.85,95.52,8.57,Cloudy,0.0,92.9,Winter,live-1775116012-007,West,Pune,Maharashtra,India,Retail Hub 1
+2025-01-01,S006,P0025,Home Appliances,East,1321.012,118.737,125.66,126.56,68.1,13.29,Sunny,0.0,69.38,Winter,live-1775116012-008,East,Guwahati,Assam,India,Retail Hub
+2025-01-04,S003,P0030,Industrial Tools,South,1272.058,288.113,288.113,303.36,73.44,13.66,Sunny,1.0,73.52,Winter,live-1775116012-009,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-02,S005,P0029,Office Supplies,South,1705.416,232.236,232.236,244.62,71.43,13.47,Rainy,0.0,73.02,Winter,live-1775116012-010,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-03,S006,P0028,Pet Supplies,East,1461.19,160.268,164.537,172.69,61.71,14.69,Rainy,0.0,64.78,Winter,live-1775116012-011,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-01,S002,P0023,Pharmaceuticals,East,1500.949,149.042,164.069,153.84,55.55,7.33,Cloudy,0.0,55.7,Winter,live-1775116012-012,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-03,S004,P0022,Semiconductors,South,1467.913,136.8,164.287,139.87,61.82,7.78,Rainy,0.0,61.95,Winter,live-1775116012-013,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-04,S004,P0026,Sports Equipment,East,1211.845,282.668,282.668,300.83,61.63,9.1,Rainy,0.0,61.78,Winter,live-1775116012-014,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2025-01-01,S003,P0015,Toys,North,1406.797,130.613,145.876,139.96,34.36,21.12,Cloudy,0.0,32.58,Winter,live-1775116012-015,North,Lucknow,Uttar Pradesh,India,Retail Hub 3
+2025-01-01,S004,P0024,Automotive Parts,East,1799.118,140.63,157.649,151.78,60.96,1.91,Snowy,0.0,61.46,Winter,live-1775116100-001,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-03,S001,P0027,Beauty & Personal Care,East,947.652,210.081,210.081,225.63,61.17,8.57,Rainy,1.0,61.82,Winter,live-1775116100-002,East,Guwahati,Assam,India,Retail Hub 1
+2024-01-01,S003,P0012,Clothing,North,101.172,54.636,54.636,56.17,53.01,10.25,Rainy,0.0,52.0,Winter,live-1775116100-003,North,Dehradun,Uttarakhand,India,Retail Hub 3
+2025-01-04,S001,P0021,EV Vehicles,East,1188.551,148.321,148.321,153.11,50.31,0.66,Cloudy,0.0,48.89,Winter,live-1775116100-004,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2024-01-01,S002,P0008,Electronics,South,211.828,18.917,196.314,19.88,62.9,3.59,Sunny,0.0,59.34,Winter,live-1775116100-005,South,Hyderabad,Telangana,India,Retail Hub 2
+2024-01-01,S004,P0016,Furniture,East,350.354,233.515,249.824,249.63,69.05,5.04,Rainy,0.0,65.5,Winter,live-1775116100-006,East,Ranchi,Jharkhand,India,Retail Hub 4
+2025-01-01,S006,P0002,Groceries,North,1192.964,132.951,136.301,141.6,33.03,13.3,Snowy,1.0,33.69,Winter,live-1775116100-007,North,Dehradun,Uttarakhand,India,Retail Hub
+2025-01-02,S006,P0025,Home Appliances,South,1226.578,111.961,161.808,115.95,66.34,10.58,Snowy,0.0,65.45,Winter,live-1775116100-008,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-01,S006,P0030,Industrial Tools,East,1671.882,144.189,160.017,148.77,59.63,20.28,Sunny,0.0,58.99,Winter,live-1775116100-009,East,Kolkata,West Bengal,India,Retail Hub
+2025-01-03,S006,P0029,Office Supplies,East,1435.122,205.637,205.637,212.32,61.0,18.06,Sunny,0.0,62.25,Winter,live-1775116100-010,East,Guwahati,Assam,India,Retail Hub
+2025-01-03,S003,P0028,Pet Supplies,South,1876.951,252.447,252.447,257.99,71.37,17.93,Snowy,0.0,71.99,Winter,live-1775116100-011,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S004,P0023,Pharmaceuticals,East,1471.159,156.562,166.808,165.05,63.24,3.93,Snowy,0.0,61.87,Winter,live-1775116100-012,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-02,S003,P0022,Semiconductors,South,1421.147,116.714,139.803,121.9,60.42,5.52,Rainy,0.0,57.26,Winter,live-1775116100-013,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-02,S006,P0026,Sports Equipment,West,1296.495,194.262,194.669,206.36,62.58,3.31,Rainy,1.0,59.75,Winter,live-1775116100-014,West,Surat,Gujarat,India,Retail Hub
+2025-01-02,S004,P0020,Toys,West,2050.004,165.995,186.25,175.65,32.49,22.28,Sunny,0.0,33.73,Winter,live-1775116100-015,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S004,P0024,Automotive Parts,South,1443.836,173.242,186.718,177.93,66.95,0.48,Cloudy,1.0,67.44,Winter,live-1775116178-001,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-02,S003,P0027,Beauty & Personal Care,East,1212.312,146.353,165.397,154.3,58.8,5.47,Rainy,0.0,55.86,Winter,live-1775116178-002,East,Guwahati,Assam,India,Retail Hub 3
+2024-01-02,S005,P0012,Clothing,North,77.093,73.015,73.015,78.35,53.46,13.24,Rainy,1.0,54.78,Winter,live-1775116178-003,North,Dehradun,Uttarakhand,India,Retail Hub 5
+2025-01-02,S001,P0021,EV Vehicles,East,1186.248,139.864,139.864,141.62,51.68,24.86,Rainy,0.0,53.93,Winter,live-1775116178-004,East,Guwahati,Assam,India,Retail Hub 1
+2024-01-01,S002,P0002,Electronics,East,170.007,26.166,32.311,27.41,93.07,1.47,Snowy,0.0,89.36,Winter,live-1775116178-005,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-01,S001,P0010,Furniture,East,1570.147,133.842,149.692,138.19,83.61,18.05,Sunny,0.0,78.98,Winter,live-1775116178-006,East,Patna,Bihar,India,Retail Hub 1
+2025-01-01,S003,P0004,Groceries,West,1935.481,126.971,156.15,134.44,85.26,3.47,Snowy,0.0,84.87,Winter,live-1775116178-007,West,Mumbai,Maharashtra,India,Retail Hub 3
+2025-01-02,S004,P0025,Home Appliances,West,1612.143,186.311,186.311,188.58,60.28,28.55,Rainy,0.0,56.68,Winter,live-1775116178-008,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S001,P0030,Industrial Tools,East,1691.883,169.826,191.584,179.86,72.7,13.22,Rainy,0.0,74.82,Winter,live-1775116178-009,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-01,S006,P0029,Office Supplies,East,1518.758,155.693,165.58,160.73,60.72,7.05,Sunny,0.0,61.05,Winter,live-1775116178-010,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-03,S006,P0028,Pet Supplies,East,1162.994,169.408,171.051,172.37,70.34,10.82,Snowy,0.0,71.54,Winter,live-1775116178-011,East,Kolkata,West Bengal,India,Retail Hub
+2025-01-03,S001,P0023,Pharmaceuticals,South,1184.229,180.94,180.94,185.97,53.74,23.54,Snowy,0.0,51.58,Winter,live-1775116178-012,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-03,S003,P0022,Semiconductors,East,1160.872,199.37,199.37,215.05,54.15,13.86,Sunny,0.0,56.46,Winter,live-1775116178-013,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-01,S004,P0026,Sports Equipment,East,1765.602,150.604,157.03,159.91,66.51,10.7,Sunny,0.0,64.58,Winter,live-1775116178-014,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-01,S001,P0016,Toys,North,1696.634,127.167,135.083,129.42,40.84,11.81,Sunny,0.0,40.57,Winter,live-1775116178-015,North,Chandigarh,Chandigarh,India,Retail Hub 1
+2025-01-02,S002,P0024,Automotive Parts,South,1158.297,165.128,165.128,167.5,66.37,5.22,Cloudy,0.0,63.83,Winter,live-1775456230-001,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-02,S003,P0027,Beauty & Personal Care,West,1723.062,160.51,205.493,168.41,54.86,12.1,Sunny,0.0,57.05,Winter,live-1775456230-002,West,Surat,Gujarat,India,Retail Hub 3
+2023-12-29,S005,P0003,Clothing,South,391.037,340.362,340.362,364.39,17.0,12.5,Rainy,0.0,16.73,Winter,live-1775456230-003,South,Kochi,Kerala,India,Retail Hub 5
+2025-01-05,S001,P0021,EV Vehicles,East,1086.803,171.61,171.61,184.25,50.87,1.19,Cloudy,0.0,51.85,Winter,live-1775456230-004,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-01,S001,P0017,Electronics,North,1205.256,138.232,141.249,148.26,21.04,1.68,Snowy,0.0,21.96,Winter,live-1775456230-005,North,Lucknow,Uttar Pradesh,India,Retail Hub 1
+2025-01-01,S002,P0002,Furniture,West,1534.973,131.894,163.927,135.47,45.27,7.12,Cloudy,0.0,43.81,Winter,live-1775456230-006,West,Mumbai,Maharashtra,India,Retail Hub 2
+2025-01-01,S004,P0013,Groceries,West,1966.959,158.195,168.15,164.86,13.67,8.64,Rainy,0.0,12.93,Winter,live-1775456230-007,West,Ahmedabad,Gujarat,India,Retail Hub 4
+2025-01-03,S001,P0025,Home Appliances,West,1290.893,134.292,147.923,136.63,60.2,29.5,Rainy,0.0,60.42,Winter,live-1775456230-008,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-02,S005,P0030,Industrial Tools,West,1910.324,195.441,195.441,200.65,66.18,8.29,Rainy,0.0,67.8,Winter,live-1775456230-009,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-05,S001,P0029,Office Supplies,East,1260.128,243.384,243.384,258.35,60.62,16.34,Sunny,1.0,57.96,Winter,live-1775456230-010,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-03,S001,P0028,Pet Supplies,East,1517.24,157.775,179.893,160.49,61.1,14.48,Rainy,0.0,57.79,Winter,live-1775456230-011,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-06,S005,P0023,Pharmaceuticals,East,1014.323,238.001,288.517,244.24,67.04,18.99,Sunny,0.0,68.25,Winter,live-1775456230-012,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-02,S005,P0022,Semiconductors,East,1725.161,134.962,169.123,139.78,63.43,14.84,Snowy,0.0,60.85,Winter,live-1775456230-013,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-05,S004,P0026,Sports Equipment,South,1404.669,188.573,235.573,202.57,62.25,1.87,Rainy,0.0,58.95,Winter,live-1775456230-014,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-01,S006,P0015,Toys,South,1712.443,125.358,143.777,131.62,66.97,0.0,Sunny,0.0,70.0,Winter,live-1775456230-015,South,Chennai,Tamil Nadu,India,Retail Hub
+2025-01-02,S004,P0024,Automotive Parts,East,1723.49,147.457,168.706,156.66,60.78,1.7,Snowy,1.0,61.09,Winter,live-1775456274-001,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-03,S005,P0027,Beauty & Personal Care,East,1333.284,241.792,241.792,256.27,60.73,5.34,Rainy,0.0,62.32,Winter,live-1775456274-002,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-02,S005,P0001,Clothing,East,1982.98,236.799,236.799,247.15,11.7,13.97,Rainy,1.0,11.57,Winter,live-1775456274-003,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-06,S001,P0021,EV Vehicles,East,995.555,174.063,180.47,181.42,51.78,0.0,Cloudy,0.0,51.69,Winter,live-1775456274-004,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-01,S006,P0012,Electronics,North,1610.713,105.327,121.02,107.89,36.07,0.0,Cloudy,0.0,35.62,Winter,live-1775456274-005,North,Dehradun,Uttarakhand,India,Retail Hub
+2024-01-02,S002,P0020,Furniture,South,238.079,159.112,159.112,169.76,88.1,10.94,Cloudy,0.0,91.49,Winter,live-1775456274-006,South,Chennai,Tamil Nadu,India,Retail Hub 2
+2025-01-01,S005,P0014,Groceries,South,1977.758,181.338,181.338,194.27,30.75,4.26,Cloudy,0.0,29.17,Winter,live-1775456274-007,South,Bengaluru,Karnataka,India,Retail Hub 5
+2025-01-03,S004,P0025,Home Appliances,West,1498.383,199.611,199.611,211.97,61.03,29.63,Rainy,0.0,58.91,Winter,live-1775456274-008,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-02,S001,P0030,Industrial Tools,South,1406.253,218.563,218.563,227.54,70.93,14.91,Sunny,1.0,72.95,Winter,live-1775456274-009,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-02,S004,P0029,Office Supplies,East,1863.681,176.85,197.752,186.58,61.03,6.56,Sunny,0.0,59.65,Winter,live-1775456274-010,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2025-01-04,S002,P0028,Pet Supplies,South,1666.907,254.573,254.573,267.69,68.47,15.06,Snowy,0.0,68.63,Winter,live-1775456274-011,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-02,S003,P0023,Pharmaceuticals,East,1442.613,137.931,159.705,148.34,53.91,8.33,Cloudy,0.0,53.01,Winter,live-1775456274-012,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-03,S005,P0022,Semiconductors,East,1197.594,242.302,242.302,252.75,62.08,10.95,Snowy,0.0,63.49,Winter,live-1775456274-013,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-03,S003,P0026,Sports Equipment,East,1441.136,191.573,191.573,201.87,59.43,15.25,Snowy,1.0,60.39,Winter,live-1775456274-014,East,Kolkata,West Bengal,India,Retail Hub 3
+2025-01-03,S003,P0006,Toys,East,1594.307,144.015,146.632,151.27,43.69,27.49,Snowy,0.0,45.44,Winter,live-1775456274-015,East,Ranchi,Jharkhand,India,Retail Hub 3
+2025-01-02,S004,P0024,Automotive Parts,West,1503.863,132.424,143.887,134.41,53.38,5.12,Sunny,1.0,52.18,Winter,live-1775456300-001,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-02,S006,P0027,Beauty & Personal Care,East,1621.069,164.059,180.887,174.17,63.04,19.9,Sunny,0.0,63.3,Winter,live-1775456300-002,East,Bhubaneswar,Odisha,India,Retail Hub
+2024-01-02,S003,P0019,Clothing,South,298.858,167.995,226.021,171.98,92.6,6.72,Snowy,0.0,88.22,Winter,live-1775456300-003,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S005,P0021,EV Vehicles,West,1727.187,151.242,180.271,153.15,50.01,8.93,Cloudy,0.0,47.94,Winter,live-1775456300-004,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-01,S002,P0001,Electronics,East,1812.308,113.812,124.609,116.74,37.62,11.95,Rainy,0.0,37.66,Winter,live-1775456300-005,East,Ranchi,Jharkhand,India,Retail Hub 2
+2025-01-02,S006,P0019,Furniture,West,1304.296,96.365,128.766,97.88,51.87,12.83,Rainy,0.0,53.31,Winter,live-1775456300-006,West,Pune,Maharashtra,India,Retail Hub
+2025-01-01,S001,P0013,Groceries,West,1657.477,140.796,147.701,143.56,13.37,10.6,Rainy,0.0,13.2,Winter,live-1775456300-007,West,Ahmedabad,Gujarat,India,Retail Hub 1
+2025-01-03,S005,P0025,Home Appliances,East,1789.353,138.91,163.039,147.58,74.53,18.97,Sunny,0.0,70.78,Winter,live-1775456300-008,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-02,S001,P0030,Industrial Tools,East,1577.609,173.22,185.649,176.91,72.69,14.55,Rainy,0.0,71.19,Winter,live-1775456300-009,East,Bhubaneswar,Odisha,India,Retail Hub 1
+2025-01-06,S001,P0029,Office Supplies,East,1092.114,244.508,244.508,257.09,59.86,15.34,Sunny,0.0,60.95,Winter,live-1775456300-010,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-01,S003,P0028,Pet Supplies,East,1898.489,156.074,190.674,166.89,62.12,16.51,Rainy,0.0,64.86,Winter,live-1775456300-011,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-02,S004,P0023,Pharmaceuticals,East,1388.307,152.786,175.045,158.98,64.26,2.67,Snowy,0.0,67.36,Winter,live-1775456300-012,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-02,S006,P0022,Semiconductors,West,1181.243,138.584,143.948,148.55,56.53,4.19,Sunny,1.0,56.85,Winter,live-1775456300-013,West,Surat,Gujarat,India,Retail Hub
+2025-01-02,S003,P0026,Sports Equipment,South,1531.331,163.658,188.213,171.31,61.96,3.47,Rainy,0.0,61.45,Winter,live-1775456300-014,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S004,P0015,Toys,South,2156.632,171.33,182.453,180.6,67.71,0.0,Sunny,0.0,67.0,Winter,live-1775456300-015,South,Chennai,Tamil Nadu,India,Retail Hub 4
+2025-01-01,S005,Automotive Parts,Automotive Parts,East,325.668,260.426,260.426,270.8,69.88,11.16,Sunny,0.0,66.02,Winter,live-1775456326-001,Nan,Unknown,Unknown,India,Retail Hub 5
+2025-01-03,S005,P0027,Beauty & Personal Care,South,1809.138,299.584,299.584,321.92,70.01,18.38,Sunny,1.0,66.77,Winter,live-1775456326-002,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-02,S001,P0018,Clothing,West,1444.398,136.162,140.417,146.83,10.82,1.66,Cloudy,1.0,10.68,Winter,live-1775456326-003,West,Panaji,Goa,India,Retail Hub 1
+2025-01-03,S004,P0021,EV Vehicles,East,1272.712,170.852,170.852,176.4,62.82,21.53,Cloudy,0.0,60.76,Winter,live-1775456326-004,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-01,S004,P0013,Electronics,South,2231.805,126.044,129.281,131.5,69.91,14.1,Snowy,0.0,66.58,Winter,live-1775456326-005,South,Chennai,Tamil Nadu,India,Retail Hub 4
+2025-01-02,S004,P0010,Furniture,West,1702.745,157.985,157.985,163.73,40.49,4.77,Rainy,0.0,40.84,Winter,live-1775456326-006,West,Mumbai,Maharashtra,India,Retail Hub 4
+2025-01-01,S001,P0002,Groceries,South,1568.735,140.675,146.777,148.01,41.06,2.43,Cloudy,0.0,41.25,Winter,live-1775456326-007,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-03,S003,P0025,Home Appliances,West,1410.28,158.28,158.28,166.36,58.96,30.08,Rainy,0.0,61.42,Winter,live-1775456326-008,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-03,S005,P0030,Industrial Tools,East,1710.625,188.594,190.275,192.07,67.93,12.25,Snowy,0.0,66.91,Winter,live-1775456326-009,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-02,S005,P0029,Office Supplies,East,1707.373,215.523,215.523,219.56,69.97,28.38,Rainy,1.0,70.65,Winter,live-1775456326-010,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-01,S005,P0028,Pet Supplies,East,2118.182,209.984,209.984,225.88,61.27,18.36,Rainy,0.0,59.05,Winter,live-1775456326-011,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-02,S003,P0023,Pharmaceuticals,South,1365.196,173.55,173.55,176.18,53.41,20.79,Snowy,0.0,54.28,Winter,live-1775456326-012,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-03,S005,P0022,Semiconductors,South,1490.735,166.031,182.935,174.14,60.18,7.72,Rainy,0.0,56.91,Winter,live-1775456326-013,South,Hyderabad,Telangana,India,Retail Hub 5
+2025-01-03,S004,P0026,Sports Equipment,West,1590.778,221.164,221.164,231.88,65.17,5.59,Rainy,0.0,61.67,Winter,live-1775456326-014,West,Surat,Gujarat,India,Retail Hub 4
+2023-12-31,S002,P0001,Toys,North,372.322,34.005,48.825,34.58,51.34,4.72,Sunny,0.0,53.49,Winter,live-1775456326-015,North,Jaipur,Rajasthan,India,Retail Hub 2
+2025-01-01,S006,P0024,Automotive Parts,South,1129.188,178.614,178.614,181.48,67.27,0.7,Cloudy,1.0,68.48,Winter,live-1775456354-001,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-04,S005,P0027,Beauty & Personal Care,East,2039.822,178.064,239.148,181.57,55.87,3.24,Rainy,0.0,55.03,Winter,live-1775456354-002,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-01,S002,P0018,Clothing,West,1665.211,162.362,162.362,172.03,10.87,3.28,Cloudy,1.0,11.0,Winter,live-1775456354-003,West,Panaji,Goa,India,Retail Hub 2
+2025-01-03,S003,P0021,EV Vehicles,East,1116.076,240.733,240.733,248.1,51.65,28.0,Rainy,0.0,49.72,Winter,live-1775456354-004,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-01,S001,P0018,Electronics,North,1315.311,171.259,171.259,174.78,28.74,21.36,Snowy,1.0,27.51,Winter,live-1775456354-005,North,Jaipur,Rajasthan,India,Retail Hub 1
+2025-01-01,S002,P0010,Furniture,East,1695.095,141.212,149.609,144.94,85.1,15.38,Sunny,0.0,85.14,Winter,live-1775456354-006,East,Patna,Bihar,India,Retail Hub 2
+2025-01-01,S004,P0011,Groceries,East,1931.907,126.326,135.985,134.2,92.5,7.38,Cloudy,0.0,91.42,Winter,live-1775456354-007,East,Ranchi,Jharkhand,India,Retail Hub 4
+2025-01-01,S006,P0025,Home Appliances,East,1420.078,135.482,154.166,137.74,73.4,23.71,Rainy,0.0,72.69,Winter,live-1775456354-008,East,Kolkata,West Bengal,India,Retail Hub
+2025-01-02,S006,P0030,Industrial Tools,East,1583.649,147.313,173.65,156.07,60.5,20.89,Sunny,0.0,62.24,Winter,live-1775456354-009,East,Kolkata,West Bengal,India,Retail Hub
+2025-01-02,S001,P0029,Office Supplies,West,1608.256,162.499,185.058,171.1,64.48,21.81,Cloudy,0.0,64.1,Winter,live-1775456354-010,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-04,S002,P0028,Pet Supplies,West,1126.167,263.138,263.138,265.92,60.43,22.07,Cloudy,1.0,63.11,Winter,live-1775456354-011,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-01,S004,P0023,Pharmaceuticals,South,1632.466,149.52,160.512,155.25,54.04,21.34,Snowy,0.0,53.14,Winter,live-1775456354-012,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-02,S004,P0022,Semiconductors,West,1525.228,132.527,166.825,138.59,54.62,6.37,Sunny,0.0,56.64,Winter,live-1775456354-013,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-02,S002,P0026,Sports Equipment,East,1485.447,160.023,179.226,172.04,65.71,13.46,Sunny,0.0,67.78,Winter,live-1775456354-014,East,Guwahati,Assam,India,Retail Hub 2
+2024-01-03,S005,P0020,Toys,West,264.783,45.922,204.257,48.46,65.7,1.6,Snowy,1.0,68.38,Winter,live-1775456354-015,West,Mumbai,Maharashtra,India,Retail Hub 5
+2025-01-01,S002,P0024,Automotive Parts,East,1617.068,129.378,138.912,130.73,55.02,9.14,Snowy,0.0,52.82,Winter,live-1775456385-001,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-05,S002,P0027,Beauty & Personal Care,West,1310.845,228.187,228.187,246.07,50.86,11.89,Sunny,0.0,53.06,Winter,live-1775456385-002,West,Surat,Gujarat,India,Retail Hub 2
+2025-01-01,S003,P0001,Clothing,East,1821.374,197.664,197.664,203.75,11.52,13.53,Rainy,1.0,12.07,Winter,live-1775456385-003,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-04,S003,P0021,EV Vehicles,East,924.45,291.454,291.454,299.93,52.52,28.14,Rainy,0.0,50.31,Winter,live-1775456385-004,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-01,S006,P0009,Electronics,South,1298.109,118.724,147.655,122.07,94.39,22.68,Sunny,0.0,98.41,Winter,live-1775456385-005,South,Bengaluru,Karnataka,India,Retail Hub
+2025-01-01,S005,P0003,Furniture,South,1791.448,167.594,174.079,170.49,26.21,4.72,Sunny,0.0,25.96,Winter,live-1775456385-006,South,Coimbatore,Tamil Nadu,India,Retail Hub 5
+2024-01-02,S001,P0012,Groceries,West,93.01,68.832,80.437,72.5,66.51,22.2,Sunny,0.0,66.49,Winter,live-1775456385-007,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-04,S003,P0025,Home Appliances,West,1288.38,186.083,186.083,194.94,58.99,29.98,Rainy,0.0,56.33,Winter,live-1775456385-008,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-03,S001,P0030,Industrial Tools,East,1199.762,191.822,203.307,198.94,64.51,12.11,Snowy,0.0,67.04,Winter,live-1775456385-009,East,Guwahati,Assam,India,Retail Hub 1
+2025-01-02,S001,P0029,Office Supplies,South,1342.945,162.696,182.906,170.65,72.94,14.32,Rainy,0.0,73.98,Winter,live-1775456385-010,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-02,S003,P0028,Pet Supplies,West,1488.517,172.574,211.203,180.77,63.6,19.7,Cloudy,0.0,61.71,Winter,live-1775456385-011,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-02,S006,P0023,Pharmaceuticals,South,1141.833,171.939,171.939,180.26,52.73,18.78,Snowy,1.0,52.44,Winter,live-1775456385-012,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-01,S002,P0022,Semiconductors,East,1504.477,122.664,163.351,130.42,61.4,12.25,Snowy,0.0,62.91,Winter,live-1775456385-013,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-04,S003,P0026,Sports Equipment,East,1219.837,211.845,232.311,218.67,59.87,6.98,Rainy,1.0,58.24,Winter,live-1775456385-014,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2023-12-30,S003,P0007,Toys,North,356.234,66.822,66.822,68.02,44.78,13.77,Rainy,0.0,46.15,Winter,live-1775456385-015,North,New Delhi,Delhi,India,Retail Hub 3
+2025-01-02,S006,P0024,Automotive Parts,South,1065.719,169.183,196.719,173.96,68.94,2.57,Cloudy,0.0,68.0,Winter,live-1775456421-001,South,Hyderabad,Telangana,India,Retail Hub
+2025-01-01,S001,P0027,Beauty & Personal Care,South,1668.201,157.787,165.49,166.05,69.77,18.88,Sunny,0.0,66.68,Winter,live-1775456421-002,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-01,S005,P0019,Clothing,East,1544.579,150.274,173.301,153.01,57.42,13.66,Snowy,0.0,55.58,Winter,live-1775456421-003,East,Ranchi,Jharkhand,India,Retail Hub 5
+2025-01-02,S001,P0021,EV Vehicles,South,1301.87,138.594,138.594,146.2,49.54,15.97,Snowy,1.0,47.74,Winter,live-1775456421-004,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-01,S006,P0013,Electronics,South,1681.696,94.824,109.295,101.54,65.04,10.28,Snowy,0.0,65.94,Winter,live-1775456421-005,South,Chennai,Tamil Nadu,India,Retail Hub
+2025-01-02,S003,P0009,Furniture,South,1853.893,201.711,201.711,216.03,59.58,19.75,Rainy,1.0,58.37,Winter,live-1775456421-006,South,Hyderabad,Telangana,India,Retail Hub 3
+2025-01-01,S001,P0014,Groceries,South,1561.317,149.099,154.548,159.95,29.57,5.12,Cloudy,0.0,28.27,Winter,live-1775456421-007,South,Bengaluru,Karnataka,India,Retail Hub 1
+2025-01-01,S005,P0025,Home Appliances,East,2092.112,175.877,175.877,186.4,56.22,16.55,Rainy,1.0,55.71,Winter,live-1775456421-008,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-02,S001,P0030,Industrial Tools,West,1479.662,144.139,183.866,149.7,66.48,9.87,Rainy,0.0,68.4,Winter,live-1775456421-009,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-02,S003,P0029,Office Supplies,East,1698.234,190.681,193.736,199.04,62.38,4.25,Sunny,0.0,63.8,Winter,live-1775456421-010,East,Bhubaneswar,Odisha,India,Retail Hub 3
+2025-01-02,S004,P0028,Pet Supplies,East,1768.878,190.712,199.949,196.15,59.6,31.03,Snowy,0.0,62.43,Winter,live-1775456421-011,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-02,S001,P0023,Pharmaceuticals,East,1179.481,113.071,148.707,115.17,62.23,3.81,Snowy,0.0,58.94,Winter,live-1775456421-012,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-03,S001,P0022,Semiconductors,South,1163.027,118.744,126.147,123.71,59.38,4.95,Rainy,0.0,57.78,Winter,live-1775456421-013,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-01,S006,P0026,Sports Equipment,East,1228.072,148.566,161.462,156.44,58.43,5.75,Rainy,0.0,56.69,Winter,live-1775456421-014,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-01,S004,P0011,Toys,West,1801.546,174.757,189.992,179.6,39.88,15.17,Snowy,0.0,41.51,Winter,live-1775456421-015,West,Ahmedabad,Gujarat,India,Retail Hub 4
+2025-01-01,S005,P0024,Automotive Parts,East,1904.314,152.835,179.48,161.97,62.72,1.1,Snowy,0.0,65.48,Winter,live-1775456457-001,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-07,S003,P0027,Beauty & Personal Care,South,1019.632,282.143,295.79,304.56,70.79,26.11,Sunny,1.0,68.42,Winter,live-1775456457-002,South,Hyderabad,Telangana,India,Retail Hub 3
+2024-01-01,S006,P0015,Clothing,North,149.89,29.873,57.321,30.9,93.45,10.03,Sunny,1.0,97.17,Winter,live-1775456457-003,North,Dehradun,Uttarakhand,India,Retail Hub
+2025-01-02,S005,P0021,EV Vehicles,West,1614.399,174.083,193.247,186.22,49.74,9.49,Cloudy,1.0,46.86,Winter,live-1775456457-004,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-01,S003,P0013,Electronics,South,2088.573,125.249,136.853,126.87,69.79,13.12,Snowy,1.0,71.31,Winter,live-1775456457-005,South,Chennai,Tamil Nadu,India,Retail Hub 3
+2025-01-01,S002,P0019,Furniture,West,1571.261,115.772,128.2,119.4,53.35,11.02,Rainy,0.0,50.58,Winter,live-1775456457-006,West,Pune,Maharashtra,India,Retail Hub 2
+2025-01-02,S003,P0013,Groceries,North,1666.319,128.121,147.092,129.96,64.95,5.12,Sunny,0.0,61.11,Winter,live-1775456457-007,North,New Delhi,Delhi,India,Retail Hub 3
+2025-01-04,S004,P0025,Home Appliances,West,1357.354,208.019,211.387,210.75,60.49,31.57,Rainy,0.0,57.27,Winter,live-1775456457-008,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-02,S004,P0030,Industrial Tools,South,1753.3,172.329,189.012,175.28,75.18,11.97,Sunny,0.0,73.38,Winter,live-1775456457-009,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-03,S004,P0029,Office Supplies,East,1525.499,199.968,229.739,202.88,69.56,23.47,Rainy,0.0,68.04,Winter,live-1775456457-010,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-06,S005,P0028,Pet Supplies,West,1325.815,200.692,250.32,204.36,66.68,17.34,Cloudy,0.0,63.7,Winter,live-1775456457-011,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-03,S005,P0023,Pharmaceuticals,East,1474.057,234.866,234.866,252.63,55.2,9.04,Cloudy,0.0,53.92,Winter,live-1775456457-012,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-02,S006,P0022,Semiconductors,East,989.041,116.66,124.722,122.15,58.78,10.0,Snowy,0.0,59.45,Winter,live-1775456457-013,East,Kolkata,West Bengal,India,Retail Hub
+2025-01-03,S001,P0026,Sports Equipment,East,1314.828,162.826,184.343,170.81,60.01,13.03,Snowy,0.0,58.44,Winter,live-1775456457-014,East,Kolkata,West Bengal,India,Retail Hub 1
+2024-01-01,S003,P0020,Toys,West,150.839,34.072,184.562,36.29,62.62,0.0,Snowy,0.0,59.48,Winter,live-1775456457-015,West,Mumbai,Maharashtra,India,Retail Hub 3
+2025-01-02,S005,Automotive Parts,Automotive Parts,East,399.997,243.401,290.058,257.76,69.67,9.29,Sunny,0.0,70.65,Winter,live-1775456486-001,Nan,Unknown,Unknown,India,Retail Hub 5
+2025-01-03,S006,P0027,Beauty & Personal Care,East,1475.135,220.758,220.758,230.95,63.66,21.81,Sunny,1.0,62.01,Winter,live-1775456486-002,East,Bhubaneswar,Odisha,India,Retail Hub
+2025-01-01,S003,P0003,Clothing,South,1668.142,118.618,132.182,127.66,82.97,2.65,Rainy,1.0,86.74,Winter,live-1775456486-003,South,Chennai,Tamil Nadu,India,Retail Hub 3
+2025-01-02,S002,P0021,EV Vehicles,South,1464.659,111.562,173.617,118.79,52.74,18.27,Snowy,0.0,53.03,Winter,live-1775456486-004,South,Hyderabad,Telangana,India,Retail Hub 2
+2025-01-01,S004,P0014,Electronics,West,2086.723,157.389,174.839,167.69,73.11,19.98,Sunny,0.0,72.16,Winter,live-1775456486-005,West,Ahmedabad,Gujarat,India,Retail Hub 4
+2025-01-01,S004,P0016,Furniture,East,1330.501,138.853,138.853,146.83,74.88,29.32,Cloudy,0.0,73.58,Winter,live-1775456486-006,East,Guwahati,Assam,India,Retail Hub 4
+2025-01-01,S006,P0011,Groceries,East,1434.233,116.422,116.422,121.21,85.2,5.55,Cloudy,0.0,85.05,Winter,live-1775456486-007,East,Ranchi,Jharkhand,India,Retail Hub
+2025-01-02,S004,P0025,Home Appliances,South,1624.992,154.878,185.28,156.87,69.27,8.7,Snowy,0.0,66.31,Winter,live-1775456486-008,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-03,S004,P0030,Industrial Tools,South,1643.796,193.781,206.5,197.58,74.82,12.24,Sunny,0.0,77.62,Winter,live-1775456486-009,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-03,S005,P0029,Office Supplies,East,1910.252,314.554,314.554,331.49,65.5,22.96,Sunny,0.0,63.75,Winter,live-1775456486-010,East,Guwahati,Assam,India,Retail Hub 5
+2025-01-07,S005,P0028,Pet Supplies,West,1246.278,179.56,253.697,191.91,67.86,18.74,Cloudy,0.0,65.58,Winter,live-1775456486-011,West,Surat,Gujarat,India,Retail Hub 5
+2025-01-04,S005,P0023,Pharmaceuticals,East,1327.898,251.765,251.765,262.22,55.87,9.33,Cloudy,0.0,55.16,Winter,live-1775456486-012,East,Bhubaneswar,Odisha,India,Retail Hub 5
+2025-01-02,S002,P0022,Semiconductors,East,1423.743,143.172,161.906,147.29,62.58,14.04,Snowy,1.0,64.36,Winter,live-1775456486-013,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-02,S003,P0026,Sports Equipment,East,1526.649,148.046,186.832,156.48,63.99,11.71,Sunny,0.0,64.03,Winter,live-1775456486-014,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-01,S002,P0006,Toys,East,1686.422,159.621,159.621,168.39,42.14,25.48,Snowy,0.0,43.03,Winter,live-1775456486-015,East,Ranchi,Jharkhand,India,Retail Hub 2
+2025-01-03,S003,Automotive Parts,Automotive Parts,East,294.887,264.844,264.844,281.67,69.82,8.13,Sunny,0.0,71.59,Winter,live-1775456515-001,Nan,Unknown,Unknown,India,Retail Hub 3
+2025-01-02,S001,P0027,Beauty & Personal Care,South,1619.839,145.525,181.976,153.97,71.31,20.52,Sunny,0.0,68.25,Winter,live-1775456515-002,South,Hyderabad,Telangana,India,Retail Hub 1
+2024-01-01,S006,P0016,Clothing,South,120.789,68.433,113.879,69.57,67.46,9.8,Snowy,0.0,64.32,Winter,live-1775456515-003,South,Bengaluru,Karnataka,India,Retail Hub
+2025-01-02,S001,P0021,EV Vehicles,West,1187.226,134.939,146.12,137.05,48.34,7.86,Cloudy,0.0,45.97,Winter,live-1775456515-004,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-01,S002,P0013,Electronics,South,1939.681,115.671,124.142,121.78,66.98,13.05,Snowy,0.0,66.34,Winter,live-1775456515-005,South,Chennai,Tamil Nadu,India,Retail Hub 2
+2023-12-31,S005,P0017,Furniture,West,142.302,48.794,223.159,50.14,97.01,21.5,Cloudy,1.0,100.84,Winter,live-1775456515-006,West,Ahmedabad,Gujarat,India,Retail Hub 5
+2025-01-02,S002,P0020,Groceries,East,1787.343,161.444,169.533,170.17,76.76,11.13,Rainy,0.0,72.68,Winter,live-1775456515-007,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-05,S004,P0025,Home Appliances,West,1221.222,245.457,245.457,259.85,59.84,32.39,Rainy,0.0,58.41,Winter,live-1775456515-008,West,Surat,Gujarat,India,Retail Hub 4
+2025-01-01,S004,P0030,Industrial Tools,East,2003.691,184.775,210.259,191.4,76.29,12.25,Rainy,0.0,78.91,Winter,live-1775456515-009,East,Bhubaneswar,Odisha,India,Retail Hub 4
+2025-01-01,S002,P0029,Office Supplies,East,1751.323,178.269,178.522,192.19,61.81,7.06,Sunny,0.0,60.11,Winter,live-1775456515-010,East,Bhubaneswar,Odisha,India,Retail Hub 2
+2025-01-03,S003,P0028,Pet Supplies,West,1392.734,180.295,215.375,190.94,64.48,19.0,Cloudy,0.0,65.53,Winter,live-1775456515-011,West,Surat,Gujarat,India,Retail Hub 3
+2025-01-03,S006,P0023,Pharmaceuticals,East,1005.391,141.484,152.649,149.68,67.85,12.96,Sunny,0.0,65.92,Winter,live-1775456515-012,East,Guwahati,Assam,India,Retail Hub
+2025-01-04,S005,P0022,Semiconductors,East,987.957,329.784,329.784,346.12,62.25,10.38,Snowy,1.0,60.97,Winter,live-1775456515-013,East,Kolkata,West Bengal,India,Retail Hub 5
+2025-01-03,S002,P0026,Sports Equipment,East,1386.336,175.083,184.431,178.22,66.77,14.01,Sunny,0.0,64.81,Winter,live-1775456515-014,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-02,S002,P0019,Toys,East,1630.051,155.357,155.357,158.64,51.21,20.26,Snowy,0.0,50.1,Winter,live-1775456515-015,East,Guwahati,Assam,India,Retail Hub 2
+2025-01-03,S004,P0024,Automotive Parts,East,1635.962,163.112,163.456,171.75,61.42,3.7,Snowy,0.0,57.74,Winter,live-1775456553-001,East,Kolkata,West Bengal,India,Retail Hub 4
+2025-01-04,S005,P0027,Beauty & Personal Care,West,1677.869,218.866,247.131,227.35,53.75,11.01,Sunny,0.0,56.4,Winter,live-1775456553-002,West,Surat,Gujarat,India,Retail Hub 5
+2024-01-02,S006,P0015,Clothing,North,144.142,31.768,55.093,33.22,93.21,11.52,Sunny,0.0,95.28,Winter,live-1775456553-003,North,Dehradun,Uttarakhand,India,Retail Hub
+2025-01-03,S003,P0021,EV Vehicles,East,1162.327,170.613,170.613,172.74,63.7,16.94,Cloudy,0.0,66.16,Winter,live-1775456553-004,East,Kolkata,West Bengal,India,Retail Hub 3
+2023-12-29,S001,P0006,Electronics,West,231.574,176.589,178.535,190.0,75.01,17.0,Snowy,0.0,71.41,Winter,live-1775456553-005,West,Pune,Maharashtra,India,Retail Hub 1
+2025-01-01,S001,P0006,Furniture,North,1718.61,112.889,112.889,115.22,64.21,25.78,Snowy,0.0,66.7,Winter,live-1775456553-006,North,Dehradun,Uttarakhand,India,Retail Hub 1
+2025-01-02,S006,P0007,Groceries,South,1180.184,131.224,156.272,137.65,63.08,2.85,Cloudy,0.0,64.44,Winter,live-1775456553-007,South,Coimbatore,Tamil Nadu,India,Retail Hub
+2025-01-03,S001,P0025,Home Appliances,South,1068.883,207.76,207.76,221.79,67.25,8.01,Snowy,0.0,66.21,Winter,live-1775456553-008,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-02,S001,P0030,Industrial Tools,East,1721.672,163.447,192.311,168.63,59.79,20.76,Sunny,0.0,61.05,Winter,live-1775456553-009,East,Kolkata,West Bengal,India,Retail Hub 1
+2025-01-03,S001,P0029,Office Supplies,West,1510.195,189.838,204.965,199.21,65.98,22.07,Cloudy,0.0,67.89,Winter,live-1775456553-010,West,Surat,Gujarat,India,Retail Hub 1
+2025-01-03,S001,P0028,Pet Supplies,South,1745.448,208.618,208.618,213.08,67.25,19.3,Snowy,0.0,65.23,Winter,live-1775456553-011,South,Hyderabad,Telangana,India,Retail Hub 1
+2025-01-02,S003,P0023,Pharmaceuticals,East,1246.368,148.916,152.785,160.12,65.39,12.63,Sunny,0.0,61.51,Winter,live-1775456553-012,East,Guwahati,Assam,India,Retail Hub 3
+2025-01-04,S004,P0022,Semiconductors,South,1397.044,158.712,160.447,164.66,61.59,8.41,Rainy,0.0,58.15,Winter,live-1775456553-013,South,Hyderabad,Telangana,India,Retail Hub 4
+2025-01-03,S002,P0026,Sports Equipment,West,1576.322,151.367,190.075,158.36,63.73,8.1,Rainy,0.0,60.97,Winter,live-1775456553-014,West,Surat,Gujarat,India,Retail Hub 2
+2024-01-01,S002,P0006,Toys,South,444.158,286.747,286.747,293.41,78.99,17.0,Sunny,0.0,79.04,Winter,live-1775456553-015,South,Hyderabad,Telangana,India,Retail Hub 2
