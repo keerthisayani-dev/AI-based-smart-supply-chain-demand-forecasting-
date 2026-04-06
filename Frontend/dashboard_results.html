@@ -6714,7 +6714,7 @@
           // Keep results loading even if dynamic options are slow or unavailable.
         });
         await applyRoleUi();
-        await loadResults({ forceRefresh: true });
+        await loadResults({ forceRefresh: false });
         startResultsAutoRefresh();
         applyResultsSectionRoute();
         fetchLiveStatus()

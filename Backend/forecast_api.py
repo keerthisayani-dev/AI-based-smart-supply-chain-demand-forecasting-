@@ -3030,7 +3030,10 @@ def dashboard_results(request: Request) -> Response:
         f"window.__DEMANDIQ_RESULTS_BOOTSTRAP__ = {json.dumps(bootstrap_payload)};"
         "</script>"
     )
-    html = html.replace("</body>", f"{bootstrap_script}\n</body>")
+    if "</head>" in html:
+        html = html.replace("</head>", f"{bootstrap_script}\n</head>", 1)
+    else:
+        html = html.replace("</body>", f"{bootstrap_script}\n</body>", 1)
     return HTMLResponse(content=html, headers=NO_CACHE_HEADERS)
 
 
