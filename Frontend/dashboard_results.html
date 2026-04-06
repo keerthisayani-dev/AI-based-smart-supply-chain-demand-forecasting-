@@ -2836,10 +2836,6 @@
           <i data-lucide="line-chart" class="menu-icon"></i>
           <span class="menu-text">Past Demand Report</span>
         </button>
-        <button class="menu-item optional-toggle" id="dynamicToolsNavBtn" type="button">
-          <i data-lucide="table-properties" class="menu-icon"></i>
-          <span class="menu-text">Dataset Editor</span>
-        </button>
         <button class="menu-item optional-toggle" id="compareNavBtn" type="button">
           <i data-lucide="git-compare-arrows" class="menu-icon"></i>
           <span class="menu-text">Hybrid Compare</span>
@@ -2985,10 +2981,10 @@
     </section>
     <section class="glass-card optional-panel-hidden" id="dynamicCompareSection">
       <div class="chart-head">
-        <h3 id="dynamicCompareTitle">Dynamic Dataset Editor and Hybrid Platform Comparison</h3>
+        <h3 id="dynamicCompareTitle">Hybrid Product Comparison</h3>
       </div>
-      <div class="dynamic-grid">
-        <article class="dynamic-card" id="dynamicEditorCard">
+      <div class="dynamic-grid compare-only">
+        <article class="dynamic-card optional-panel-hidden" id="dynamicEditorCard" style="display:none !important;" aria-hidden="true">
           <div class="dynamic-card-head">
             <div class="dynamic-copy">
               <h4 class="dynamic-title">Edit Dynamic Records</h4>
@@ -3393,7 +3389,10 @@
 
     function normalizeResultsSection(value) {
       const key = String(value || "").trim().toLowerCase();
-      if (["strategy", "dynamic-tools", "compare", "history", "admin-upload"].includes(key)) {
+      if (key === "dynamic-tools") {
+        return "compare";
+      }
+      if (["strategy", "compare", "history", "admin-upload"].includes(key)) {
         return key;
       }
       return "reports";
@@ -3517,7 +3516,6 @@
       const sectionLabels = {
         reports: currentMode === "past" ? "Past Demand Report Branch" : "Results Report Branch",
         strategy: "Hybrid Strategy Branch",
-        "dynamic-tools": "Dataset Editor Branch",
         compare: "Hybrid Strategy and Platform Compare Branch",
         history: "History Log Branch",
         "admin-upload": "Admin Upload Hub Branch",
@@ -3525,7 +3523,6 @@
 
       const isReports = section === "reports";
       const isStrategy = section === "strategy";
-      const isDynamic = section === "dynamic-tools";
       const isCompare = section === "compare";
       const isHistory = section === "history";
       const isAdminUpload = section === "admin-upload";
@@ -3535,7 +3532,7 @@
         resultsHeroCard.classList.toggle("section-hero-hidden", !isReports);
       }
       setStrategyPanelOpen(isCompare || isStrategy);
-      setDynamicToolsPanelOpen(isDynamic);
+      setDynamicToolsPanelOpen(false);
       setComparePanelOpen(isCompare || isStrategy);
       setHistoryPanelOpen(isHistory);
       setAdminUploadPanelOpen(isAdminUpload);
@@ -3545,10 +3542,10 @@
         el.classList.toggle("optional-panel-hidden", !isReports);
       });
       if (dynamicCompareSection) {
-        dynamicCompareSection.classList.toggle("optional-panel-hidden", !(isDynamic || isCompare || isStrategy));
+        dynamicCompareSection.classList.toggle("optional-panel-hidden", !(isCompare || isStrategy));
       }
       if (dynamicCompareGrid) {
-        dynamicCompareGrid.classList.toggle("editor-only", isDynamic);
+        dynamicCompareGrid.classList.remove("editor-only");
         dynamicCompareGrid.classList.toggle("compare-only", isCompare || isStrategy);
       }
 
@@ -3598,13 +3595,9 @@
       if (dynamicCompareSection) dynamicCompareSection.style.display = "";
       if (dynamicEditorCard) dynamicEditorCard.style.display = (isAdmin || isInventoryManager) ? "" : "none";
       if (dynamicCompareCard) dynamicCompareCard.style.display = "";
-      if (dynamicCompareTitle) {
-        dynamicCompareTitle.textContent = isViewer
-          ? "Hybrid Product Comparison"
-          : "Dynamic Dataset Editor and Hybrid Product Comparison";
-      }
+      if (dynamicCompareTitle) dynamicCompareTitle.textContent = "Hybrid Product Comparison";
       if (dynamicCompareGrid) {
-        dynamicCompareGrid.classList.toggle("compare-only", isViewer);
+        dynamicCompareGrid.classList.add("compare-only");
       }
       if (downloadDropdownEl) downloadDropdownEl.style.display = isViewer ? "none" : "";
       if (downloadPdfItem) downloadPdfItem.style.display = isInventoryManager ? "none" : "";
@@ -4802,7 +4795,7 @@
         if (topUserNameResultsEl) topUserNameResultsEl.textContent = fullName;
         if (role === "admin") roleAccessNote = "Admin access: strategy simulator, dataset editor, product comparison, and admin controls enabled.";
         if (role === "inventory_manager") roleAccessNote = "Inventory Planner access: strategy simulator and product comparison enabled, with limited dataset editor access.";
-        if (role === "viewer") roleAccessNote = "Viewer access: product comparison only in this section. Strategy simulator and dataset editor are hidden.";
+        if (role === "viewer") roleAccessNote = "Viewer access: product comparison only in this section. Strategy simulator is hidden.";
         if (roleTextEl) roleTextEl.textContent = roleAccessNote;
         if (resultsHeroMetaEl) resultsHeroMetaEl.textContent = `${roleTitle} access is active for this results workspace.`;
         applyRoleFeatureGates();
@@ -6228,7 +6221,7 @@
       }
 
       const uploadType = String(uploadTypeSelect.value || "sandbox_training_dataset");
-      const retrainModel = uploadType !== "inventory_stock_file";
+      const retrainModel = false;
       setAdminStatusText("Uploading and validating document...");
       uploadDatasetBtn.disabled = true;
       try {
@@ -6291,11 +6284,11 @@
               storedAs,
               recordsProcessed: processed,
               duplicatesInfo: duplicateLine,
-              trainingStatus: data?.retrained ? "Completed" : "Skipped",
+              trainingStatus: data?.retrained ? "Completed" : "Pending manual retrain",
               trainedCategories,
               failedCategoriesText,
               modelMetrics: data?.model_metrics || {},
-              datasetImpact: "Original sales dataset not modified. Training used uploaded file only.",
+              datasetImpact: "Original sales dataset not modified. Upload completed quickly. Use 'Retrain Predicted Model' when you want to train.",
             });
           } else if (uploadType === "inventory_stock_file") {
             const lowStock = Number(data?.inventory_alerts?.low_stock || 0);
@@ -6329,11 +6322,11 @@
               storedAs,
               recordsProcessed: processed,
               duplicatesInfo: duplicateLine,
-              trainingStatus: data?.retrained ? "Completed" : "Skipped",
+              trainingStatus: data?.retrained ? "Completed" : "Pending manual retrain",
               trainedCategories,
               failedCategoriesText,
               modelMetrics: data?.model_metrics || {},
-              datasetImpact: "Upload handled successfully.",
+              datasetImpact: "Upload handled successfully. Use 'Retrain Predicted Model' separately when needed.",
             });
           }
           await loadResults();
@@ -6697,36 +6690,59 @@
           shell.classList.add("ready");
         }
 
-        const plotlyReady = await ensurePlotlyLoaded();
-        if (!plotlyReady) {
-          const contextEl = document.getElementById("contextText");
-          if (contextEl) {
-            contextEl.textContent = "Chart library could not be loaded. Check internet/firewall and reload.";
-          }
-        }
-        loadDynamicOptions({ preferCache: true }).catch(() => {
+        const plotlyReadyPromise = ensurePlotlyLoaded()
+          .then(async (plotlyReady) => {
+            if (!plotlyReady) {
+              const contextEl = document.getElementById("contextText");
+              if (contextEl) {
+                contextEl.textContent = "Chart library could not be loaded. Check internet/firewall and reload.";
+              }
+              return;
+            }
+            if (!window.__demandIqPlotlyRefreshDone) {
+              window.__demandIqPlotlyRefreshDone = true;
+              await loadResults({ forceRefresh: false, liveStatus: latestLiveStatus });
+            }
+          })
+          .catch(() => {
+            const contextEl = document.getElementById("contextText");
+            if (contextEl) {
+              contextEl.textContent = "Chart library could not be loaded. Check internet/firewall and reload.";
+            }
+          });
+        const dynamicOptionsWarmPromise = loadDynamicOptions({ preferCache: true }).catch(() => {
           // Keep results loading even if dynamic options are slow or unavailable.
         });
         await applyRoleUi();
-        const liveStatus = await fetchLiveStatus().catch(() => latestLiveStatus);
-        await loadResults({ forceRefresh: true, liveStatus });
+        await loadResults({ forceRefresh: true });
         startResultsAutoRefresh();
         applyResultsSectionRoute();
+        fetchLiveStatus()
+          .then(async (liveStatus) => {
+            if (currentMode === "forecast" && liveStatus?.running) {
+              await loadResults({ forceRefresh: true, liveStatus });
+            }
+          })
+          .catch(() => {
+            // Keep the initial results visible even if live status is unavailable.
+          });
 
-        // Load dynamic editor data in background so forecast results render immediately.
-        loadDynamicOptions({ preferCache: true, forceRefresh: true })
+        // Load hybrid compare options in background so comparison stays ready without editor features.
+        dynamicOptionsWarmPromise
+          .then(() => loadDynamicOptions({ preferCache: true, forceRefresh: true }))
           .then(async () => {
             await Promise.all([
-              loadDynamicRecords(),
               syncStrategyInputsForProductChange(),
             ]);
             warmStrategyCacheForProducts(dynamicProductOptions);
           })
           .catch((err) => {
-            setDynamicEditorStatus(`Dynamic data unavailable: ${String(err?.message || "Unknown error")}`);
             setCompareStatus(`Dynamic compare unavailable: ${String(err?.message || "Unknown error")}`);
             setStrategyStatus(`Strategy simulator unavailable: ${String(err?.message || "Unknown error")}`);
           });
+        plotlyReadyPromise.catch(() => {
+          // Warning text is already handled above.
+        });
       } catch (err) {
         const contextEl = document.getElementById("contextText");
         const roleTextEl = document.getElementById("roleText");

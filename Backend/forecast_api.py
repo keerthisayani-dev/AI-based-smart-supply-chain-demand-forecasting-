@@ -2945,6 +2945,15 @@ def dashboard(request: Request) -> Response:
             detail=f"Dashboard file not found at {FRONTEND_HTML_PATH}",
         )
     html = FRONTEND_HTML_PATH.read_text(encoding="utf-8")
+    try:
+        with _engine_lock:
+            bootstrap_payload = _get_cached_scope_payload(_get_cached_df())
+        bootstrap_json = json.dumps(bootstrap_payload, separators=(",", ":"))
+        bootstrap_script = f'<script>window.__DEMANDIQ_BOOTSTRAP__={bootstrap_json};</script>\n'
+        html = html.replace('<script defer src="/assets/js/dashboard_redesign.js?v=20260406-01"></script>', f"{bootstrap_script}<script defer src=\"/assets/js/dashboard_redesign.js?v=20260406-01\"></script>")
+    except Exception:
+        # Fall back to the static HTML if bootstrap injection fails.
+        pass
     return HTMLResponse(content=html, headers=NO_CACHE_HEADERS)
 
 
