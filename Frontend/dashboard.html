@@ -13,8 +13,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   <link rel="stylesheet" href="/assets/css/dashboard_glass.css?v=20260402-02" />
   <link rel="stylesheet" href="/assets/css/portfolio_dark_theme.css?v=20260402-02" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 <body class="dashboard-layout">
   <div class="mesh-bg" aria-hidden="true"></div>
@@ -198,34 +198,6 @@
       </article>
     </section>
 
-    <section id="cityStoreSummarySection" class="surface-card city-store-summary-card">
-      <div class="viz-head city-store-summary-head">
-        <div>
-          <h2>City Store Inventory Snapshot</h2>
-          <span id="cityStoreSummaryMeta" class="viz-meta-line">Select a city to view all stores, quantities, units sold, and demand signals.</span>
-        </div>
-      </div>
-      <div id="cityStoreSummaryEmpty" class="city-store-summary-empty">Select a city to load store-wise quantities and sales details.</div>
-      <div id="cityStoreSummaryWrap" class="city-store-summary-wrap is-hidden">
-        <table class="city-store-table" aria-label="City store inventory summary">
-          <thead>
-            <tr>
-              <th>Store</th>
-              <th>Store ID</th>
-              <th>Latest Date</th>
-              <th>Inventory</th>
-              <th>Units Sold</th>
-              <th>Units Ordered</th>
-              <th>Avg Forecast</th>
-              <th>Price</th>
-              <th>Discount</th>
-            </tr>
-          </thead>
-          <tbody id="cityStoreSummaryBody"></tbody>
-        </table>
-      </div>
-    </section>
-
     <section id="forecastVisualization" class="surface-card viz-panel">
       <article class="surface-card viz-card viz-card-wide">
         <h3>All 15 Product Daily Trends</h3>
@@ -332,8 +304,8 @@
 
   <footer class="page-footer">&copy; DemandIQ - AI Demand Prediction System</footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="/assets/js/dashboard_redesign.js?v=20260403-05"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script defer src="/assets/js/dashboard_redesign.js?v=20260406-01"></script>
 </body>
 </html>
 

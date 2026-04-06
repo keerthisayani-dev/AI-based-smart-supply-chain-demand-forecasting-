@@ -105,6 +105,7 @@ let liveAutoRefreshTimer = null;
 let liveControlBusy = false;
 let lastAppliedLiveDate = "";
 let dashboardInitialized = false;
+let deferredTasksInitialized = false;
 const LIVE_REFRESH_INTERVAL_MS = 2000;
 const LIVE_SIMULATION_INTERVAL_SECONDS = 1;
 let liveSimulationState = {
@@ -867,6 +868,48 @@ function resetAdvancedSections(message) {
   if (r2ValueEl) r2ValueEl.textContent = "-";
 }
 
+function resetVisualizationPlaceholders() {
+  destroyCharts();
+  latestDashboardData = null;
+  setElementText("avgForecastKpi", "-");
+  setElementText("peakDayKpi", "-");
+  setElementText("riskLevelKpi", "-");
+  setElementText("trendWindowValue", "-");
+  setElementText("trendPeakValue", "-");
+  setElementText("trendDirectionValue", "-");
+  setElementText("summaryHint", "Summary updates when city, store, category, or date changes.");
+  setChartEmptyState("actualForecastEmpty", true, "Select city, store, and category to view this chart.");
+  setChartEmptyState("dailyTrendEmpty", true, "Select city, store, and category to view this chart.");
+  setChartEmptyState("stockRiskEmpty", true, "Select city, store, and category to view this chart.");
+  setChartEmptyState("categoryComparisonEmpty", true, "Select a city to load product daily trends.");
+  resetAdvancedSections("Choose city, store, and category to view AI insight.");
+}
+
+function scheduleDeferredTask(callback, timeout = 300) {
+  if (typeof callback !== "function") return;
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(() => {
+      Promise.resolve().then(callback).catch(() => {});
+    }, { timeout });
+    return;
+  }
+  window.setTimeout(() => {
+    Promise.resolve().then(callback).catch(() => {});
+  }, timeout);
+}
+
+function initializeDeferredTasks() {
+  if (deferredTasksInitialized) return;
+  deferredTasksInitialized = true;
+  scheduleDeferredTask(async () => {
+    await loadManualTrendData();
+  }, 500);
+  scheduleDeferredTask(async () => {
+    await refreshLiveStatus();
+    startLiveStatusPolling();
+  }, 1200);
+}
+
 function updateAdvancedSections(data) {
   const {
     category,
@@ -970,12 +1013,23 @@ function getSelectedStore() {
   return storeEl.value || "";
 }
 
+function hasDetailedForecastVisuals() {
+  return Boolean(
+    document.getElementById("actualForecastChart")
+    || document.getElementById("dailyTrendChart")
+    || document.getElementById("stockRiskGauge"),
+  );
+}
+
 function buildRenderKey() {
   const city = getSelectedCity();
   const category = getSelectedOrFirstCategory();
   const store = getSelectedStore();
   const { from, to } = getResolvedDateRange();
   const liveMode = liveSimulationState.running ? "live" : "manual";
+  if (!hasDetailedForecastVisuals()) {
+    return `${city}|${category}|${from}|${to}|${liveMode}`;
+  }
   return `${city}|${store}|${category}|${from}|${to}|${liveMode}`;
 }
 
@@ -1146,6 +1200,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
   const city = getSelectedCity();
   const store = getSelectedStore();
   const category = getSelectedOrFirstCategory();
+  const detailedVisualsPresent = hasDetailedForecastVisuals();
   const hasDetailedScope = Boolean(city && category && store);
   const { from, to } = getResolvedDateRange();
   const subtitleEl = document.getElementById("vizSubtitle");
@@ -1158,6 +1213,269 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
       : (city
         ? `${city} | all 15 products | ${from} to ${to}`
         : `All cities | all 15 products | ${from} to ${to}`);
+  }
+
+  if (!detailedVisualsPresent) {
+    latestDashboardData = null;
+    setElementText("avgForecastKpi", "-");
+    setElementText("peakDayKpi", "-");
+    setElementText("riskLevelKpi", "-");
+    setElementText("summaryHint", city
+      ? `Showing all 15 product trends for ${city}.`
+      : "Select a city to load product daily trends.");
+    if (!hasDetailedScope) {
+      resetAdvancedSections("Choose city, store, and category to view AI insight.");
+    } else {
+      try {
+        const detailSnapshot = await fetchForecastSnapshot(city, store, category, from, to, {
+          liveMode,
+          forceRefresh: liveMode,
+        });
+        if (isStale()) return;
+        const history = Array.isArray(detailSnapshot.filteredHistory) ? detailSnapshot.filteredHistory : [];
+        const forecast = Array.isArray(detailSnapshot.filteredForecast) ? detailSnapshot.filteredForecast : [];
+        const labels = Array.from(new Set([
+          ...history.map((x) => String(x.date || "")),
+          ...forecast.map((x) => String(x.date || "")),
+        ])).filter(Boolean).sort();
+        const actualMap = new Map(history.map((row) => [row.date, Number(row.actual_units_sold || 0)]));
+        const forecastMap = new Map(forecast.map((row) => [row.date, Number(row.forecast_units_sold || 0)]));
+        const totalForecast = forecast.reduce((sum, row) => sum + Number(row.forecast_units_sold || 0), 0);
+        const avgForecast = forecast.length ? totalForecast / forecast.length : 0;
+        const peakDayRow = forecast.reduce((max, row) => {
+          const current = Number(row?.forecast_units_sold || 0);
+          const best = Number(max?.forecast_units_sold || -Infinity);
+          return current > best ? row : max;
+        }, null);
+        const latestActual = history.length ? Number(history[history.length - 1].actual_units_sold || 0) : 0;
+        const coverageDays = avgForecast > 0 ? (latestActual * 10) / avgForecast : 0;
+
+        let riskLabel = "Low";
+        if (coverageDays < 5) riskLabel = "High";
+        else if (coverageDays < 10) riskLabel = "Medium";
+
+        setElementText("avgForecastKpi", avgForecast > 0 ? avgForecast.toFixed(1) : "-");
+        setElementText("peakDayKpi", peakDayRow?.date ? formatShortDate(peakDayRow.date) : "-");
+        setElementText("riskLevelKpi", riskLabel);
+        setElementText("summaryHint", peakDayRow?.date
+          ? `Peak predicted value on ${formatShortDate(peakDayRow.date)} with ${Number(peakDayRow.forecast_units_sold || 0).toFixed(1)} units.`
+          : `Showing all 15 product trends for ${city}.`);
+
+        const firstForecast = forecast.length ? Number(forecast[0].forecast_units_sold || 0) : 0;
+        const lastForecast = forecast.length ? Number(forecast[forecast.length - 1].forecast_units_sold || 0) : 0;
+        const growthPct = firstForecast > 0 ? ((lastForecast - firstForecast) / firstForecast) * 100 : 0;
+        const pairedPoints = labels
+          .map((date) => ({ actual: actualMap.get(date), predicted: forecastMap.get(date) }))
+          .filter((point) => Number.isFinite(point.actual) && Number.isFinite(point.predicted));
+        let mae = 0;
+        let rmse = 0;
+        let r2 = 0;
+        if (pairedPoints.length) {
+          const absErr = pairedPoints.map((point) => Math.abs(point.actual - point.predicted));
+          const sqErr = pairedPoints.map((point) => (point.actual - point.predicted) ** 2);
+          mae = absErr.reduce((a, b) => a + b, 0) / absErr.length;
+          rmse = Math.sqrt(sqErr.reduce((a, b) => a + b, 0) / sqErr.length);
+          const meanActual = pairedPoints.reduce((sum, point) => sum + point.actual, 0) / pairedPoints.length;
+          const ssRes = sqErr.reduce((a, b) => a + b, 0);
+          const ssTot = pairedPoints.reduce((sum, point) => sum + (point.actual - meanActual) ** 2, 0);
+          r2 = ssTot > 0 ? 1 - (ssRes / ssTot) : 0;
+        }
+        const metricsAreDefaultLike = Math.abs(mae) < 1e-9 && Math.abs(rmse) < 1e-9 && Math.abs(r2) < 1e-9;
+        if (!Number.isFinite(mae) || !Number.isFinite(rmse) || !Number.isFinite(r2) || metricsAreDefaultLike) {
+          mae = DEFAULT_PERFORMANCE_METRICS.mae;
+          rmse = DEFAULT_PERFORMANCE_METRICS.rmse;
+          r2 = DEFAULT_PERFORMANCE_METRICS.r2;
+        }
+
+        const reorderPoint = Math.round((avgForecast * DEFAULT_LEAD_TIME_DAYS) + DEFAULT_SAFETY_STOCK);
+        const estimatedInventory = Math.round(latestActual * 4);
+        const recommendedOrderQty = Math.max(0, reorderPoint - estimatedInventory);
+        const alerts = [];
+        if (growthPct > 12) alerts.push({ level: "critical", text: `Warning: ${category} - High demand expected` });
+        if (estimatedInventory < reorderPoint) alerts.push({ level: "warning", text: `Warning: ${category} - Reorder recommended soon` });
+        if (!alerts.length) alerts.push({ level: "safe", text: `OK: ${category} - Inventory levels safe` });
+
+        const exportRows = labels.map((date) => ({
+          date,
+          actual: actualMap.has(date) ? Number(actualMap.get(date)) : null,
+          forecast: forecastMap.has(date) ? Number(forecastMap.get(date)) : null,
+        }));
+
+        updateAdvancedSections({
+          city,
+          category,
+          from,
+          to,
+          avgForecast,
+          peakDayRow,
+          growthPct,
+          reorderPoint,
+          recommendedOrderQty,
+          estimatedInventory,
+          riskLabel,
+          alerts,
+          metrics: { mae, rmse, r2 },
+          rows: exportRows,
+        });
+      } catch (err) {
+        if (isStale()) return;
+        resetAdvancedSections(`Unable to generate AI insight: ${err.message}`);
+      }
+    }
+
+    const productSeries = scopeOptionsState.categories
+      .filter(Boolean)
+      .slice(0, 15);
+    if (!city) {
+      if (categoryComparisonChart) {
+        categoryComparisonChart.destroy();
+        categoryComparisonChart = null;
+      }
+      setChartEmptyState("categoryComparisonEmpty", true, "Select a city to load product daily trends.");
+      latestRenderKey = requestedKey || `${city}|${category}|${from}|${to}`;
+      return;
+    }
+
+    const categoryRows = await Promise.all(productSeries.map(async (cat) => {
+      try {
+        const snap = await fetchForecastSnapshot(city, "", cat, from, to, {
+          liveMode,
+          forceRefresh: liveMode,
+        });
+        const preferredRows = Array.isArray(snap.filteredForecast) && snap.filteredForecast.length
+          ? snap.filteredForecast
+          : snap.filteredHistory;
+        return {
+          category: cat,
+          points: (Array.isArray(preferredRows) ? preferredRows : []).map((row) => ({
+            date: String(row?.date || ""),
+            value: Number(
+              row?.forecast_units_sold != null
+                ? row.forecast_units_sold
+                : row?.actual_units_sold != null
+                  ? row.actual_units_sold
+                  : NaN,
+            ),
+          })).filter((point) => point.date && Number.isFinite(point.value)),
+        };
+      } catch (_) {
+        return { category: cat, points: [] };
+      }
+    }));
+    if (isStale()) return;
+
+    const comparisonCanvas = document.getElementById("categoryComparisonChart");
+    if (!comparisonCanvas) return;
+    const comparisonCtx = comparisonCanvas.getContext("2d");
+    const comparisonLabels = Array.from(new Set(
+      categoryRows.flatMap((row) => row.points.map((point) => point.date)),
+    )).filter(Boolean).sort();
+    const comparisonDatasets = categoryRows
+      .filter((row) => Array.isArray(row.points) && row.points.length)
+      .map((row, index) => {
+        const pointMap = new Map(row.points.map((point) => [point.date, point.value]));
+        const isSelectedCategory = row.category === category;
+        return {
+          label: row.category,
+          data: comparisonLabels.map((date) => (pointMap.has(date) ? Number(pointMap.get(date)) : null)),
+          borderColor: buildTrendReferenceColor(index, isSelectedCategory ? 1 : 0.82),
+          backgroundColor: buildTrendReferenceColor(index, 0.08),
+          borderWidth: isSelectedCategory ? 2.6 : 1.7,
+          pointRadius: comparisonLabels.length > 18 ? (isSelectedCategory ? 2.8 : 1.8) : (isSelectedCategory ? 3.6 : 2.4),
+          pointHoverRadius: isSelectedCategory ? 5 : 4,
+          pointBackgroundColor: buildTrendReferenceColor(index, 1),
+          pointBorderColor: "rgba(255, 255, 255, 0.96)",
+          pointBorderWidth: 1,
+          pointStyle: "circle",
+          tension: 0.34,
+          spanGaps: true,
+          fill: false,
+        };
+      });
+
+    if (categoryComparisonChart) categoryComparisonChart.destroy();
+    if (comparisonLabels.length && comparisonDatasets.length) {
+      setChartEmptyState("categoryComparisonEmpty", false);
+      categoryComparisonChart = new Chart(comparisonCtx, {
+        type: "line",
+        data: {
+          labels: comparisonLabels.map(formatShortDate),
+          datasets: comparisonDatasets,
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 700, easing: "easeOutQuart" },
+          interaction: { mode: "nearest", intersect: false },
+          plugins: {
+            legend: {
+              position: "top",
+              labels: {
+                color: "#6b7d86",
+                boxWidth: 10,
+                boxHeight: 10,
+                usePointStyle: true,
+                pointStyle: "circle",
+                padding: 10,
+                font: {
+                  size: 11,
+                  weight: "600",
+                },
+              },
+            },
+            tooltip: {
+              backgroundColor: "rgba(255, 255, 255, 0.96)",
+              titleColor: "#52636b",
+              bodyColor: "#52636b",
+              borderColor: "rgba(198, 205, 210, 0.85)",
+              borderWidth: 1,
+              padding: 10,
+              displayColors: true,
+              callbacks: {
+                title(items) {
+                  const item = Array.isArray(items) && items.length ? items[0] : null;
+                  return item?.label ? `Date: ${item.label}` : "";
+                },
+                label(context) {
+                  const value = Number(context.parsed?.y);
+                  return `${context.dataset.label}: ${Number.isFinite(value) ? `${formatMaybeWhole(value)} units` : "-"}`;
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              border: { display: false },
+              ticks: {
+                color: "#7a888f",
+                maxRotation: 0,
+                autoSkip: true,
+                maxTicksLimit: 8,
+              },
+              grid: { display: false },
+            },
+            y: {
+              border: { display: false },
+              title: {
+                display: true,
+                text: "Units Sold",
+                color: "#7a888f",
+                font: { weight: "700", size: 11 },
+              },
+              ticks: {
+                color: "#7a888f",
+                maxTicksLimit: 6,
+              },
+              grid: { color: "rgba(210, 214, 217, 0.55)" },
+            },
+          },
+        },
+      });
+    } else {
+      setChartEmptyState("categoryComparisonEmpty", true, "No product daily trend data available.");
+    }
+    latestRenderKey = requestedKey || `${city}|${category}|${from}|${to}`;
+    return;
   }
 
   let snapshot;
@@ -1450,9 +1768,9 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
   const recommendedOrderQty = Math.max(0, reorderPoint - estimatedInventory);
 
   const alerts = [];
-  if (growthPct > 12) alerts.push({ level: "critical", text: `⚠ ${category} — High demand expected` });
-  if (estimatedInventory < reorderPoint) alerts.push({ level: "warning", text: `⚠ ${category} — Reorder recommended soon` });
-  if (!alerts.length) alerts.push({ level: "safe", text: `✔ ${category} — Inventory levels safe` });
+  if (growthPct > 12) alerts.push({ level: "critical", text: `Warning: ${category} - High demand expected` });
+  if (estimatedInventory < reorderPoint) alerts.push({ level: "warning", text: `Warning: ${category} - Reorder recommended soon` });
+  if (!alerts.length) alerts.push({ level: "safe", text: `OK: ${category} - Inventory levels safe` });
 
   const exportRows = labels.map((date) => ({
     date,
@@ -1481,6 +1799,14 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
   const productSeries = scopeOptionsState.categories
     .filter(Boolean)
     .slice(0, 15);
+  if (!city) {
+    if (categoryComparisonChart) {
+      categoryComparisonChart.destroy();
+      categoryComparisonChart = null;
+    }
+    setChartEmptyState("categoryComparisonEmpty", true, "Select a city to load product daily trends.");
+    return;
+  }
   const categoryRows = await Promise.all(productSeries.map(async (cat) => {
     try {
       const snap = await fetchForecastSnapshot(city, "", cat, from, to, {
@@ -1688,7 +2014,6 @@ function applyLiveStatusPayload(payload = {}, options = {}) {
   const liveWindowChanged = liveSimulationState.running && applyLiveDateWindow(liveSimulationState.latest_data_date);
   updateLiveControlsUi();
   if (options.forceRefresh || liveWindowChanged) {
-    renderCityStoreSummary().catch(() => {});
     queueRenderForecastVisualization({ immediate: true, force: true, liveMode: liveSimulationState.running });
   }
 }
@@ -1706,7 +2031,6 @@ async function refreshLiveStatus(options = {}) {
     const forceRefresh = Boolean(options?.forceRefresh);
     const tickChanged = Number(liveSimulationState.tick_count || 0) !== previousTick;
     if (forceRefresh || tickChanged || liveWindowChanged) {
-      await renderCityStoreSummary();
       await queueRenderForecastVisualization({ immediate: true, force: true });
     }
   } catch (err) {
@@ -2340,9 +2664,11 @@ async function initializeDefaults() {
     shell.classList.remove("preload");
     shell.classList.add("ready");
   }
-  await loadManualTrendData();
-  await renderCityStoreSummary();
-  await queueRenderForecastVisualization({ immediate: true });
+  resetVisualizationPlaceholders();
+  if (hasSavedCity || hasSavedCategory || hasSavedStore) {
+    await queueRenderForecastVisualization({ immediate: true });
+  }
+  initializeDeferredTasks();
 }
 
 function validateInputs() {
@@ -2393,8 +2719,38 @@ function validateInputs() {
   return !hasError;
 }
 
+async function generateInlineDashboardResults() {
+  if (!validateInputs()) return;
+  if (generateBtnEl) {
+    generateBtnEl.disabled = true;
+    generateBtnEl.textContent = "Loading Results...";
+  }
+  setChartEmptyState("categoryComparisonEmpty", true, "Loading product daily trends...");
+  saveDashboardState();
+  try {
+    await queueRenderForecastVisualization({ immediate: true, force: true });
+    const visualizationEl = document.getElementById("forecastVisualization");
+    if (visualizationEl) {
+      visualizationEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  } finally {
+    if (generateBtnEl) {
+      generateBtnEl.disabled = false;
+      generateBtnEl.textContent = "Generate Prediction";
+    }
+  }
+}
+
 function goToResults(mode) {
   if (!validateInputs()) return;
+  if (mode === "forecast" && generateBtnEl) {
+    generateBtnEl.disabled = true;
+    generateBtnEl.textContent = "Loading Forecast...";
+  }
+  if (mode === "past" && pastDemandBtnEl) {
+    pastDemandBtnEl.disabled = true;
+    pastDemandBtnEl.textContent = "Loading Report...";
+  }
   saveDashboardState();
   const resultUrl = `/dashboard/results?city=${encodeURIComponent(cityEl.value)}&store=${encodeURIComponent(storeEl.value)}&category=${encodeURIComponent(categoryEl.value)}&from=${encodeURIComponent(fromDateEl.value)}&to=${encodeURIComponent(toDateEl.value)}&mode=${encodeURIComponent(mode)}`;
   window.location.href = resultUrl;
@@ -2486,7 +2842,6 @@ cityEl.addEventListener("change", async () => {
   clearFieldError(categoryEl, categoryErrorEl);
   syncScopeSelections("city", cityEl.value || "", "", "");
   await loadStoresForCity(cityEl.value || "", storeEl.value || "");
-  await renderCityStoreSummary();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
@@ -2495,7 +2850,6 @@ storeEl.addEventListener("change", async () => {
   clearFieldError(categoryEl, categoryErrorEl);
   syncScopeSelections("store", cityEl.value || "", "", storeEl.value || "");
   await loadCategoriesForCityStore(cityEl.value || "", storeEl.value || "", categoryEl.value || "");
-  await renderCityStoreSummary();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
@@ -2504,31 +2858,26 @@ categoryEl.addEventListener("change", () => {
   updateCategoryPlaceholderState();
   rebuildCategoryMenu();
   syncScopeSelections("category", cityEl.value || "", categoryEl.value || "", storeEl.value || "");
-  renderCityStoreSummary();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
 fromDateEl.addEventListener("input", () => {
   clearFieldError(fromDateEl, fromDateErrorEl);
-  renderCityStoreSummary();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
 fromDateEl.addEventListener("change", () => {
   clearFieldError(fromDateEl, fromDateErrorEl);
-  renderCityStoreSummary();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
 toDateEl.addEventListener("input", () => {
   clearFieldError(toDateEl, toDateErrorEl);
-  renderCityStoreSummary();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
 toDateEl.addEventListener("change", () => {
   clearFieldError(toDateEl, toDateErrorEl);
-  renderCityStoreSummary();
   saveDashboardState();
   queueRenderForecastVisualization();
 });
@@ -2540,7 +2889,11 @@ const pastDemandBtnEl = document.getElementById("pastDemandBtn");
 const adminDashBtnEl = document.getElementById("adminDashBtn");
 const logoutBtnEl = document.getElementById("logoutBtn");
 
-if (generateBtnEl) generateBtnEl.addEventListener("click", () => goToResults("forecast"));
+if (generateBtnEl) {
+  generateBtnEl.addEventListener("click", async () => {
+    await generateInlineDashboardResults();
+  });
+}
 if (downloadBtnEl) downloadBtnEl.addEventListener("click", () => goToResults("forecast"));
 if (navReportsBtnEl) {
   navReportsBtnEl.addEventListener("click", () => {
@@ -2681,8 +3034,6 @@ if (liveTickBtnEl) {
 initializeDefaults();
 initializeSidebarState();
 updateDashboardClock();
-refreshLiveStatus();
-startLiveStatusPolling();
 startLiveAutoRefreshLoop();
 window.setInterval(updateDashboardClock, 1000);
 window.addEventListener("pageshow", (event) => {

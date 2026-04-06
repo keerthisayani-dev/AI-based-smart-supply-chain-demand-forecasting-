@@ -1134,49 +1134,24 @@
     let authMode = "signin";
     let liveAccountSuggestions = [];
 
+    function clearSavedLoginProfiles() {
+      try {
+        localStorage.removeItem(SAVED_LOGIN_PROFILES_KEY);
+      } catch (_) {
+        // Ignore storage access failures.
+      }
+    }
+
     function loadSavedLoginProfiles() {
-      try {
-        const raw = localStorage.getItem(SAVED_LOGIN_PROFILES_KEY);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) return [];
-        return parsed
-          .map((p) => ({
-            email: String(p?.email || "").trim().toLowerCase(),
-            role: String(p?.role || "").trim(),
-            remember_me: Boolean(p?.remember_me),
-            full_name: String(p?.full_name || "").trim(),
-            password: String(p?.password || ""),
-            updated_at: Number(p?.updated_at || 0),
-          }))
-          .filter((p) => p.email);
-      } catch (_) {
-        return [];
-      }
+      return [];
     }
 
-    function saveLoginProfiles(profiles) {
-      try {
-        localStorage.setItem(SAVED_LOGIN_PROFILES_KEY, JSON.stringify(profiles));
-      } catch (_) {
-        // Ignore local storage write failures.
-      }
+    function saveLoginProfiles() {
+      clearSavedLoginProfiles();
     }
 
-    function upsertSavedLoginProfile(profile) {
-      const email = String(profile?.email || "").trim().toLowerCase();
-      if (!email) return;
-      const existing = loadSavedLoginProfiles();
-      const filtered = existing.filter((p) => p.email !== email);
-      filtered.unshift({
-        email,
-        role: String(profile?.role || "").trim(),
-        remember_me: Boolean(profile?.remember_me),
-        full_name: String(profile?.full_name || "").trim(),
-        password: String(profile?.password || ""),
-        updated_at: Date.now(),
-      });
-      saveLoginProfiles(filtered.slice(0, MAX_SAVED_LOGIN_PROFILES));
+    function upsertSavedLoginProfile() {
+      clearSavedLoginProfiles();
       renderSavedEmailSuggestions();
     }
 
@@ -1684,6 +1659,7 @@
     setMode("signin");
     renderRoleMenu();
     syncRoleTriggerText();
+    clearSavedLoginProfiles();
     consumeLogoutClearFlag();
     clearCredentialFields();
     window.addEventListener("pageshow", clearCredentialFields);
