@@ -13,6 +13,7 @@ import sys
 import tempfile
 import time
 import random
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -146,7 +147,17 @@ NO_CACHE_HEADERS = {
     "Expires": "0",
 }
 
-app = FastAPI(title="Supply Chain Forecasting Engine", version="1.1.0")
+@asynccontextmanager
+async def app_lifespan(_: FastAPI):
+    threading.Thread(
+        target=_prewarm_engine_cache,
+        name="demandiq-cache-prewarm",
+        daemon=True,
+    ).start()
+    yield
+
+
+app = FastAPI(title="Supply Chain Forecasting Engine", version="1.1.0", lifespan=app_lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -1348,16 +1359,6 @@ def _prewarm_engine_cache() -> None:
     except Exception:
         # Background prewarm should never block app startup.
         pass
-
-
-@app.on_event("startup")
-def _startup_prewarm_engine_cache() -> None:
-    threading.Thread(
-        target=_prewarm_engine_cache,
-        name="demandiq-cache-prewarm",
-        daemon=True,
-    ).start()
-
 
 class SalesRecord(BaseModel):
     date: str
