@@ -79,6 +79,7 @@ const ALLOWED_MAX_DATE = "2031-12-31";
 const DASHBOARD_STATE_KEY = "dashboard_form_state_v1";
 const DASHBOARD_FORCE_CLEAR_KEY = "dashboard_force_clear_v1";
 const LOGIN_CLEAR_AFTER_LOGOUT_KEY = "demandiq_clear_login_after_logout_v1";
+const RESULTS_PREFETCH_KEY = "demandiq_results_prefetch_v1";
 const DEFAULT_LEAD_TIME_DAYS = 5;
 const DEFAULT_SAFETY_STOCK = 150;
 const DEFAULT_PERFORMANCE_METRICS = { mae: 8.41, rmse: 10.26, r2: 0.89 };
@@ -2719,25 +2720,75 @@ function validateInputs() {
   return !hasError;
 }
 
-async function generateInlineDashboardResults() {
-  if (!validateInputs()) return;
-  if (generateBtnEl) {
-    generateBtnEl.disabled = true;
-    generateBtnEl.textContent = "Loading Results...";
-  }
-  setChartEmptyState("categoryComparisonEmpty", true, "Loading product daily trends...");
-  saveDashboardState();
+function writeResultsPrefetchPayload(payload) {
   try {
-    await queueRenderForecastVisualization({ immediate: true, force: true });
-    const visualizationEl = document.getElementById("forecastVisualization");
-    if (visualizationEl) {
-      visualizationEl.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  } finally {
-    if (generateBtnEl) {
-      generateBtnEl.disabled = false;
-      generateBtnEl.textContent = "Generate Prediction";
-    }
+    sessionStorage.setItem(RESULTS_PREFETCH_KEY, JSON.stringify(payload));
+  } catch (_) {
+    // Ignore storage failures and continue to results page.
+  }
+}
+
+function prefetchResultsPayloadForNavigation(mode) {
+  const city = String(cityEl.value || "").trim();
+  const store = String(storeEl.value || "").trim();
+  const category = String(categoryEl.value || "").trim();
+  const fromDate = String(fromDateEl.value || "").trim();
+  const toDate = String(toDateEl.value || "").trim();
+  if (!city || !store || !category || !fromDate || !toDate) return;
+
+  const fromDateObj = new Date(`${fromDate}T00:00:00Z`);
+  const toDateObj = new Date(`${toDate}T00:00:00Z`);
+  if (Number.isNaN(fromDateObj.getTime()) || Number.isNaN(toDateObj.getTime())) return;
+  const periodDays = Math.max(1, Math.floor((toDateObj - fromDateObj) / 86400000) + 1);
+  const anchorForForecast = new Date(fromDateObj);
+  anchorForForecast.setUTCDate(anchorForForecast.getUTCDate() - 1);
+  const forecastAnchorDate = anchorForForecast.toISOString().slice(0, 10);
+  const requestAnchor = mode === "past" ? toDate : forecastAnchorDate;
+
+  try {
+    const sameSelection = latestDashboardData
+      && String(latestDashboardData.city || "") === city
+      && String(latestDashboardData.store || "") === store
+      && String(latestDashboardData.category || "") === category
+      && String(latestDashboardData.from || "") === fromDate
+      && String(latestDashboardData.to || "") === toDate;
+    if (!sameSelection || !Array.isArray(latestDashboardData.rows) || !latestDashboardData.rows.length) return;
+
+    const history = latestDashboardData.rows
+      .filter((row) => row && row.date && row.actual != null)
+      .map((row) => ({
+        date: String(row.date),
+        actual_units_sold: Number(row.actual || 0),
+      }));
+    const forecast = latestDashboardData.rows
+      .filter((row) => row && row.date && row.forecast != null)
+      .map((row) => ({
+        date: String(row.date),
+        forecast_units_sold: Number(row.forecast || 0),
+      }));
+    if (!history.length && !forecast.length) return;
+
+    writeResultsPrefetchPayload({
+      query: {
+        city,
+        store,
+        category,
+        from: fromDate,
+        to: toDate,
+        mode,
+      },
+      forecast_payload: {
+        category,
+        city,
+        store,
+        anchor_date: requestAnchor,
+        history,
+        forecast,
+      },
+      stored_at: Date.now(),
+    });
+  } catch (_) {
+    // Allow normal results-page loading if prefetch fails.
   }
 }
 
@@ -2752,6 +2803,7 @@ function goToResults(mode) {
     pastDemandBtnEl.textContent = "Loading Report...";
   }
   saveDashboardState();
+  prefetchResultsPayloadForNavigation(mode);
   const resultUrl = `/dashboard/results?city=${encodeURIComponent(cityEl.value)}&store=${encodeURIComponent(storeEl.value)}&category=${encodeURIComponent(categoryEl.value)}&from=${encodeURIComponent(fromDateEl.value)}&to=${encodeURIComponent(toDateEl.value)}&mode=${encodeURIComponent(mode)}`;
   window.location.href = resultUrl;
 }
@@ -2889,11 +2941,7 @@ const pastDemandBtnEl = document.getElementById("pastDemandBtn");
 const adminDashBtnEl = document.getElementById("adminDashBtn");
 const logoutBtnEl = document.getElementById("logoutBtn");
 
-if (generateBtnEl) {
-  generateBtnEl.addEventListener("click", async () => {
-    await generateInlineDashboardResults();
-  });
-}
+if (generateBtnEl) generateBtnEl.addEventListener("click", () => goToResults("forecast"));
 if (downloadBtnEl) downloadBtnEl.addEventListener("click", () => goToResults("forecast"));
 if (navReportsBtnEl) {
   navReportsBtnEl.addEventListener("click", () => {
