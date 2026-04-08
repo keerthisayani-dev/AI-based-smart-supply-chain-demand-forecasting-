@@ -1191,23 +1191,58 @@ async function fetchForecastSnapshot(city, store, category, fromDate, toDate, op
     const data = await resp.json();
     const history = Array.isArray(data.history) ? data.history : [];
     const forecast = Array.isArray(data.forecast) ? data.forecast : [];
+    const availableHistoryRange = history.length
+      ? {
+        from: String(history[0]?.date || ""),
+        to: String(history[history.length - 1]?.date || ""),
+      }
+      : null;
+    const availableForecastRange = forecast.length
+      ? {
+        from: String(forecast[0]?.date || ""),
+        to: String(forecast[forecast.length - 1]?.date || ""),
+      }
+      : null;
     if (liveMode) {
       return {
         filteredHistory: history.slice(-periodDays),
         filteredForecast: forecast.slice(0, periodDays),
+        usedFallbackRange: false,
+        availableHistoryRange,
+        availableForecastRange,
       };
     }
     const fromTs = new Date(fromDate).getTime();
     const toTs = new Date(toDate).getTime();
+    const filteredHistory = history.filter((r) => {
+      const t = new Date(r.date).getTime();
+      return t >= fromTs && t <= toTs;
+    });
+    let filteredForecast = forecast.filter((r) => {
+      const t = new Date(r.date).getTime();
+      return t >= fromTs && t <= toTs;
+    });
+    let usedFallbackRange = false;
+    if (!filteredForecast.length && forecast.length) {
+      filteredForecast = [...forecast];
+      usedFallbackRange = true;
+    }
+    if (!filteredHistory.length && !filteredForecast.length && history.length) {
+      usedFallbackRange = true;
+      return {
+        filteredHistory: [...history],
+        filteredForecast,
+        usedFallbackRange,
+        availableHistoryRange,
+        availableForecastRange,
+      };
+    }
     return {
-      filteredHistory: history.filter((r) => {
-        const t = new Date(r.date).getTime();
-        return t >= fromTs && t <= toTs;
-      }),
-      filteredForecast: forecast.filter((r) => {
-        const t = new Date(r.date).getTime();
-        return t >= fromTs && t <= toTs;
-      }),
+      filteredHistory,
+      filteredForecast,
+      usedFallbackRange,
+      availableHistoryRange,
+      availableForecastRange,
     };
   })();
   vizDataCache.set(key, promise);
@@ -1600,6 +1635,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
 
   const history = snapshot.filteredHistory;
   const forecast = snapshot.filteredForecast;
+  const usingFallbackRange = Boolean(snapshot.usedFallbackRange);
   const labels = Array.from(new Set([
     ...history.map((x) => String(x.date || "")),
     ...forecast.map((x) => String(x.date || "")),
@@ -1651,7 +1687,9 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
   setElementText("riskLevelKpi", riskLabel);
   setElementText("summaryHint", peakDayRow?.date
     ? `Peak predicted value on ${formatShortDate(peakDayRow.date)} with ${Number(peakDayRow.forecast_units_sold || 0).toFixed(1)} units.`
-    : "Summary updates when city, category, or date changes.");
+    : (usingFallbackRange
+      ? `No rows matched ${from} to ${to}. Showing nearest available range instead.`
+      : "Summary updates when city, category, or date changes."));
 
   const actualForecastCanvas = document.getElementById("actualForecastChart");
   if (actualForecastCanvas) {
