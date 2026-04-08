@@ -680,6 +680,24 @@ function getCategoriesForCityStore(city, store) {
   return getScopeMapValues(scopeOptionsState.cityStoreCategoryMap, `${cityKey}|||${storeKey}`);
 }
 
+function getComparisonCategories(city, store) {
+  const selectedCity = String(city || "").trim();
+  const selectedStore = String(store || "").trim();
+  if (!selectedCity) return scopeOptionsState.categories.filter(Boolean).slice(0, 15);
+
+  const cityScoped = normalizeScopeValues(getCategoriesForCity(selectedCity));
+  if (selectedStore) {
+    const storeScoped = normalizeScopeValues(getCategoriesForCityStore(selectedCity, selectedStore));
+    if (storeScoped.length) {
+      return storeScoped.slice(0, 15);
+    }
+  }
+  if (cityScoped.length) {
+    return cityScoped.slice(0, 15);
+  }
+  return scopeOptionsState.categories.filter(Boolean).slice(0, 15);
+}
+
 function populateScopeSelect(selectEl, placeholder, values, selectedValue) {
   selectEl.innerHTML = `<option value="" selected disabled>${placeholder}</option>`;
   values.forEach((value) => {
@@ -1244,6 +1262,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
   const city = getSelectedCity();
   const store = getSelectedStore();
   const category = getSelectedOrFirstCategory();
+  const comparisonCategories = getComparisonCategories(city, store);
   const detailedVisualsPresent = hasDetailedForecastVisuals();
   const hasDetailedScope = Boolean(city && category && store);
   const { from, to } = getResolvedDateRange();
@@ -1255,8 +1274,8 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
         ? `${city} | ${store} | ${category} | live rolling window`
         : `${city} | ${store} | ${category} | ${from} to ${to}`)
       : (city
-        ? `${city} | all 15 products | ${from} to ${to}`
-        : `All cities | all 15 products | ${from} to ${to}`);
+        ? `${city} | ${comparisonCategories.length} scoped products | ${from} to ${to}`
+        : `All cities | ${comparisonCategories.length} products | ${from} to ${to}`);
   }
 
   if (!detailedVisualsPresent) {
@@ -1265,7 +1284,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
     setElementText("peakDayKpi", "-");
     setElementText("riskLevelKpi", "-");
     setElementText("summaryHint", city
-      ? `Showing all 15 product trends for ${city}.`
+      ? `Showing ${comparisonCategories.length} scoped product trends for ${city}.`
       : "Select a city to load product daily trends.");
     if (!hasDetailedScope) {
       resetAdvancedSections("Choose city, store, and category to view AI insight.");
@@ -1303,7 +1322,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
         setElementText("riskLevelKpi", riskLabel);
         setElementText("summaryHint", peakDayRow?.date
           ? `Peak predicted value on ${formatShortDate(peakDayRow.date)} with ${Number(peakDayRow.forecast_units_sold || 0).toFixed(1)} units.`
-          : `Showing all 15 product trends for ${city}.`);
+          : `Showing ${comparisonCategories.length} scoped product trends for ${city}.`);
 
         const firstForecast = forecast.length ? Number(forecast[0].forecast_units_sold || 0) : 0;
         const lastForecast = forecast.length ? Number(forecast[forecast.length - 1].forecast_units_sold || 0) : 0;
@@ -1367,9 +1386,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
       }
     }
 
-    const productSeries = scopeOptionsState.categories
-      .filter(Boolean)
-      .slice(0, 15);
+    const productSeries = comparisonCategories;
     if (!city) {
       if (categoryComparisonChart) {
         categoryComparisonChart.destroy();
@@ -1550,8 +1567,8 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
     setElementText("trendPeakValue", "-");
     setElementText("trendDirectionValue", "-");
     setElementText("summaryHint", city
-      ? "Showing all 15 product trends for the selected city. Choose store and category to unlock the detailed charts."
-      : "Showing all 15 product trends across all cities. Choose city, store, and category to unlock the detailed charts.");
+      ? `Showing ${comparisonCategories.length} scoped product trends for the selected city. Choose store and category to unlock the detailed charts.`
+      : `Showing ${comparisonCategories.length} product trends across all cities. Choose city, store, and category to unlock the detailed charts.`);
     setChartEmptyState("actualForecastEmpty", true, "Select city, store, and category to view this chart.");
     setChartEmptyState("dailyTrendEmpty", true, "Select city, store, and category to view this chart.");
     setChartEmptyState("stockRiskEmpty", true, "Select city, store, and category to view this chart.");
@@ -1852,9 +1869,7 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
   });
   latestRenderKey = requestedKey || `${category}|${from}|${to}`;
 
-  const productSeries = scopeOptionsState.categories
-    .filter(Boolean)
-    .slice(0, 15);
+  const productSeries = comparisonCategories;
   if (!city) {
     if (categoryComparisonChart) {
       categoryComparisonChart.destroy();
