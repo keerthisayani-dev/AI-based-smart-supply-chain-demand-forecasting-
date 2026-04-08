@@ -47,6 +47,7 @@ try:
         normalize_columns,
         prepare_sales_data,
         parse_date_series,
+        _build_dynamic_fallback_rows,
         train_forecast_model,
     )
 except ImportError:  # Allows running as a script from Backend/
@@ -61,6 +62,7 @@ except ImportError:  # Allows running as a script from Backend/
         normalize_columns,
         prepare_sales_data,
         parse_date_series,
+        _build_dynamic_fallback_rows,
         train_forecast_model,
     )
 
@@ -2892,15 +2894,14 @@ def _fallback_forecast_for_category(
         raise ValueError(f"No rows found for category {resolved_category}{city_msg}{store_msg}")
 
     last_date = pd.to_datetime(category_rows[DATE_COL].max()).normalize()
-    last_value = float(pd.to_numeric(category_rows[TARGET_COL], errors="coerce").dropna().iloc[-1])
     future_dates = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=max(1, int(horizon)), freq="D")
-    return [
-        {
-            "date": d.date().isoformat(),
-            "forecast_units_sold": round(last_value, 3),
-        }
-        for d in future_dates
-    ]
+    daily_history = (
+        category_rows.groupby(DATE_COL, as_index=True)[TARGET_COL]
+        .sum()
+        .sort_index()
+        .to_frame(name=TARGET_COL)
+    )
+    return _build_dynamic_fallback_rows(daily_history, future_dates, TARGET_COL)
 
 
 def _history_for_category(
