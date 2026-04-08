@@ -5613,10 +5613,6 @@
         }
         if (currentMode === "forecast" && !filteredForecast.length) {
           roleTextEl.textContent = `${roleAccessNote} Note: No predicted values generated for selected period.`;
-        } else if (currentMode === "forecast" && (usedFallbackForecastRange || usedFallbackHistoryRange)) {
-          const fallbackStart = actualSeriesRows[0]?.date || filteredForecast[0]?.date || "";
-          const fallbackEnd = filteredForecast[filteredForecast.length - 1]?.date || actualSeriesRows[actualSeriesRows.length - 1]?.date || "";
-          roleTextEl.textContent = `${roleAccessNote} Note: No rows matched the selected period. Showing nearest available forecast/history range (${fallbackStart} to ${fallbackEnd}).`;
         }
 
         const mTotalEl = document.getElementById("mTotal");
@@ -5644,6 +5640,11 @@
         const actualSeriesRows = currentMode === "past"
           ? pastHistoryForDisplay
           : (nearPeriodActuals.length ? nearPeriodActuals : forecastHistoryForDisplay);
+        if (currentMode === "forecast" && (usedFallbackForecastRange || usedFallbackHistoryRange)) {
+          const fallbackStart = actualSeriesRows[0]?.date || filteredForecast[0]?.date || "";
+          const fallbackEnd = filteredForecast[filteredForecast.length - 1]?.date || actualSeriesRows[actualSeriesRows.length - 1]?.date || "";
+          roleTextEl.textContent = `${roleAccessNote} Note: No rows matched the selected period. Showing nearest available forecast/history range (${fallbackStart} to ${fallbackEnd}).`;
+        }
 
         const series = [];
         if (actualSeriesRows.length) {
