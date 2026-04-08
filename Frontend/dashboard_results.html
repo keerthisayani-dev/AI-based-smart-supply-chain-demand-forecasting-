@@ -5578,10 +5578,17 @@
           const d = normalizeToIsoDate(r.date);
           return d && d >= fromIso && d <= toIso;
         });
+        let usedFallbackForecastRange = false;
+        let usedFallbackHistoryRange = false;
         if (currentMode === "forecast" && !filteredForecast.length && forecast.length) {
           filteredForecast = [...forecast];
+          usedFallbackForecastRange = true;
         }
         const pastHistoryForDisplay = (currentMode === "past" && !filteredHistory.length) ? history : filteredHistory;
+        const forecastHistoryForDisplay = (currentMode === "forecast" && !filteredHistory.length && !filteredForecast.length) ? history : filteredHistory;
+        if (currentMode === "forecast" && !filteredHistory.length && !filteredForecast.length && history.length) {
+          usedFallbackHistoryRange = true;
+        }
         updateInsightsAndFinancials(filteredForecast, history);
 
         const totalForecast = filteredForecast.reduce((s, r) => s + toNum(r.forecast_units_sold), 0);
@@ -5606,6 +5613,10 @@
         }
         if (currentMode === "forecast" && !filteredForecast.length) {
           roleTextEl.textContent = `${roleAccessNote} Note: No predicted values generated for selected period.`;
+        } else if (currentMode === "forecast" && (usedFallbackForecastRange || usedFallbackHistoryRange)) {
+          const fallbackStart = actualSeriesRows[0]?.date || filteredForecast[0]?.date || "";
+          const fallbackEnd = filteredForecast[filteredForecast.length - 1]?.date || actualSeriesRows[actualSeriesRows.length - 1]?.date || "";
+          roleTextEl.textContent = `${roleAccessNote} Note: No rows matched the selected period. Showing nearest available forecast/history range (${fallbackStart} to ${fallbackEnd}).`;
         }
 
         const mTotalEl = document.getElementById("mTotal");
@@ -5630,7 +5641,9 @@
           const t = new Date(r.date).getTime();
           return t >= contextWindowStart && t <= selectedToTs;
         });
-        const actualSeriesRows = currentMode === "past" ? pastHistoryForDisplay : nearPeriodActuals;
+        const actualSeriesRows = currentMode === "past"
+          ? pastHistoryForDisplay
+          : (nearPeriodActuals.length ? nearPeriodActuals : forecastHistoryForDisplay);
 
         const series = [];
         if (actualSeriesRows.length) {
@@ -5730,10 +5743,10 @@
           chartEndCandidates.push(filteredForecast[filteredForecast.length - 1].date);
         }
 
-        const chartFrom = currentMode === "past"
+        const chartFrom = (currentMode === "past" || usedFallbackForecastRange || usedFallbackHistoryRange)
           ? (chartStartCandidates.length ? chartStartCandidates.sort()[0] : fromDate)
           : fromDate;
-        const chartTo = currentMode === "past"
+        const chartTo = (currentMode === "past" || usedFallbackForecastRange || usedFallbackHistoryRange)
           ? (chartEndCandidates.length ? chartEndCandidates.sort().slice(-1)[0] : toDate)
           : toDate;
         const forecastStartDate = filteredForecast.length ? filteredForecast[0].date : null;
