@@ -1196,6 +1196,38 @@ async function fetchForecastSnapshot(city, store, category, fromDate, toDate, op
   return promise;
 }
 
+function buildCategoryTrendEmptyMessage(categoryRows, fromDate, toDate) {
+  const rows = Array.isArray(categoryRows) ? categoryRows : [];
+  const failed = rows.filter((row) => String(row?.error || "").trim());
+  const empty = rows.filter((row) => !String(row?.error || "").trim() && (!Array.isArray(row?.points) || !row.points.length));
+  const withData = rows.filter((row) => Array.isArray(row?.points) && row.points.length);
+  const rangeText = fromDate && toDate ? ` for ${fromDate} to ${toDate}` : "";
+
+  if (!rows.length) {
+    return `No product daily trend data available${rangeText}.`;
+  }
+
+  if (!withData.length && failed.length) {
+    const firstError = String(failed[0]?.error || "").trim();
+    return `Product trend requests failed for ${failed.length} categories${rangeText}. ${firstError || "Check backend logs for details."}`;
+  }
+
+  if (!withData.length && empty.length) {
+    const sample = empty
+      .slice(0, 3)
+      .map((row) => String(row?.category || "").trim())
+      .filter(Boolean)
+      .join(", ");
+    return `No product daily trend rows matched the selected date range${rangeText}.${sample ? ` Tried: ${sample}${empty.length > 3 ? ", ..." : ""}.` : ""}`;
+  }
+
+  if (failed.length) {
+    return `Loaded ${withData.length} product trend series${rangeText}, but ${failed.length} categories failed to load.`;
+  }
+
+  return `No product daily trend data available${rangeText}.`;
+}
+
 function destroyCharts() {
   if (actualForecastChart) actualForecastChart.destroy();
   if (dailyTrendChart) dailyTrendChart.destroy();
@@ -1366,12 +1398,15 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
                 ? row.forecast_units_sold
                 : row?.actual_units_sold != null
                   ? row.actual_units_sold
-                  : NaN,
+                : NaN,
             ),
           })).filter((point) => point.date && Number.isFinite(point.value)),
+          error: "",
         };
-      } catch (_) {
-        return { category: cat, points: [] };
+      } catch (err) {
+        const message = err?.message || String(err);
+        debugLog("category-trends:load-error", { category: cat, city, from, to, message });
+        return { category: cat, points: [], error: String(message) };
       }
     }));
     if (isStale()) return;
@@ -1484,7 +1519,16 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
         },
       });
     } else {
-      setChartEmptyState("categoryComparisonEmpty", true, "No product daily trend data available.");
+      const emptyMessage = buildCategoryTrendEmptyMessage(categoryRows, from, to);
+      debugLog("category-trends:empty", {
+        city,
+        from,
+        to,
+        total: categoryRows.length,
+        withData: categoryRows.filter((row) => Array.isArray(row.points) && row.points.length).length,
+        failed: categoryRows.filter((row) => String(row.error || "").trim()).length,
+      });
+      setChartEmptyState("categoryComparisonEmpty", true, emptyMessage);
     }
     latestRenderKey = requestedKey || `${city}|${category}|${from}|${to}`;
     return;
@@ -1837,12 +1881,15 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
               ? row.forecast_units_sold
               : row?.actual_units_sold != null
                 ? row.actual_units_sold
-                : NaN,
+              : NaN,
           ),
         })).filter((point) => point.date && Number.isFinite(point.value)),
+        error: "",
       };
-    } catch (_) {
-      return { category: cat, points: [] };
+    } catch (err) {
+      const message = err?.message || String(err);
+      debugLog("category-trends:load-error", { category: cat, city, from, to, message });
+      return { category: cat, points: [], error: String(message) };
     }
   }));
   if (isStale()) return;
@@ -1953,7 +2000,16 @@ async function renderForecastVisualization(runId = null, requestedKey = "", opti
       },
     });
   } else {
-    setChartEmptyState("categoryComparisonEmpty", true, "No product daily trend data available.");
+    const emptyMessage = buildCategoryTrendEmptyMessage(categoryRows, from, to);
+    debugLog("category-trends:empty", {
+      city,
+      from,
+      to,
+      total: categoryRows.length,
+      withData: categoryRows.filter((row) => Array.isArray(row.points) && row.points.length).length,
+      failed: categoryRows.filter((row) => String(row.error || "").trim()).length,
+    });
+    setChartEmptyState("categoryComparisonEmpty", true, emptyMessage);
   }
 
 }
