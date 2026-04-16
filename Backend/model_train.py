@@ -225,6 +225,51 @@ def build_hybrid_comparison(
     amazon = comparison["Amazon"]
     flipkart = comparison["Flipkart"]
 
+    def enrich_platform_aliases(item: dict[str, float | str]) -> dict[str, float | str]:
+        revenue = float(item["estimated_revenue"])
+        profit = float(item["estimated_profit"])
+        margin = float(item["profit_margin"])
+        weighted_score = float(item["weighted_score"])
+        units = float(item["predicted_units_sold"])
+        avg_price = float(item["avg_price"])
+        avg_discount = float(item["avg_discount"])
+        total_units = float(item["total_units_sold"])
+        avg_units = float(item["avg_units_sold"])
+        demand_stability = round(max(55.0, 100 - abs(units - avg_units) / max(avg_units, 1.0) * 100), 2)
+        avg_demand_forecast = round(units * 1.05, 2)
+        avg_inventory_level = round(units * 1.3, 2)
+
+        item.update(
+            {
+                "name": item["platform"],
+                "weightedScore": weighted_score,
+                "weighted_score_value": weighted_score,
+                "score": weighted_score,
+                "estimatedRevenue": revenue,
+                "estimatedProfit": profit,
+                "estimatedProfitMargin": margin,
+                "profitMargin": margin,
+                "predictedUnitsSold": units,
+                "totalUnitsSold": total_units,
+                "avgUnitsSold": avg_units,
+                "avgPrice": avg_price,
+                "avgDiscount": avg_discount,
+                "demandStability": demand_stability,
+                "avgDemandForecast": avg_demand_forecast,
+                "avgInventoryLevel": avg_inventory_level,
+                "revenueDisplay": f"Rs {revenue:,.2f}",
+                "profitDisplay": f"Rs {profit:,.2f}",
+                "profitMarginDisplay": f"{margin:.2f}%",
+                "weightedScoreDisplay": f"{weighted_score:.2f}",
+                "avgPriceDisplay": f"Rs {avg_price:,.2f}",
+                "avgDiscountDisplay": f"{avg_discount:.2f}%",
+            }
+        )
+        return item
+
+    amazon = enrich_platform_aliases(amazon)
+    flipkart = enrich_platform_aliases(flipkart)
+
     if amazon["weighted_score"] > flipkart["weighted_score"]:
         winner = "Amazon"
         summary = "Amazon leads on the current weighted score."
@@ -256,8 +301,8 @@ def build_hybrid_comparison(
         },
         {
             "metric": "Demand Stability",
-            "amazon": round(max(55.0, 100 - abs(amazon["predicted_units_sold"] - context["avg_units_sold"]) / max(context["avg_units_sold"], 1.0) * 100), 2),
-            "flipkart": round(max(55.0, 100 - abs(flipkart["predicted_units_sold"] - context["avg_units_sold"]) / max(context["avg_units_sold"], 1.0) * 100), 2),
+            "amazon": amazon["demandStability"],
+            "flipkart": flipkart["demandStability"],
             "better": "Amazon" if amazon["predicted_units_sold"] >= flipkart["predicted_units_sold"] else "Flipkart",
         },
         {
@@ -268,14 +313,14 @@ def build_hybrid_comparison(
         },
         {
             "metric": "Avg Demand Forecast",
-            "amazon": round(amazon["predicted_units_sold"] * 1.05, 2),
-            "flipkart": round(flipkart["predicted_units_sold"] * 1.04, 2),
+            "amazon": amazon["avgDemandForecast"],
+            "flipkart": round(float(flipkart["predicted_units_sold"]) * 1.04, 2),
             "better": "Amazon" if amazon["predicted_units_sold"] > flipkart["predicted_units_sold"] else "Flipkart",
         },
         {
             "metric": "Avg Inventory Level",
-            "amazon": round(amazon["predicted_units_sold"] * 1.35, 2),
-            "flipkart": round(flipkart["predicted_units_sold"] * 1.28, 2),
+            "amazon": amazon["avgInventoryLevel"],
+            "flipkart": round(float(flipkart["predicted_units_sold"]) * 1.28, 2),
             "better": "Amazon" if amazon["predicted_units_sold"] > flipkart["predicted_units_sold"] else "Flipkart",
         },
         {
@@ -304,6 +349,24 @@ def build_hybrid_comparison(
         },
     ]
 
+    comparison_rows = []
+    for row in detailed_metrics:
+        amazon_value = row["amazon"]
+        flipkart_value = row["flipkart"]
+        comparison_rows.append(
+            {
+                "metric": row["metric"],
+                "amazon": amazon_value,
+                "flipkart": flipkart_value,
+                "Amazon": amazon_value,
+                "Flipkart": flipkart_value,
+                "better": row["better"],
+                "winner": row["better"],
+                "amazonValue": amazon_value,
+                "flipkartValue": flipkart_value,
+            }
+        )
+
     return {
         "product_id": context["product_id"],
         "category": context["category"],
@@ -314,20 +377,34 @@ def build_hybrid_comparison(
         "summary": summary,
         "amazon": amazon,
         "flipkart": flipkart,
+        "Amazon": amazon,
+        "Flipkart": flipkart,
         "detailed_metrics": detailed_metrics,
+        "detailedMetrics": comparison_rows,
         "final_recommendation": {
             "best_platform_overall": winner,
             "summary": summary,
         },
+        "finalRecommendation": {
+            "bestPlatformOverall": winner,
+            "best_platform_overall": winner,
+            "winner": winner,
+            "summary": summary,
+            "message": summary,
+        },
         "platforms": {
             "amazon": amazon,
             "flipkart": flipkart,
+            "Amazon": amazon,
+            "Flipkart": flipkart,
         },
         "cards": [
             flipkart,
             amazon,
         ],
-        "comparison_table": detailed_metrics,
+        "comparison_table": comparison_rows,
+        "comparisonTable": comparison_rows,
+        "marketplaceComparison": comparison_rows,
         "strategy_output": [
             {
                 "metric": "Revenue Uplift",
@@ -342,7 +419,27 @@ def build_hybrid_comparison(
                 "change": "+11.11%",
             },
         ],
+        "strategyOutput": [
+            {
+                "metric": "Revenue Uplift",
+                "baseline": round((amazon["estimated_revenue"] + flipkart["estimated_revenue"]) / 2 * 0.92, 2),
+                "simulated": round((amazon["estimated_revenue"] + flipkart["estimated_revenue"]) / 2, 2),
+                "change": "+8.70%",
+            },
+            {
+                "metric": "Profit Uplift",
+                "baseline": round((amazon["estimated_profit"] + flipkart["estimated_profit"]) / 2 * 0.9, 2),
+                "simulated": round((amazon["estimated_profit"] + flipkart["estimated_profit"]) / 2, 2),
+                "change": "+11.11%",
+            },
+        ],
         "recommendation_text": summary,
+        "recommendationText": summary,
+        "best_platform_overall": winner,
+        "bestPlatformOverall": winner,
+        "winner": winner,
+        "summaryText": summary,
+        "status": "success",
     }
 
 
@@ -405,6 +502,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
 
 
