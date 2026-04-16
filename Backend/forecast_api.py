@@ -3999,6 +3999,17 @@ def dynamic_data_compare(payload: DynamicCompareRequest, request: Request) -> Di
             df = _load_dynamic_dataset()
             product_df = _filter_dynamic_product(df, product)
             scoped_df = _date_filtered(product_df, from_date, to_date)
+            date_fallback_used = False
+            actual_from_date = from_date
+            actual_to_date = to_date
+            if scoped_df.empty and not product_df.empty:
+                date_col = _dynamic_find_col(product_df, "date")
+                parsed_dates = parse_date_series(_dynamic_get_series(product_df, date_col)).dropna() if date_col else pd.Series(dtype="datetime64[ns]")
+                if not parsed_dates.empty:
+                    actual_from_date = parsed_dates.min().strftime("%Y-%m-%d")
+                    actual_to_date = parsed_dates.max().strftime("%Y-%m-%d")
+                scoped_df = product_df.copy()
+                date_fallback_used = True
             left_df, left_inferred = _filter_dynamic_platform(scoped_df, platform_1)
             right_df, right_inferred = _filter_dynamic_platform(scoped_df, platform_2)
             left_metrics = _compare_metrics(left_df)
@@ -4034,10 +4045,13 @@ def dynamic_data_compare(payload: DynamicCompareRequest, request: Request) -> Di
         "product": product,
         "platform_1": platform_1,
         "platform_2": platform_2,
-        "from": from_date,
-        "to": to_date,
-        "fallback_used": bool(left_inferred or right_inferred),
-        "inference_mode": "price-median-platform-split" if (left_inferred or right_inferred) else "",
+        "from": actual_from_date,
+        "to": actual_to_date,
+        "requested_from": from_date,
+        "requested_to": to_date,
+        "fallback_used": bool(left_inferred or right_inferred or date_fallback_used),
+        "date_fallback_used": bool(date_fallback_used),
+        "inference_mode": "price-median-platform-split" if (left_inferred or right_inferred) else ("date-range-fallback" if date_fallback_used else ""),
         "same_platform_mode": False,
         "left_rows": int(len(left_df.index)),
         "right_rows": int(len(right_df.index)),
