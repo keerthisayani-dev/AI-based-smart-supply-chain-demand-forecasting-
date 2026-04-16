@@ -3,14 +3,24 @@ from pathlib import Path
 import random
 import pandas as pd
 
-from model_pipeline import (
-    build_features,
-    evaluate,
-    load_product_daily_data,
-    plot_actual_vs_pred,
-    split_train_test,
-    train_and_predict,
-)
+try:
+    from .model_pipeline import (
+        build_features,
+        evaluate,
+        load_product_daily_data,
+        plot_actual_vs_pred,
+        split_train_test,
+        train_and_predict,
+    )
+except ImportError:
+    from model_pipeline import (
+        build_features,
+        evaluate,
+        load_product_daily_data,
+        plot_actual_vs_pred,
+        split_train_test,
+        train_and_predict,
+    )
 
 
 # SETTINGS
@@ -367,6 +377,33 @@ def build_hybrid_comparison(
             }
         )
 
+    summary_cards = [
+        {
+            "platform": "Amazon",
+            "name": "Amazon",
+            "weighted_score": amazon["weighted_score"],
+            "weightedScore": amazon["weighted_score"],
+            "estimated_revenue": amazon["estimated_revenue"],
+            "estimatedRevenue": amazon["estimated_revenue"],
+            "profit_margin": amazon["profit_margin"],
+            "profitMargin": amazon["profit_margin"],
+            "predicted_units_sold": amazon["predicted_units_sold"],
+            "predictedUnitsSold": amazon["predicted_units_sold"],
+        },
+        {
+            "platform": "Flipkart",
+            "name": "Flipkart",
+            "weighted_score": flipkart["weighted_score"],
+            "weightedScore": flipkart["weighted_score"],
+            "estimated_revenue": flipkart["estimated_revenue"],
+            "estimatedRevenue": flipkart["estimated_revenue"],
+            "profit_margin": flipkart["profit_margin"],
+            "profitMargin": flipkart["profit_margin"],
+            "predicted_units_sold": flipkart["predicted_units_sold"],
+            "predictedUnitsSold": flipkart["predicted_units_sold"],
+        },
+    ]
+
     return {
         "product_id": context["product_id"],
         "category": context["category"],
@@ -398,6 +435,8 @@ def build_hybrid_comparison(
             "Amazon": amazon,
             "Flipkart": flipkart,
         },
+        "summary_cards": summary_cards,
+        "summaryCards": summary_cards,
         "cards": [
             flipkart,
             amazon,
@@ -405,6 +444,8 @@ def build_hybrid_comparison(
         "comparison_table": comparison_rows,
         "comparisonTable": comparison_rows,
         "marketplaceComparison": comparison_rows,
+        "detailed_metrics_table": comparison_rows,
+        "detailedMetricsTable": comparison_rows,
         "strategy_output": [
             {
                 "metric": "Revenue Uplift",
@@ -439,6 +480,8 @@ def build_hybrid_comparison(
         "bestPlatformOverall": winner,
         "winner": winner,
         "summaryText": summary,
+        "has_data": True,
+        "hasData": True,
         "status": "success",
     }
 
@@ -502,5 +545,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
 
