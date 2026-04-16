@@ -4339,11 +4339,27 @@
       const maxDate = String(payload.max_date || "");
       dynamicMinDateBound = minDate;
       dynamicMaxDateBound = maxDate;
-      if (fromEl && !fromEl.value && minDate) fromEl.value = minDate;
-      if (toEl && !toEl.value && maxDate) toEl.value = maxDate;
-      if (addDateEl && !addDateEl.value && maxDate) addDateEl.value = maxDate;
-      if (cmpFromEl && !cmpFromEl.value && minDate) cmpFromEl.value = minDate;
-      if (cmpToEl && !cmpToEl.value && maxDate) cmpToEl.value = maxDate;
+      const clampWithinBounds = (el, fallback) => {
+        if (!el) return;
+        const current = String(el.value || "").trim();
+        if (!current) {
+          if (fallback) el.value = fallback;
+          return;
+        }
+        if (minDate && current < minDate) {
+          el.value = minDate;
+          return;
+        }
+        if (maxDate && current > maxDate) {
+          el.value = maxDate;
+        }
+      };
+
+      clampWithinBounds(fromEl, minDate);
+      clampWithinBounds(toEl, maxDate);
+      clampWithinBounds(addDateEl, maxDate);
+      clampWithinBounds(cmpFromEl, minDate);
+      clampWithinBounds(cmpToEl, maxDate);
       applyStrategyDateDefaults(false);
       initDynamicDatePickers();
       if (dynamicPlatformOptions.length) {
@@ -4390,8 +4406,8 @@
 
     function getStrategyDateBounds() {
       return {
-        minDate: STRATEGY_ALLOWED_MIN_DATE || dynamicMinDateBound || "",
-        maxDate: STRATEGY_ALLOWED_MAX_DATE || dynamicMaxDateBound || "",
+        minDate: dynamicMinDateBound || STRATEGY_ALLOWED_MIN_DATE || "",
+        maxDate: dynamicMaxDateBound || STRATEGY_ALLOWED_MAX_DATE || "",
       };
     }
 
@@ -4414,11 +4430,32 @@
       const toEl = document.getElementById("cmpToDate") || document.getElementById("strategyToDate");
       if (!fromEl || !toEl) return;
       const bounds = getStrategyDateBounds();
-      if (force || !String(fromEl.value || "").trim()) {
-        fromEl.value = bounds.minDate || fromEl.value || "";
+      const normalize = (value) => String(value || "").trim();
+      const minDate = normalize(bounds.minDate);
+      const maxDate = normalize(bounds.maxDate);
+      const clampDate = (value, fallback) => {
+        const current = normalize(value);
+        if (!current) return fallback || "";
+        if (minDate && current < minDate) return minDate;
+        if (maxDate && current > maxDate) return maxDate;
+        return current;
+      };
+
+      if (force || !normalize(fromEl.value)) {
+        fromEl.value = minDate || normalize(fromEl.value);
+      } else {
+        fromEl.value = clampDate(fromEl.value, minDate);
       }
-      if (force || !String(toEl.value || "").trim()) {
-        toEl.value = bounds.maxDate || toEl.value || "";
+
+      if (force || !normalize(toEl.value)) {
+        toEl.value = maxDate || normalize(toEl.value);
+      } else {
+        toEl.value = clampDate(toEl.value, maxDate);
+      }
+
+      if (normalize(fromEl.value) && normalize(toEl.value) && fromEl.value > toEl.value) {
+        fromEl.value = minDate || toEl.value;
+        toEl.value = maxDate || fromEl.value;
       }
     }
 
