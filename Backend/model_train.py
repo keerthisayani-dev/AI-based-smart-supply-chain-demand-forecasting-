@@ -1,548 +1,276 @@
-from pathlib import Path
+import warnings
+warnings.filterwarnings("ignore")
 
-import random
+from collections import deque
+import json
+import os
+import time
 import pandas as pd
+import numpy as np
+from pathlib import Path
+import matplotlib.pyplot as plt
 
-try:
-    from .model_pipeline import (
-        build_features,
-        evaluate,
-        load_product_daily_data,
-        plot_actual_vs_pred,
-        split_train_test,
-        train_and_predict,
-    )
-except ImportError:
-    from model_pipeline import (
-        build_features,
-        evaluate,
-        load_product_daily_data,
-        plot_actual_vs_pred,
-        split_train_test,
-        train_and_predict,
-    )
+from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 
 
-# SETTINGS
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-CSV_PATH = PROJECT_ROOT / "Dataset" / "retail_store_inventory.csv"
+BASE_DIR = Path(__file__).resolve().parents[1]
+DATASET_DIR = BASE_DIR / "Dataset"
+FEATURE_PATHS = [
+    DATASET_DIR / "retail_store_inventory_city_level_cleaned_features.csv",
+    DATASET_DIR / "retail_store_inventory_city_level_features.csv",
+    DATASET_DIR / "retail_store_inventory_cleaned_features.csv",
+    DATASET_DIR / "retail_store_inventory_features.csv",
+]
+CSV_PATH = next((path for path in FEATURE_PATHS if path.exists()), None)
+if CSV_PATH is None:
+    raise FileNotFoundError("No feature-engineered dataset found. Run Backend/features_engineering.py first.")
+
 DATE_COL = "date"
-PRODUCT_COL = "product id"
 TARGET = "units sold"
-TEST_RATIO = 0.2
-START_DATE = "2022-01-01"
-PRODUCT_ID = None  
-UNIT_COST = 42.0
+MODEL_OUTPUT_DIR = BASE_DIR / "Backend"
+METRICS_PATH = MODEL_OUTPUT_DIR / "model_metrics.json"
+PREDICTIONS_PATH = MODEL_OUTPUT_DIR / "model_test_predictions.csv"
+PLOT_PATH = MODEL_OUTPUT_DIR / "model_training_graph.png"
+DROP_FEATURES = {"record_id"}
+MAX_PLOT_POINTS = 250
+TRAIN_METRIC_SAMPLE_SIZE = 50000
+FAST_MODE = str(os.getenv("DEMANDIQ_FAST_TRAIN", "1")).strip().lower() in {"1", "true", "yes", "on"}
+FAST_TRAIN_ROW_LIMIT = int(os.getenv("DEMANDIQ_FAST_TRAIN_ROWS", "200000"))
+FAST_TOTAL_ROW_LIMIT = int(os.getenv("DEMANDIQ_FAST_TOTAL_ROWS", str(int(FAST_TRAIN_ROW_LIMIT * 1.25))))
+FAST_ESTIMATORS = int(os.getenv("DEMANDIQ_FAST_N_ESTIMATORS", "40"))
+FULL_ESTIMATORS = int(os.getenv("DEMANDIQ_N_ESTIMATORS", "80"))
+AUTO_OPEN_GRAPH = str(os.getenv("DEMANDIQ_AUTO_OPEN_GRAPH", "1")).strip().lower() in {"1", "true", "yes", "on"}
+CSV_CHUNK_SIZE = int(os.getenv("DEMANDIQ_CSV_CHUNK_SIZE", "50000"))
+MODEL_N_JOBS = int(os.getenv("DEMANDIQ_N_JOBS", "1"))
 
 
-PLATFORM_RULES = {
-    "Amazon": {
-        "traffic_multiplier": 1.08,
-        "conversion_multiplier": 1.04,
-        "fee_pct": 0.18,
-        "fulfillment_cost": 11.0,
-    },
-    "Flipkart": {
-        "traffic_multiplier": 1.03,
-        "conversion_multiplier": 1.02,
-        "fee_pct": 0.14,
-        "fulfillment_cost": 9.0,
-    },
-}
+def _build_read_dtypes(csv_path: Path) -> dict[str, str]:
+    sample = pd.read_csv(csv_path, nrows=1000)
+    sample.columns = sample.columns.str.strip().str.lower()
 
-
-def _load_raw_data() -> pd.DataFrame:
-    df = pd.read_csv(CSV_PATH)
-    df.columns = df.columns.str.strip().str.lower()
-    df[DATE_COL] = pd.to_datetime(df[DATE_COL], dayfirst=True, errors="coerce")
-    df = df.dropna(subset=[DATE_COL, PRODUCT_COL, TARGET]).sort_values(DATE_COL)
-    return df
-
-
-def _safe_float(value: float | int | str | None, default: float) -> float:
-    try:
-        if value is None or value == "":
-            return default
-        return float(value)
-    except (TypeError, ValueError):
-        return default
-
-
-def _seeded_rng(*values: object) -> random.Random:
-    seed_text = "|".join(str(value) for value in values if value is not None)
-    seed = sum((index + 1) * ord(char) for index, char in enumerate(seed_text))
-    return random.Random(seed or 2026)
-
-
-def _select_market_slice(
-    df: pd.DataFrame,
-    product_id: str | None = None,
-    category: str | None = None,
-) -> pd.DataFrame:
-    scoped = df.copy()
-
-    if category:
-        category_mask = scoped["category"].astype(str).str.lower() == str(category).lower()
-        if category_mask.any():
-            scoped = scoped[category_mask].copy()
-
-    if product_id:
-        product_mask = scoped[PRODUCT_COL].astype(str).str.lower() == str(product_id).lower()
-        if product_mask.any():
-            scoped = scoped[product_mask].copy()
-
-    if scoped.empty:
-        scoped = df.copy()
-
-    return scoped
-
-
-def _estimate_baseline_units(
-    product_id: str | None = None,
-    category: str | None = None,
-) -> tuple[float, dict[str, float | str]]:
-    df = _load_raw_data()
-    scoped = _select_market_slice(df, product_id=product_id, category=category)
-
-    pid = product_id
-    if not pid:
-        pid = str(scoped[PRODUCT_COL].iloc[0])
-
-    daily, selected_pid = load_product_daily_data(
-        csv_path=CSV_PATH,
-        date_col=DATE_COL,
-        product_col=PRODUCT_COL,
-        target=TARGET,
-        start_date=START_DATE,
-        product_id=pid,
-    )
-
-    feat, features = build_features(daily, TARGET)
-    if feat.empty:
-        baseline_units = float(daily[TARGET].tail(30).mean())
-    else:
-        latest_row = feat.iloc[[-1]][features]
-        train_X = feat.iloc[:-1][features]
-        train_y = feat.iloc[:-1][TARGET].astype(float)
-
-        if train_X.empty:
-            baseline_units = float(feat[TARGET].tail(30).mean())
+    dtype_map: dict[str, str] = {}
+    for col in sample.columns:
+        if col == DATE_COL:
+            continue
+        if pd.api.types.is_integer_dtype(sample[col]):
+            dtype_map[col] = "int32"
+        elif pd.api.types.is_float_dtype(sample[col]):
+            dtype_map[col] = "float32"
         else:
-            from sklearn.linear_model import LinearRegression
-
-            model = LinearRegression()
-            model.fit(train_X, train_y)
-            baseline_units = float(model.predict(latest_row)[0])
-
-    recent = scoped[scoped[PRODUCT_COL] == selected_pid].copy()
-    if recent.empty:
-        recent = scoped.copy()
-
-    recent = recent.sort_values(DATE_COL)
-    baseline_units = max(baseline_units, float(recent[TARGET].tail(30).mean()), 1.0)
-
-    context = {
-        "product_id": selected_pid,
-        "category": str(recent["category"].mode().iloc[0]) if "category" in recent.columns else "",
-        "avg_price": float(recent["price"].tail(30).mean()) if "price" in recent.columns else 0.0,
-        "avg_discount": float(recent["discount"].tail(30).mean()) if "discount" in recent.columns else 0.0,
-        "avg_units_sold": float(recent[TARGET].tail(30).mean()),
-        "total_units_sold": float(recent[TARGET].sum()),
-    }
-    return baseline_units, context
+            dtype_map[col] = "category"
+    return dtype_map
 
 
-def build_hybrid_comparison(
-    product_id: str | None = None,
-    category: str | None = None,
-    price: float | int | str | None = None,
-    discount: float | int | str | None = None,
-    price_change: float | int | str | None = None,
-    unit_cost: float = UNIT_COST,
-) -> dict:
-    baseline_units, context = _estimate_baseline_units(product_id=product_id, category=category)
-
-    baseline_price = max(_safe_float(context["avg_price"], 50.0), 1.0)
-    baseline_discount = max(_safe_float(context["avg_discount"], 0.0), 0.0)
-
-    effective_price = _safe_float(price, baseline_price)
-    effective_price += _safe_float(price_change, 0.0)
-    effective_price = max(effective_price, baseline_price * 0.25)
-
-    effective_discount = max(_safe_float(discount, baseline_discount), 0.0)
-    effective_discount = min(effective_discount, 80.0)
-
-    net_price = max(effective_price * (1 - effective_discount / 100), 1.0)
-    relative_price = net_price / max(baseline_price * (1 - baseline_discount / 100), 1.0)
-    relative_price = min(max(relative_price, 0.5), 3.0)
-
-    price_factor = max(0.35, 1.45 - 0.45 * relative_price)
-    discount_factor = 1.0 + min(effective_discount, 60.0) / 150.0
-
-    comparison: dict[str, dict[str, float | str]] = {}
-    for platform, rules in PLATFORM_RULES.items():
-        predicted_units = baseline_units * price_factor * discount_factor
-        predicted_units *= rules["traffic_multiplier"] * rules["conversion_multiplier"]
-        predicted_units = max(predicted_units, 1.0)
-
-        estimated_revenue = predicted_units * net_price
-        profit_per_unit = net_price * (1 - rules["fee_pct"]) - unit_cost - rules["fulfillment_cost"]
-        estimated_profit = predicted_units * profit_per_unit
-        profit_margin = (estimated_profit / estimated_revenue * 100) if estimated_revenue > 0 else 0.0
-
-        comparison[platform] = {
-            "platform": platform,
-            "predicted_units_sold": round(predicted_units, 2),
-            "estimated_revenue": round(estimated_revenue, 2),
-            "estimated_profit": round(estimated_profit, 2),
-            "profit_margin": round(profit_margin, 2),
-            "avg_price": round(effective_price, 2),
-            "avg_discount": round(effective_discount, 2),
-            "total_units_sold": round(float(context["total_units_sold"]), 2),
-            "avg_units_sold": round(float(context["avg_units_sold"]), 2),
-        }
-
-    rng = _seeded_rng(
-        context["product_id"],
-        context["category"],
-        effective_price,
-        effective_discount,
-        price_change,
-    )
-    for item in comparison.values():
-        if item["estimated_revenue"] <= 0:
-            item["estimated_revenue"] = round(rng.uniform(180000, 950000), 2)
-        if item["estimated_profit"] <= 0:
-            item["estimated_profit"] = round(item["estimated_revenue"] * rng.uniform(0.08, 0.22), 2)
-        if item["profit_margin"] <= 0:
-            item["profit_margin"] = round(item["estimated_profit"] / item["estimated_revenue"] * 100, 2)
-        if item["predicted_units_sold"] <= 0:
-            item["predicted_units_sold"] = round(rng.uniform(1200, 9500), 2)
-
-    max_revenue = max(max(item["estimated_revenue"], 1.0) for item in comparison.values())
-    max_profit = max(max(item["estimated_profit"], 1.0) for item in comparison.values())
-    max_units = max(max(item["predicted_units_sold"], 1.0) for item in comparison.values())
-
-    for item in comparison.values():
-        weighted_score = (
-            0.35 * (item["estimated_revenue"] / max_revenue) * 100
-            + 0.35 * (max(item["estimated_profit"], 0.0) / max_profit) * 100
-            + 0.20 * (item["predicted_units_sold"] / max_units) * 100
-            + 0.10 * max(item["profit_margin"], 0.0)
-        )
-        item["weighted_score"] = round(weighted_score, 2)
-
-    amazon = comparison["Amazon"]
-    flipkart = comparison["Flipkart"]
-
-    def enrich_platform_aliases(item: dict[str, float | str]) -> dict[str, float | str]:
-        revenue = float(item["estimated_revenue"])
-        profit = float(item["estimated_profit"])
-        margin = float(item["profit_margin"])
-        weighted_score = float(item["weighted_score"])
-        units = float(item["predicted_units_sold"])
-        avg_price = float(item["avg_price"])
-        avg_discount = float(item["avg_discount"])
-        total_units = float(item["total_units_sold"])
-        avg_units = float(item["avg_units_sold"])
-        demand_stability = round(max(55.0, 100 - abs(units - avg_units) / max(avg_units, 1.0) * 100), 2)
-        avg_demand_forecast = round(units * 1.05, 2)
-        avg_inventory_level = round(units * 1.3, 2)
-
-        item.update(
-            {
-                "name": item["platform"],
-                "weightedScore": weighted_score,
-                "weighted_score_value": weighted_score,
-                "score": weighted_score,
-                "estimatedRevenue": revenue,
-                "estimatedProfit": profit,
-                "estimatedProfitMargin": margin,
-                "profitMargin": margin,
-                "predictedUnitsSold": units,
-                "totalUnitsSold": total_units,
-                "avgUnitsSold": avg_units,
-                "avgPrice": avg_price,
-                "avgDiscount": avg_discount,
-                "demandStability": demand_stability,
-                "avgDemandForecast": avg_demand_forecast,
-                "avgInventoryLevel": avg_inventory_level,
-                "revenueDisplay": f"Rs {revenue:,.2f}",
-                "profitDisplay": f"Rs {profit:,.2f}",
-                "profitMarginDisplay": f"{margin:.2f}%",
-                "weightedScoreDisplay": f"{weighted_score:.2f}",
-                "avgPriceDisplay": f"Rs {avg_price:,.2f}",
-                "avgDiscountDisplay": f"{avg_discount:.2f}%",
-            }
-        )
-        return item
-
-    amazon = enrich_platform_aliases(amazon)
-    flipkart = enrich_platform_aliases(flipkart)
-
-    if amazon["weighted_score"] > flipkart["weighted_score"]:
-        winner = "Amazon"
-        summary = "Amazon leads on the current weighted score."
-    elif flipkart["weighted_score"] > amazon["weighted_score"]:
-        winner = "Flipkart"
-        summary = "Flipkart leads on the current weighted score."
-    else:
-        winner = "Tie"
-        summary = "Both platforms are evenly matched on the current weighted score."
-
-    detailed_metrics = [
-        {
-            "metric": "Total Units Sold",
-            "amazon": amazon["total_units_sold"],
-            "flipkart": flipkart["total_units_sold"],
-            "better": "Amazon" if amazon["total_units_sold"] > flipkart["total_units_sold"] else "Tie",
-        },
-        {
-            "metric": "Avg Units Sold",
-            "amazon": amazon["avg_units_sold"],
-            "flipkart": flipkart["avg_units_sold"],
-            "better": "Amazon" if amazon["avg_units_sold"] > flipkart["avg_units_sold"] else "Tie",
-        },
-        {
-            "metric": "Avg Price",
-            "amazon": amazon["avg_price"],
-            "flipkart": flipkart["avg_price"],
-            "better": "Amazon" if amazon["avg_price"] > flipkart["avg_price"] else "Flipkart",
-        },
-        {
-            "metric": "Demand Stability",
-            "amazon": amazon["demandStability"],
-            "flipkart": flipkart["demandStability"],
-            "better": "Amazon" if amazon["predicted_units_sold"] >= flipkart["predicted_units_sold"] else "Flipkart",
-        },
-        {
-            "metric": "Avg Discount",
-            "amazon": amazon["avg_discount"],
-            "flipkart": flipkart["avg_discount"],
-            "better": "Tie",
-        },
-        {
-            "metric": "Avg Demand Forecast",
-            "amazon": amazon["avgDemandForecast"],
-            "flipkart": round(float(flipkart["predicted_units_sold"]) * 1.04, 2),
-            "better": "Amazon" if amazon["predicted_units_sold"] > flipkart["predicted_units_sold"] else "Flipkart",
-        },
-        {
-            "metric": "Avg Inventory Level",
-            "amazon": amazon["avgInventoryLevel"],
-            "flipkart": round(float(flipkart["predicted_units_sold"]) * 1.28, 2),
-            "better": "Amazon" if amazon["predicted_units_sold"] > flipkart["predicted_units_sold"] else "Flipkart",
-        },
-        {
-            "metric": "Estimated Revenue",
-            "amazon": amazon["estimated_revenue"],
-            "flipkart": flipkart["estimated_revenue"],
-            "better": "Amazon" if amazon["estimated_revenue"] > flipkart["estimated_revenue"] else "Flipkart",
-        },
-        {
-            "metric": "Estimated Profit",
-            "amazon": amazon["estimated_profit"],
-            "flipkart": flipkart["estimated_profit"],
-            "better": "Amazon" if amazon["estimated_profit"] > flipkart["estimated_profit"] else "Flipkart",
-        },
-        {
-            "metric": "Profit Margin",
-            "amazon": amazon["profit_margin"],
-            "flipkart": flipkart["profit_margin"],
-            "better": "Amazon" if amazon["profit_margin"] > flipkart["profit_margin"] else "Flipkart",
-        },
-        {
-            "metric": "Weighted Score",
-            "amazon": amazon["weighted_score"],
-            "flipkart": flipkart["weighted_score"],
-            "better": winner,
-        },
-    ]
-
-    comparison_rows = []
-    for row in detailed_metrics:
-        amazon_value = row["amazon"]
-        flipkart_value = row["flipkart"]
-        comparison_rows.append(
-            {
-                "metric": row["metric"],
-                "amazon": amazon_value,
-                "flipkart": flipkart_value,
-                "Amazon": amazon_value,
-                "Flipkart": flipkart_value,
-                "better": row["better"],
-                "winner": row["better"],
-                "amazonValue": amazon_value,
-                "flipkartValue": flipkart_value,
-            }
-        )
-
-    summary_cards = [
-        {
-            "platform": "Amazon",
-            "name": "Amazon",
-            "weighted_score": amazon["weighted_score"],
-            "weightedScore": amazon["weighted_score"],
-            "estimated_revenue": amazon["estimated_revenue"],
-            "estimatedRevenue": amazon["estimated_revenue"],
-            "profit_margin": amazon["profit_margin"],
-            "profitMargin": amazon["profit_margin"],
-            "predicted_units_sold": amazon["predicted_units_sold"],
-            "predictedUnitsSold": amazon["predicted_units_sold"],
-        },
-        {
-            "platform": "Flipkart",
-            "name": "Flipkart",
-            "weighted_score": flipkart["weighted_score"],
-            "weightedScore": flipkart["weighted_score"],
-            "estimated_revenue": flipkart["estimated_revenue"],
-            "estimatedRevenue": flipkart["estimated_revenue"],
-            "profit_margin": flipkart["profit_margin"],
-            "profitMargin": flipkart["profit_margin"],
-            "predicted_units_sold": flipkart["predicted_units_sold"],
-            "predictedUnitsSold": flipkart["predicted_units_sold"],
-        },
-    ]
-
-    return {
-        "product_id": context["product_id"],
-        "category": context["category"],
-        "input_price": round(effective_price, 2),
-        "input_discount": round(effective_discount, 2),
-        "net_selling_price": round(net_price, 2),
-        "best_platform": winner,
-        "summary": summary,
-        "amazon": amazon,
-        "flipkart": flipkart,
-        "Amazon": amazon,
-        "Flipkart": flipkart,
-        "detailed_metrics": detailed_metrics,
-        "detailedMetrics": comparison_rows,
-        "final_recommendation": {
-            "best_platform_overall": winner,
-            "summary": summary,
-        },
-        "finalRecommendation": {
-            "bestPlatformOverall": winner,
-            "best_platform_overall": winner,
-            "winner": winner,
-            "summary": summary,
-            "message": summary,
-        },
-        "platforms": {
-            "amazon": amazon,
-            "flipkart": flipkart,
-            "Amazon": amazon,
-            "Flipkart": flipkart,
-        },
-        "summary_cards": summary_cards,
-        "summaryCards": summary_cards,
-        "cards": [
-            flipkart,
-            amazon,
-        ],
-        "comparison_table": comparison_rows,
-        "comparisonTable": comparison_rows,
-        "marketplaceComparison": comparison_rows,
-        "detailed_metrics_table": comparison_rows,
-        "detailedMetricsTable": comparison_rows,
-        "strategy_output": [
-            {
-                "metric": "Revenue Uplift",
-                "baseline": round((amazon["estimated_revenue"] + flipkart["estimated_revenue"]) / 2 * 0.92, 2),
-                "simulated": round((amazon["estimated_revenue"] + flipkart["estimated_revenue"]) / 2, 2),
-                "change": "+8.70%",
-            },
-            {
-                "metric": "Profit Uplift",
-                "baseline": round((amazon["estimated_profit"] + flipkart["estimated_profit"]) / 2 * 0.9, 2),
-                "simulated": round((amazon["estimated_profit"] + flipkart["estimated_profit"]) / 2, 2),
-                "change": "+11.11%",
-            },
-        ],
-        "strategyOutput": [
-            {
-                "metric": "Revenue Uplift",
-                "baseline": round((amazon["estimated_revenue"] + flipkart["estimated_revenue"]) / 2 * 0.92, 2),
-                "simulated": round((amazon["estimated_revenue"] + flipkart["estimated_revenue"]) / 2, 2),
-                "change": "+8.70%",
-            },
-            {
-                "metric": "Profit Uplift",
-                "baseline": round((amazon["estimated_profit"] + flipkart["estimated_profit"]) / 2 * 0.9, 2),
-                "simulated": round((amazon["estimated_profit"] + flipkart["estimated_profit"]) / 2, 2),
-                "change": "+11.11%",
-            },
-        ],
-        "recommendation_text": summary,
-        "recommendationText": summary,
-        "best_platform_overall": winner,
-        "bestPlatformOverall": winner,
-        "winner": winner,
-        "summaryText": summary,
-        "has_data": True,
-        "hasData": True,
-        "status": "success",
-    }
+def _safe_write_text(path: Path, content: str, encoding: str = "utf-8") -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding=encoding)
 
 
-def hybrid_compare(**kwargs) -> dict:
-    return build_hybrid_comparison(**kwargs)
+def _safe_write_csv(df: pd.DataFrame, path: Path, index: bool = False) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(path, index=index)
 
 
-def compare_platforms(**kwargs) -> dict:
-    return build_hybrid_comparison(**kwargs)
+def _log(message: str) -> None:
+    print(message, flush=True)
+
+
+def _load_training_frame(csv_path: Path, dtype_map: dict[str, str]) -> pd.DataFrame:
+    if FAST_MODE:
+        # Keep only the most recent rows needed for a presentation-friendly training run.
+        tail_chunks: deque[pd.DataFrame] = deque()
+        kept_rows = 0
+        for chunk in pd.read_csv(csv_path, dtype=dtype_map, low_memory=False, chunksize=CSV_CHUNK_SIZE):
+            chunk.columns = chunk.columns.str.strip().str.lower()
+            tail_chunks.append(chunk)
+            kept_rows += len(chunk)
+            while kept_rows > FAST_TOTAL_ROW_LIMIT and tail_chunks:
+                dropped = tail_chunks.popleft()
+                kept_rows -= len(dropped)
+        if not tail_chunks:
+            raise ValueError(f"No rows could be loaded from dataset: {csv_path.name}")
+        return pd.concat(list(tail_chunks), ignore_index=True)
+
+    chunks: list[pd.DataFrame] = []
+    for chunk in pd.read_csv(csv_path, dtype=dtype_map, low_memory=False, chunksize=CSV_CHUNK_SIZE):
+        chunk.columns = chunk.columns.str.strip().str.lower()
+        chunks.append(chunk)
+    if not chunks:
+        raise ValueError(f"No rows could be loaded from dataset: {csv_path.name}")
+    return pd.concat(chunks, ignore_index=True)
+
+
+def _encode_object_columns(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+    for col in out.columns:
+        if col == TARGET:
+            continue
+        if pd.api.types.is_object_dtype(out[col]) or pd.api.types.is_string_dtype(out[col]):
+            encoder = LabelEncoder()
+            out[col] = encoder.fit_transform(out[col].astype(str)).astype("int32")
+    return out
 
 
 def main() -> None:
-    daily, pid = load_product_daily_data(
-        csv_path=CSV_PATH,
-        date_col=DATE_COL,
-        product_col=PRODUCT_COL,
-        target=TARGET,
-        start_date=START_DATE,
-        product_id=PRODUCT_ID,
+    read_dtypes = _build_read_dtypes(CSV_PATH)
+    df = _load_training_frame(CSV_PATH, read_dtypes)
+
+    if TARGET not in df.columns:
+        raise ValueError(f"Missing required target column: {TARGET}")
+
+    if DATE_COL in df.columns:
+        df[DATE_COL] = pd.to_datetime(df[DATE_COL], errors="coerce")
+        df = df.sort_values(DATE_COL)
+        df["date_ordinal"] = df[DATE_COL].map(lambda value: value.toordinal() if pd.notna(value) else np.nan)
+        df["year"] = df[DATE_COL].dt.year.fillna(0).astype(int)
+        df["month_from_date"] = df[DATE_COL].dt.month.fillna(0).astype(int)
+        df["day_from_date"] = df[DATE_COL].dt.day.fillna(0).astype(int)
+        df = df.drop(columns=[DATE_COL])
+
+    df = _encode_object_columns(df)
+    df = df.dropna(subset=[TARGET]).copy()
+    for col in df.select_dtypes(include=["float64"]).columns:
+        df[col] = pd.to_numeric(df[col], downcast="float")
+    for col in df.select_dtypes(include=["int64"]).columns:
+        df[col] = pd.to_numeric(df[col], downcast="integer")
+
+    feature_cols = [col for col in df.columns if col != TARGET]
+    feature_cols = [col for col in feature_cols if col not in DROP_FEATURES]
+    X = df[feature_cols]
+    y = pd.to_numeric(df[TARGET], errors="coerce")
+
+    valid_mask = y.notna()
+    X = X.loc[valid_mask].copy()
+    y = y.loc[valid_mask].copy()
+
+    if len(X) < 2:
+        raise ValueError("Not enough valid rows to train the model. Need at least 2 rows after cleaning.")
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=42,
+        shuffle=False,
     )
 
-    train, test = split_train_test(daily, TEST_RATIO)
-    split_date = test.index.min()
+    if X_train.empty or X_test.empty:
+        raise ValueError("Training split produced an empty train or test set. Add more valid rows to the dataset.")
 
-    print("Product:", pid, "| rows:", len(daily))
-    print("Data range used:", daily.index.min().date(), "to", daily.index.max().date())
-    print("Train range    :", train.index.min().date(), "to", train.index.max().date())
-    print("Test range     :", test.index.min().date(), "to", test.index.max().date())
+    if len(X_train) > FAST_TRAIN_ROW_LIMIT:
+        X_train = X_train.tail(FAST_TRAIN_ROW_LIMIT).copy()
+        y_train = y_train.tail(FAST_TRAIN_ROW_LIMIT).copy()
 
-    feat, features = build_features(daily, TARGET)
-    y_test = test[TARGET].astype(float)
+    n_estimators = FAST_ESTIMATORS if FAST_MODE else FULL_ESTIMATORS
+    mode_label = "FAST" if FAST_MODE else "FULL"
 
-    compare = train_and_predict(
-        feat=feat,
-        target=TARGET,
-        features=features,
-        split_date=split_date,
-        y_actual=y_test,
+    model = ExtraTreesRegressor(
+        n_estimators=n_estimators,
+        max_depth=18,
+        min_samples_leaf=3,
+        max_features="sqrt",
+        random_state=42,
+        n_jobs=MODEL_N_JOBS,
     )
+    _log(f"\nStarting model training on {len(X_train)} rows with {len(feature_cols)} features...")
+    fit_started_at = time.time()
+    try:
+        model.fit(X_train, y_train)
+    except PermissionError as exc:
+        if model.n_jobs == 1:
+            raise
+        _log(f"Parallel training unavailable ({exc}); retrying with n_jobs=1.")
+        model.set_params(n_jobs=1)
+        fit_started_at = time.time()
+        model.fit(X_train, y_train)
+    fit_seconds = time.time() - fit_started_at
 
-    print("\n--- Actual vs Predicted ---")
-    print(compare.head(10))
+    test_pred = model.predict(X_test)
+    train_eval_rows = min(TRAIN_METRIC_SAMPLE_SIZE, len(X_train))
+    train_pred = model.predict(X_train.tail(train_eval_rows))
+    train_true = y_train.tail(train_eval_rows)
 
-    metrics = evaluate(compare)
-    print("\n===== Linear Regression Evaluation =====")
-    print("MAE :", round(metrics["mae"], 3))
-    print("MSE :", round(metrics["mse"], 3))
-    print("RMSE:", round(metrics["rmse"], 3))
-    print("R2  :", round(metrics["r2"], 3))
-    print("Accuracy (%):", round(metrics["accuracy_pct"], 2))
+    metrics = {
+        "input_dataset": CSV_PATH.name,
+        "mode": mode_label.lower(),
+        "train_rows": int(len(X_train)),
+        "test_rows": int(len(X_test)),
+        "feature_count": int(len(feature_cols)),
+        "fit_seconds": float(fit_seconds),
+        "mae": float(mean_absolute_error(y_test, test_pred)),
+        "mse": float(mean_squared_error(y_test, test_pred)),
+        "rmse": float(np.sqrt(mean_squared_error(y_test, test_pred))),
+        "r2": float(r2_score(y_test, test_pred)),
+        "train_mae": float(mean_absolute_error(train_true, train_pred)),
+    }
 
-    hybrid = build_hybrid_comparison(product_id=pid)
-    print("\n===== Hybrid Comparison =====")
-    print("Best platform:", hybrid["best_platform"])
-    print("Amazon revenue:", hybrid["amazon"]["estimated_revenue"])
-    print("Flipkart revenue:", hybrid["flipkart"]["estimated_revenue"])
+    _log(f"\nTraining dataset: {CSV_PATH.name}")
+    _log("\n===== Model Evaluation (ExtraTreesRegressor) =====")
+    _log(f"Train rows: {metrics['train_rows']}")
+    _log(f"Test rows : {metrics['test_rows']}")
+    _log(f"Features  : {metrics['feature_count']}")
+    _log(f"Fit time  : {metrics['fit_seconds']:.2f} sec")
+    _log(f"MAE       : {metrics['mae']:.3f}")
+    _log(f"MSE       : {metrics['mse']:.3f}")
+    _log(f"RMSE      : {metrics['rmse']:.3f}")
+    _log(f"R2        : {metrics['r2']:.3f}")
+    _log(f"Accuracy (%): {metrics['r2'] * 100:.2f}")
 
-    plot_actual_vs_pred(compare)
+    predictions_df = X_test.copy()
+    predictions_df["actual_units_sold"] = y_test.values
+    predictions_df["predicted_units_sold"] = test_pred
+    _safe_write_csv(predictions_df, PREDICTIONS_PATH, index=False)
+
+    plot_df = predictions_df[["actual_units_sold", "predicted_units_sold"]].reset_index(drop=True)
+    plt.style.use("seaborn-v0_8-whitegrid")
+    plot_step = max(1, len(plot_df) // MAX_PLOT_POINTS)
+    plot_view = plot_df.iloc[::plot_step].copy()
+    plot_view.index = np.arange(1, len(plot_view) + 1)
+
+    fig, ax = plt.subplots(figsize=(11, 5.5))
+    ax.plot(
+        plot_view.index,
+        plot_view["actual_units_sold"],
+        label="Actual Units Sold",
+        color="#2563EB",
+        linewidth=2.2,
+        marker="o",
+        markersize=3.2,
+    )
+    ax.plot(
+        plot_view.index,
+        plot_view["predicted_units_sold"],
+        label="Predicted Units Sold",
+        color="#F59E0B",
+        linewidth=2.2,
+        marker="s",
+        markersize=3.0,
+    )
+    ax.set_title("Model Training Result: Actual vs Predicted", fontsize=14, weight="bold")
+    ax.set_xlabel("Sampled Test Points")
+    ax.set_ylabel("Units Sold")
+    ax.legend(frameon=True)
+    ax.margins(x=0.01)
+    ax.grid(True, linestyle="--", alpha=0.35)
+    for spine in ("top", "right"):
+        ax.spines[spine].set_visible(False)
+    fig.tight_layout()
+    fig.savefig(PLOT_PATH, dpi=200)
+    plt.close(fig)
+
+    _safe_write_text(METRICS_PATH, json.dumps(metrics, indent=2))
+    _log("\nModel training completed successfully.")
+    _log(f"Outputs available in: {MODEL_OUTPUT_DIR}")
+
+    if AUTO_OPEN_GRAPH:
+        try:
+            os.startfile(PLOT_PATH)  # type: ignore[attr-defined]
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":
     main()
-
